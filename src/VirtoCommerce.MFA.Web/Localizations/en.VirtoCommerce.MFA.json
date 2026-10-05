@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "mfa:create": "Create MFA related data",
+    "mfa:read": "View MFA related data",
+    "mfa:update": "Update MFA related data",
+    "mfa:delete": "Delete MFA related data"
+  }
+}

@@ -1,0 +1,63 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.4.11605.240 stable
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{E38AAE26-C23D-4304-B466-8776827E6D5D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VirtoCommerce.MFA.Web", "src\VirtoCommerce.MFA.Web\VirtoCommerce.MFA.Web.csproj", "{834F1C1E-7146-47FC-B88D-61E1CC567243}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VirtoCommerce.MFA.Data", "src\VirtoCommerce.MFA.Data\VirtoCommerce.MFA.Data.csproj", "{7CFBA676-FC74-49AA-BC3F-181E1EC965F4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VirtoCommerce.MFA.Core", "src\VirtoCommerce.MFA.Core\VirtoCommerce.MFA.Core.csproj", "{21B1BD53-BF1D-45AE-ACE7-A9531CC70279}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{7DB9111A-F8F4-40A0-B020-462D09C4511E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VirtoCommerce.MFA.Tests", "tests\VirtoCommerce.MFA.Tests\VirtoCommerce.MFA.Tests.csproj", "{0DEA05E7-6526-4DF5-864B-5E1E6C47CE5B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5BC87DE1-3800-4AE8-A4AF-EB72495FFBE0}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		.gitignore = .gitignore
+		Directory.Build.props = Directory.Build.props
+		LICENSE = LICENSE
+		module.ignore = module.ignore
+		README.md = README.md
+		VirtoCommerce.MFA.sln.DotSettings = VirtoCommerce.MFA.sln.DotSettings
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{834F1C1E-7146-47FC-B88D-61E1CC567243}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{834F1C1E-7146-47FC-B88D-61E1CC567243}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{834F1C1E-7146-47FC-B88D-61E1CC567243}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{834F1C1E-7146-47FC-B88D-61E1CC567243}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7CFBA676-FC74-49AA-BC3F-181E1EC965F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7CFBA676-FC74-49AA-BC3F-181E1EC965F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7CFBA676-FC74-49AA-BC3F-181E1EC965F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7CFBA676-FC74-49AA-BC3F-181E1EC965F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21B1BD53-BF1D-45AE-ACE7-A9531CC70279}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21B1BD53-BF1D-45AE-ACE7-A9531CC70279}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21B1BD53-BF1D-45AE-ACE7-A9531CC70279}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21B1BD53-BF1D-45AE-ACE7-A9531CC70279}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0DEA05E7-6526-4DF5-864B-5E1E6C47CE5B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DEA05E7-6526-4DF5-864B-5E1E6C47CE5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DEA05E7-6526-4DF5-864B-5E1E6C47CE5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DEA05E7-6526-4DF5-864B-5E1E6C47CE5B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{834F1C1E-7146-47FC-B88D-61E1CC567243} = {E38AAE26-C23D-4304-B466-8776827E6D5D}
+		{7CFBA676-FC74-49AA-BC3F-181E1EC965F4} = {E38AAE26-C23D-4304-B466-8776827E6D5D}
+		{21B1BD53-BF1D-45AE-ACE7-A9531CC70279} = {E38AAE26-C23D-4304-B466-8776827E6D5D}
+		{0DEA05E7-6526-4DF5-864B-5E1E6C47CE5B} = {7DB9111A-F8F4-40A0-B020-462D09C4511E}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D46F6428-ED6A-4BD9-A5CB-11F6927F6B8F}
+	EndGlobalSection
+EndGlobal

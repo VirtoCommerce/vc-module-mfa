@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <SonarQubeTestProject>false</SonarQubeTestProject>
+    <NoWarn>1591;NU1608</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Update="Localizations\**">
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\VirtoCommerce.MFA.Core\VirtoCommerce.MFA.Core.csproj" />
+    <ProjectReference Include="..\VirtoCommerce.MFA.Data\VirtoCommerce.MFA.Data.csproj" />
+  </ItemGroup>
+</Project>
