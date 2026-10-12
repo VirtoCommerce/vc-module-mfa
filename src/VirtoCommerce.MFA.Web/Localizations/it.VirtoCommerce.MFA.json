@@ -1,0 +1,35 @@
+{
+  "settings": {
+    "MultiFactorAuthentication": {
+      "Enabled": {
+        "title": "Autenticazione a più fattori",
+        "description": "Richiede, oltre alla password, un codice monouso inviato via e-mail per ogni accesso con password senza negozio: il Backoffice e le app e i client API che accedono con la password. I negozi seguono questa impostazione salvo override. Gli utenti senza e-mail confermata o con il blocco disattivato non potranno accedere finché questa opzione è attiva. L'account amministratore predefinito ha il blocco disattivato: conferma la sua e-mail e attiva il blocco prima di abilitare questa opzione, altrimenti non potrai accedere al Backoffice."
+      },
+      "StoreMode": {
+        "title": "Autenticazione a più fattori",
+        "description": "Indica se i clienti di questo negozio devono inserire, oltre alla password, un codice monouso inviato via e-mail. Use global setting: segue l'impostazione globale dell'autenticazione a più fattori. Enabled: sempre richiesto. Disabled: non richiesto per gli account cliente propri di questo negozio che non sono amministratori; tutti gli altri seguono l'impostazione globale."
+      }
+    }
+  },
+  "mfa": {
+    "sign-in": {
+      "title": "Inserisci il codice di accesso",
+      "subtitle": "Abbiamo inviato un codice a {{destination}}.",
+      "code": "Codice",
+      "code-placeholder": "Inserisci il codice a 6 cifre",
+      "submit": "Accedi",
+      "resend": "Invia di nuovo il codice",
+      "back": "Torna all'accesso",
+      "code-resent": "Codice inviato di nuovo.",
+      "errors": {
+        "invalid_code": "Il codice non è valido. Controllalo e riprova.",
+        "invalid_two_factor_token": "La sessione di accesso è scaduta. Accedi di nuovo.",
+        "user_is_locked_out": "Il tuo account è stato bloccato. Contatta l'amministratore.",
+        "user_is_temporary_locked_out": "Il tuo account è stato bloccato temporaneamente. Riprova più tardi.",
+        "sign_in_not_allowed": "Non puoi accedere al Backoffice con questo account.",
+        "lockout_disabled": "Questo account non può accedere con un codice. Contatta l'amministratore.",
+        "mfa_provider_not_available": "Impossibile inviare un codice di accesso a questo account. Conferma l'e-mail o contatta l'amministratore."
+      }
+    }
+  }
+}

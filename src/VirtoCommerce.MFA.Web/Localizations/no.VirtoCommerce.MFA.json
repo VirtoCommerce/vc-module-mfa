@@ -1,0 +1,35 @@
+{
+  "settings": {
+    "MultiFactorAuthentication": {
+      "Enabled": {
+        "title": "Flerfaktorautentisering",
+        "description": "Krever i tillegg til passordet en engangskode sendt på e-post ved hver passordpålogging uten butikk: Backoffice samt apper og API-klienter som logger på med passord. Butikkene følger denne innstillingen med mindre de overstyrer den. Brukere uten bekreftet e-post eller med deaktivert låsing kan ikke logge på mens dette er aktivert. Standard administratorkonto har låsing deaktivert: bekreft e-posten og aktiver låsing før du slår på dette, ellers kan du ikke logge på Backoffice."
+      },
+      "StoreMode": {
+        "title": "Flerfaktorautentisering",
+        "description": "Om kundene i denne butikken trenger en engangskode sendt på e-post i tillegg til passordet. Use global setting: følg den globale innstillingen for flerfaktorautentisering. Enabled: alltid påkrevd. Disabled: ikke påkrevd for butikkens egne kundekontoer som ikke er administratorer; alle andre følger den globale innstillingen."
+      }
+    }
+  },
+  "mfa": {
+    "sign-in": {
+      "title": "Skriv inn påloggingskoden",
+      "subtitle": "Vi har sendt en kode til {{destination}}.",
+      "code": "Kode",
+      "code-placeholder": "Skriv inn den 6-sifrede koden",
+      "submit": "Logg på",
+      "resend": "Send koden på nytt",
+      "back": "Tilbake til pålogging",
+      "code-resent": "Koden er sendt på nytt.",
+      "errors": {
+        "invalid_code": "Koden er ugyldig. Kontroller den og prøv igjen.",
+        "invalid_two_factor_token": "Påloggingsøkten er utløpt. Logg på igjen.",
+        "user_is_locked_out": "Kontoen din er låst. Kontakt administratoren.",
+        "user_is_temporary_locked_out": "Kontoen din er midlertidig låst. Prøv igjen senere.",
+        "sign_in_not_allowed": "Du kan ikke logge på Backoffice med denne kontoen.",
+        "lockout_disabled": "Denne kontoen kan ikke logge på med en kode. Kontakt administratoren.",
+        "mfa_provider_not_available": "Vi kan ikke sende en påloggingskode til denne kontoen. Bekreft e-posten eller kontakt administratoren."
+      }
+    }
+  }
+}

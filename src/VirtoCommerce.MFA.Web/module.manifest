@@ -4,22 +4,24 @@
   <version>3.1000.0</version>
   <version-tag></version-tag>
 
-  <platformVersion>3.1076.0</platformVersion>
+  <platformVersion>3.1079.0-alpha.13413-vcst-5904</platformVersion>
   <dependencies>
-    <dependency id="VirtoCommerce.Xapi" version="3.1003.0" />
+    <dependency id="VirtoCommerce.Customer" version="3.1011.1" />
+    <dependency id="VirtoCommerce.Notifications" version="3.1009.3" />
+    <dependency id="VirtoCommerce.Store" version="3.1005.1" />
   </dependencies>
 
-  <title>Virto Commerce MFA</title>
-  <description>Virto Commerce MFA</description>
+  <title>Multi-Factor Authentication</title>
+  <description>Protects password sign-ins to the Backoffice and the storefront with a second factor: a one-time code sent by email. Enabled globally or per store.</description>
 
   <authors>
-    <author>VirtoCommerce</author>
+    <author>Virto Commerce</author>
   </authors>
   <owners>
     <owner>Virto Commerce</owner>
   </owners>
 
-  <projectUrl>https://github.com/Virto Commerce/vc-module-mfa</projectUrl>
+  <projectUrl>https://github.com/VirtoCommerce/vc-module-mfa</projectUrl>
   <iconUrl>Modules/$(VirtoCommerce.MFA)/Content/logo.png</iconUrl>
   <requireLicenseAcceptance>false</requireLicenseAcceptance>
 
