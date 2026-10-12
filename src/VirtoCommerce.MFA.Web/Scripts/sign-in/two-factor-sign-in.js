@@ -3,7 +3,7 @@ angular.module('virtoCommerce.mfa')
         '$scope', '$state', '$stateParams', '$translate', 'platformWebApp.authService', 'virtoCommerce.mfa.mfaApi',
         function ($scope, $state, $stateParams, $translate, authService, mfaApi) {
             var CODE_PATTERN = /^\d{6}$/;
-            var FINAL_ERRORS = ['invalid_two_factor_token', 'lockout_disabled', 'mfa_provider_not_available', 'sign_in_not_allowed', 'user_is_locked_out'];
+            var FINAL_ERRORS = ['invalid_two_factor_token', 'lockout_disabled', 'mfa_provider_not_available', 'sign_in_not_allowed', 'user_is_locked_out', 'user_is_temporary_locked_out'];
 
             $scope.model = { code: '' };
             $scope.destination = null;
