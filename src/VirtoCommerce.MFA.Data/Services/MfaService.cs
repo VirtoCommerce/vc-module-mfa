@@ -107,7 +107,7 @@ public class MfaService(
 
         var ticket = twoFactorTokenService.ReadToken(twoFactorToken);
 
-        if (ticket != null && !ticket.StoreId.EqualsIgnoreCase(storeId.EmptyToNull()))
+        if (ticket == null || !ticket.StoreId.EqualsIgnoreCase(storeId.EmptyToNull()))
         {
             return MfaResult.Fail(MfaOutcome.InvalidTwoFactorToken);
         }

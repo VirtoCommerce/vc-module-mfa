@@ -90,15 +90,7 @@ public class MfaGrantTypeHandler(
 
     protected virtual TokenResponse BuildErrorResponse(TokenRequestContext context, MfaResult verifyResult)
     {
-        context.FailureReason = verifyResult.Outcome switch
-        {
-            MfaOutcome.InvalidTwoFactorToken => ModuleConstants.Security.FailureReason.InvalidTwoFactorToken,
-            MfaOutcome.LockoutDisabled => ModuleConstants.Security.FailureReason.LockoutDisabled,
-            MfaOutcome.ProviderNotAvailable => ModuleConstants.Security.FailureReason.ProviderNotAvailable,
-            MfaOutcome.AccountLocked => SignInFailureReason.LockedOut,
-            MfaOutcome.InvalidCode => ModuleConstants.Security.FailureReason.InvalidCode,
-            _ => SignInFailureReason.Unknown,
-        };
+        context.FailureReason = GetFailureReason(verifyResult.Outcome);
 
         return verifyResult.Outcome switch
         {
@@ -107,6 +99,19 @@ public class MfaGrantTypeHandler(
             MfaOutcome.ProviderNotAvailable => CreateTokenResponse(Errors.InvalidGrant, MfaErrorDescriber.ProviderNotAvailable()),
             MfaOutcome.AccountLocked when context.DetailedErrors => CreateTokenResponse(Errors.InvalidGrant, MfaErrorDescriber.GetLockoutError(verifyResult.User), MfaErrorDescriber.GetLockoutSecondsRemaining(verifyResult.User)),
             _ => CreateTokenResponse(Errors.InvalidGrant, MfaErrorDescriber.InvalidCode()),
+        };
+    }
+
+    protected virtual string GetFailureReason(MfaOutcome outcome)
+    {
+        return outcome switch
+        {
+            MfaOutcome.InvalidTwoFactorToken => ModuleConstants.Security.FailureReason.InvalidTwoFactorToken,
+            MfaOutcome.LockoutDisabled => ModuleConstants.Security.FailureReason.LockoutDisabled,
+            MfaOutcome.ProviderNotAvailable => ModuleConstants.Security.FailureReason.ProviderNotAvailable,
+            MfaOutcome.AccountLocked => SignInFailureReason.LockedOut,
+            MfaOutcome.InvalidCode => ModuleConstants.Security.FailureReason.InvalidCode,
+            _ => SignInFailureReason.Unknown,
         };
     }
 

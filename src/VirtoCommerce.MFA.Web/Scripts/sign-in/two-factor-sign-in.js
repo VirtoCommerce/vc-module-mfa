@@ -34,7 +34,9 @@ angular.module('virtoCommerce.mfa')
                         return;
                     }
 
-                    var provider = (result.providers || []).find(function (x) { return x.name === result.provider; });
+                    var provider = (result.providers || []).find(function (x) {
+                        return x.name === result.provider;
+                    });
                     $scope.provider = result.provider;
                     $scope.destination = provider ? provider.destination : null;
 
