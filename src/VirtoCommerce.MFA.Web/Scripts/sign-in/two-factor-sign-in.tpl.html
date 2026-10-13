@@ -36,7 +36,7 @@
 
                 <div class="login-form__flex">
                     <a href="" class="vc-link" ng-if="!isFinalError && !resendSecondsLeft" ng-click="sendCode(true)" ng-disabled="inProgress">{{ 'mfa.sign-in.resend' | translate }}</a>
-                    <span ng-if="!isFinalError && resendSecondsLeft">{{ 'mfa.sign-in.resend-countdown' | translate: { seconds: resendSecondsLeft } }}</span>
+                    <span class="vc-link mfa-sign-in__resend-countdown" ng-if="!isFinalError && resendSecondsLeft">{{ 'mfa.sign-in.resend-countdown' | translate: { seconds: resendSecondsLeft } }}</span>
                     <a href="" class="vc-link" ng-click="backToSignIn()">{{ 'mfa.sign-in.back' | translate }}</a>
                 </div>
             </form>

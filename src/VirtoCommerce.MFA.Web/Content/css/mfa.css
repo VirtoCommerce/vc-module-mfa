@@ -1,0 +1,4 @@
+.mfa-sign-in__resend-countdown {
+    opacity: 0.5;
+    pointer-events: none;
+}

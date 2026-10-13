@@ -105,6 +105,10 @@ public class MfaGrantTypeHandlerTests : MfaTestsBase
         // Assert
         var error = Assert.IsType<TokenResponse>(Assert.IsType<BadRequestObjectResult>(actionResult).Value);
         Assert.Equal("invalid_two_factor_token", error.Code);
+        _eventPublisher.Verify(x => x.Publish(It.Is<UserSignInAttemptEvent>(e =>
+            !e.Succeeded &&
+            e.UserId == ActiveUserId &&
+            e.FailureReason == ModuleConstants.Security.FailureReason.InvalidTwoFactorToken)), Times.Once);
     }
 
     [Fact]

@@ -1,11 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.RateLimiting;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using VirtoCommerce.MFA.Core;
 using VirtoCommerce.MFA.Core.Models;
 using VirtoCommerce.MFA.Core.Services;
@@ -24,12 +21,9 @@ public class MfaService(
     ISettingsManager settingsManager,
     ITwoFactorTokenService twoFactorTokenService,
     IEnumerable<IMfaProvider> providers,
-    IOptions<MfaOptions> options,
-    [FromKeyedServices(MfaService.CodeDeliveryLimiterKey)] PartitionedRateLimiter<string> codeDeliveryLimiter)
+    IMfaCodeDeliveryLimiter codeDeliveryLimiter)
     : IMfaService
 {
-    public const string CodeDeliveryLimiterKey = "VirtoCommerce.MFA.CodeDeliveryLimiter";
-
     private readonly IList<IMfaProvider> _providers = providers.ToList();
 
     public virtual async Task<bool> IsRequiredAsync(ApplicationUser user, string storeId)
@@ -125,11 +119,6 @@ public class MfaService(
 
         var ticket = twoFactorTokenService.ReadToken(twoFactorToken);
 
-        if (ticket == null || !ticket.StoreId.EqualsIgnoreCase(storeId.EmptyToNull()))
-        {
-            return MfaResult.Fail(MfaOutcome.InvalidTwoFactorToken);
-        }
-
         var result = await ValidateTicketAsync(ticket);
         if (result.Outcome != MfaOutcome.Success)
         {
@@ -137,6 +126,11 @@ public class MfaService(
         }
 
         var user = result.User;
+
+        if (!ticket.StoreId.EqualsIgnoreCase(storeId.EmptyToNull()))
+        {
+            return MfaResult.Fail(MfaOutcome.InvalidTwoFactorToken, user);
+        }
 
         var mfaProvider = await GetProviderAsync(user, ticket.Provider);
         if (mfaProvider == null)
@@ -164,10 +158,14 @@ public class MfaService(
         }
 
         var user = await userManager.FindByIdAsync(ticket.UserId);
-
-        if (user == null || ticket.SecurityStamp != await userManager.GetSecurityStampAsync(user) || IsTicketUsed(ticket, user))
+        if (user == null)
         {
             return MfaResult.Fail(MfaOutcome.InvalidTwoFactorToken);
+        }
+
+        if (ticket.SecurityStamp != await userManager.GetSecurityStampAsync(user) || IsTicketUsed(ticket, user))
+        {
+            return MfaResult.Fail(MfaOutcome.InvalidTwoFactorToken, user);
         }
 
         return await ValidateUserAsync(user);
@@ -219,29 +217,23 @@ public class MfaService(
 
         var result = MfaResult.Succeed(user, provider: mfaProvider.Name, providers: ToProviderInfos(user, availableProviders));
 
-        using var lease = codeDeliveryLimiter.AttemptAcquire(GetCodeDeliveryPartitionKey(user, mfaProvider));
-        if (!lease.IsAcquired)
+        var isAcquired = codeDeliveryLimiter.TryAcquire(GetCodeDeliveryKey(user, mfaProvider), out var retryAfter);
+        result.ResendSecondsRemaining = ToSeconds(retryAfter);
+
+        if (!isAcquired)
         {
             result.Outcome = MfaOutcome.ResendTooSoon;
-            result.ResendSecondsRemaining = ToSeconds(lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter) ? retryAfter : options.Value.CodeResendInterval);
-
             return result;
         }
 
         await GenerateAndSendCodeAsync(store, user, mfaProvider);
-        result.ResendSecondsRemaining = ToSeconds(options.Value.CodeResendInterval);
 
         return result;
     }
 
-    protected virtual string GetCodeDeliveryPartitionKey(ApplicationUser user, IMfaProvider mfaProvider)
+    protected virtual string GetCodeDeliveryKey(ApplicationUser user, IMfaProvider mfaProvider)
     {
         return $"{user.Id}:{mfaProvider.Name}";
-    }
-
-    private static int ToSeconds(TimeSpan value)
-    {
-        return (int)Math.Ceiling(value.TotalSeconds);
     }
 
     protected virtual async Task GenerateAndSendCodeAsync(Store store, ApplicationUser user, IMfaProvider mfaProvider)
@@ -295,5 +287,10 @@ public class MfaService(
     protected virtual string GetStoreMode(Store store)
     {
         return store?.Settings.GetValue<string>(MfaModuleSettings.StoreMode) ?? ModuleConstants.StoreModes.UseGlobalSetting;
+    }
+
+    private static int ToSeconds(TimeSpan value)
+    {
+        return (int)Math.Ceiling(value.TotalSeconds);
     }
 }

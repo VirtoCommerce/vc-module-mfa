@@ -95,7 +95,7 @@ public class MfaServiceTests : MfaTestsBase
         var result = await MfaService.ChallengeAsync(StoreId, ActiveUser);
 
         // Assert
-        Assert.Equal((int)MfaOptions.CodeResendInterval.TotalSeconds, result.ResendSecondsRemaining);
+        Assert.Equal(ResendIntervalSeconds, result.ResendSecondsRemaining);
     }
 
     [Fact]
@@ -103,6 +103,7 @@ public class MfaServiceTests : MfaTestsBase
     {
         // Arrange
         await MfaService.ChallengeAsync(StoreId, ActiveUser);
+        TimeProvider.Advance(TimeSpan.FromSeconds(10));
 
         // Act
         var result = await MfaService.ChallengeAsync(StoreId, ActiveUser);
@@ -110,7 +111,7 @@ public class MfaServiceTests : MfaTestsBase
         // Assert
         Assert.Equal(MfaOutcome.Success, result.Outcome);
         Assert.Equal(ActiveUserId, TwoFactorTokenService.ReadToken(result.TwoFactorToken).UserId);
-        Assert.InRange(result.ResendSecondsRemaining.GetValueOrDefault(), 1, (int)MfaOptions.CodeResendInterval.TotalSeconds);
+        Assert.Equal(ResendIntervalSeconds - 10, result.ResendSecondsRemaining);
         NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Once);
     }
 
@@ -119,6 +120,7 @@ public class MfaServiceTests : MfaTestsBase
     {
         // Arrange
         var challenge = await MfaService.ChallengeAsync(StoreId, ActiveUser);
+        TimeProvider.Advance(TimeSpan.FromSeconds(12.5));
 
         // Act
         var result = await MfaService.ResendCodeAsync(challenge.TwoFactorToken);
@@ -127,8 +129,25 @@ public class MfaServiceTests : MfaTestsBase
         Assert.Equal(MfaOutcome.ResendTooSoon, result.Outcome);
         Assert.Null(result.TwoFactorToken);
         Assert.Equal(EmailProvider, result.Provider);
-        Assert.InRange(result.ResendSecondsRemaining.GetValueOrDefault(), 1, (int)MfaOptions.CodeResendInterval.TotalSeconds);
+        Assert.Equal(ResendIntervalSeconds - 12, result.ResendSecondsRemaining);
         NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ResendCodeAsync_Should_SendCode_When_TheResendIntervalHasPassed()
+    {
+        // Arrange
+        var challenge = await MfaService.ChallengeAsync(StoreId, ActiveUser);
+        TimeProvider.Advance(MfaOptions.CodeResendInterval);
+
+        // Act
+        var result = await MfaService.ResendCodeAsync(challenge.TwoFactorToken);
+
+        // Assert
+        Assert.Equal(MfaOutcome.Success, result.Outcome);
+        Assert.NotNull(result.TwoFactorToken);
+        Assert.Equal(ResendIntervalSeconds, result.ResendSecondsRemaining);
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Exactly(2));
     }
 
     [Fact]
@@ -361,7 +380,30 @@ public class MfaServiceTests : MfaTestsBase
 
         // Assert
         Assert.Equal(MfaOutcome.InvalidTwoFactorToken, result.Outcome);
+        Assert.Equal(ActiveUserId, result.User?.Id);
         UserManager.Verify(x => x.VerifyTwoFactorTokenAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task VerifyCodeAsync_Should_RejectTokenWithTheUser_When_SecurityStampChanged()
+    {
+        // Act
+        var result = await MfaService.VerifyCodeAsync(StoreId, CreateTwoFactorToken(securityStamp: "old-stamp"), ValidCode);
+
+        // Assert
+        Assert.Equal(MfaOutcome.InvalidTwoFactorToken, result.Outcome);
+        Assert.Equal(ActiveUserId, result.User?.Id);
+    }
+
+    [Fact]
+    public async Task VerifyCodeAsync_Should_RejectTokenWithoutUser_When_UserNoLongerExists()
+    {
+        // Act
+        var result = await MfaService.VerifyCodeAsync(StoreId, CreateTwoFactorToken(userId: UnknownUserId), ValidCode);
+
+        // Assert
+        Assert.Equal(MfaOutcome.InvalidTwoFactorToken, result.Outcome);
+        Assert.Null(result.User);
     }
 
     [Fact]
@@ -423,6 +465,7 @@ public class MfaServiceTests : MfaTestsBase
 
         // Assert
         Assert.Equal(MfaOutcome.InvalidTwoFactorToken, result.Outcome);
+        Assert.Equal(ActiveUserId, result.User?.Id);
         UserManager.Verify(x => x.VerifyTwoFactorTokenAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
