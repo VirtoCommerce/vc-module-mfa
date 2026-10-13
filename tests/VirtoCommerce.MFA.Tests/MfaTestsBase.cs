@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
@@ -211,8 +212,18 @@ public abstract class MfaTestsBase
 
         var emailProvider = new EmailMfaProvider(memberService.Object, notificationSearchService.Object, NotificationSender.Object);
 
-        MfaService = new MfaService(UserManager.Object, StoreService.Object, settingsManager.Object, TwoFactorTokenService, [emailProvider]);
+        MfaService = new MfaService(UserManager.Object, StoreService.Object, settingsManager.Object, TwoFactorTokenService, [emailProvider], Options.Create(MfaOptions), CodeDeliveryLimiter);
     }
+
+    public MfaOptions MfaOptions { get; } = new();
+
+    public PartitionedRateLimiter<string> CodeDeliveryLimiter { get; } = PartitionedRateLimiter.Create<string, string>(key =>
+        RateLimitPartition.GetFixedWindowLimiter(key, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 1,
+            Window = new MfaOptions().CodeResendInterval,
+            QueueLimit = 0,
+        }));
 
     public string CreateTwoFactorToken(string userId = ActiveUserId, string storeId = StoreId, string securityStamp = SecurityStamp, string provider = EmailProvider)
     {

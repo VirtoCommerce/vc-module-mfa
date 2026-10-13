@@ -19,6 +19,7 @@
       "code-placeholder": "输入 6 位验证码",
       "submit": "登录",
       "resend": "重新发送验证码",
+      "resend-countdown": "{{seconds}} 秒后可重新发送验证码",
       "back": "返回登录",
       "code-resent": "已重新发送验证码。",
       "errors": {

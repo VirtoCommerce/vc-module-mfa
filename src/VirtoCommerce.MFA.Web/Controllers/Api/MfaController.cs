@@ -64,6 +64,7 @@ public class MfaController(
             Provider = result.Provider,
             Providers = result.Providers,
             LockoutSecondsRemaining = isLockoutReported ? MfaErrorDescriber.GetLockoutSecondsRemaining(result.User) : null,
+            ResendSecondsRemaining = result.ResendSecondsRemaining,
         };
     }
 
@@ -78,6 +79,7 @@ public class MfaController(
             MfaOutcome.AccountLocked when reportLockout => MfaErrorDescriber.GetLockoutError(result.User),
             MfaOutcome.LockoutDisabled => MfaErrorDescriber.LockoutDisabled(),
             MfaOutcome.ProviderNotAvailable => MfaErrorDescriber.ProviderNotAvailable(),
+            MfaOutcome.ResendTooSoon => MfaErrorDescriber.ResendTooSoon(),
             _ => MfaErrorDescriber.LoginFailed(),
         };
     }

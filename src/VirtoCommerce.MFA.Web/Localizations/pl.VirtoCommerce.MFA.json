@@ -19,6 +19,7 @@
       "code-placeholder": "Wprowadź 6-cyfrowy kod",
       "submit": "Zaloguj się",
       "resend": "Wyślij kod ponownie",
+      "resend-countdown": "Wyślij kod ponownie za {{seconds}} s",
       "back": "Wróć do logowania",
       "code-resent": "Kod wysłano ponownie.",
       "errors": {

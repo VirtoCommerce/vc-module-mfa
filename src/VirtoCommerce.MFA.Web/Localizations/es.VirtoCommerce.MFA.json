@@ -19,6 +19,7 @@
       "code-placeholder": "Introduzca el código de 6 dígitos",
       "submit": "Iniciar sesión",
       "resend": "Reenviar código",
+      "resend-countdown": "Reenviar código en {{seconds}} s",
       "back": "Volver al inicio de sesión",
       "code-resent": "Código enviado de nuevo.",
       "errors": {

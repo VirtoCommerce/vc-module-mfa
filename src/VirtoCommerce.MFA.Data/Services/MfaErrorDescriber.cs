@@ -44,6 +44,12 @@ public static class MfaErrorDescriber
         Description = "The code is invalid or has expired.",
     };
 
+    public static IdentityError ResendTooSoon() => new()
+    {
+        Code = "resend_too_soon",
+        Description = "A code has just been sent. Wait before requesting a new one.",
+    };
+
     public static IdentityError LoginFailed() => ToIdentityError(SecurityErrorDescriber.LoginFailed());
 
     public static IdentityError SignInNotAllowed() => ToIdentityError(SecurityErrorDescriber.SignInNotAllowed());

@@ -18,6 +18,7 @@ Tokens are not limited to the store the request names, so the rules look at the 
 | appsettings.json | Description | Default |
 | --- | --- | --- |
 | `MultiFactorAuthentication:TwoFactorTokenLifetime` | How long the two-factor token of the token endpoint sign-in stays valid. | `00:10:00` |
+| `MultiFactorAuthentication:CodeResendInterval` | How often a code can be sent to a user by the same provider. Must be shorter than `TwoFactorTokenLifetime`. | `00:00:30` |
 
 Codes are sent with the ASP.NET Core Identity `Email` two-factor provider, which requires a confirmed email. **Before enabling MFA, confirm the email of the users it applies to** (the account blade in the Backoffice has an "Email confirmed" switch); a user without a confirmed email cannot complete the sign-in.
 
@@ -39,12 +40,15 @@ Codes are sent with the ASP.NET Core Identity `Email` two-factor provider, which
       "errors": [{ "code": "two_factor_required", "description": "..." }],
       "twoFactorToken": "CfDJ8...",
       "provider": "Email",
-      "providers": [{ "name": "Email", "destination": "j•••h@acme.com" }]
+      "providers": [{ "name": "Email", "destination": "j•••h@acme.com" }],
+      "resendSecondsRemaining": 30
     }
     ```
 
 2. The client exchanges the code for tokens: `POST /connect/token` (`grant_type=mfa`, `two_factor_token`, `code`, and `storeId` when the first step named a store).
 3. To send the code again, the client calls `POST /api/mfa/resend` (`twoFactorToken`, optional `provider`). The response has a new `twoFactorToken` to use from then on, which expires at the same time as the first one, and the `provider` the code was sent with. Within the time step of the Identity provider, the same code is sent again.
+
+`resendSecondsRemaining` tells the client how many seconds remain before it can request a new code. It comes with every response that sends a code and with the `resend_too_soon` error.
 
 The two-factor token proves that the password was verified. It is an encrypted ticket with the user, the store, the user's security stamp and the provider the current code was sent with, valid for `MultiFactorAuthentication:TwoFactorTokenLifetime` (10 minutes by default) from the password step. `provider` names the provider the code was sent with, and `providers` lists every provider available to the user with its masked destination. The tokens issued by the `mfa` grant, and the tokens refreshed from them, have the `amr` claim `mfa`. Codes are generated and verified by the Identity two-factor provider (`GenerateTwoFactorTokenAsync`, `VerifyTwoFactorTokenAsync`), which also defines their length and lifetime. The module stores nothing.
 
@@ -58,9 +62,9 @@ The code is sent by the `MfaSignInEmailNotification` notification in the user's 
 * Accounts in the customer role (`__customer`) do not sign in to the Backoffice, with or without the code: the same rule as the Backoffice password sign-in. Note that this is the role, while the store setting above looks at the user type.
 * Accounts with lockout disabled can't complete a sign-in that requires MFA.
 * Wrong codes count toward the platform account lockout, shared with wrong passwords. While the code is pending, a correct password does not reset the failed attempt count; a correct code resets it. A locked account isn't sent a code.
-* Every MFA step runs after the password is verified, so `lockout_disabled` and `mfa_provider_not_available` are always reported: they reveal nothing to someone without the password and tell the user what to fix. A lockout is reported at the token endpoint only when `PasswordLogin:DetailedErrors` is enabled (otherwise `invalid_code`), and always on the Backoffice code screen, like the Backoffice login page. The sign-in log always records the real reason: the password step with `RequiresTwoFactor`, the code step with the `MFA` sign-in type.
+* Every MFA step runs after the password is verified, so `lockout_disabled` and `mfa_provider_not_available` are always reported: they reveal nothing to someone without the password and tell the user what to fix. A lockout is reported at the token endpoint and by the resend endpoint only when `PasswordLogin:DetailedErrors` is enabled (otherwise `invalid_code` from the `mfa` grant and `login_failed` from the resend endpoint), and always on the Backoffice code screen, like the Backoffice login page. The sign-in log always records the real reason: the password step with `RequiresTwoFactor`, the code step with the `MFA` sign-in type.
 * The email is both the second factor and the password recovery channel: whoever controls the mailbox can reset the password and receive the code. Email codes protect against a leaked password, not against a compromised mailbox; an authenticator app or a passkey is needed for that.
-* Code resends are not rate-limited.
+* A code is sent to a user by the same provider at most once per `MultiFactorAuthentication:CodeResendInterval`, whichever sign-in asks for it: the password grant, the resend endpoint or the Backoffice code screen. A request that comes too soon sends nothing and returns `resend_too_soon` with `resendSecondsRemaining`. The password grant still answers `two_factor_required` with a new two-factor token: the code sent shortly before is still valid. The limit is kept in the memory of each platform instance.
 * A two-factor token completes one sign-in: it is refused once the user has signed in after it was issued (the user's last login date).
 * Any change of the user's security stamp, for example a password change or a logout in another session, invalidates the two-factor token and the codes already sent.
 * Apps that sign in to the token endpoint with a password without a store, such as vc-shell apps, must support the `two_factor_required` step when global MFA is enabled.
@@ -76,6 +80,7 @@ The code is sent by the `MfaSignInEmailNotification` notification in the user's 
 | `sign_in_not_allowed` | `mfa` grant, Backoffice code screen | The account can't sign in: to the Backoffice, or at all, for example when it is not active. |
 | `lockout_disabled` | all | The account has lockout disabled, so it can't pass the second factor. Enable lockout for the account. |
 | `mfa_provider_not_available` | all | No provider can deliver a code to the account, for example the email is not confirmed. Confirm the email. |
+| `resend_too_soon` | resend, Backoffice code screen | A code has just been sent. Request a new one after `resendSecondsRemaining` seconds. |
 | `user_is_locked_out`, `user_is_temporary_locked_out` | all | The account is locked; `lockoutSecondsRemaining` is returned. |
 | `login_failed` | password grant, resend, Backoffice code screen | Any other failure, for example a lockout at the token endpoint without `PasswordLogin:DetailedErrors`, or several accounts with the same email. |
 

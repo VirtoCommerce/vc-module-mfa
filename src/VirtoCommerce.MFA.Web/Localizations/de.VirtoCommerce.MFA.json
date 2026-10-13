@@ -19,6 +19,7 @@
       "code-placeholder": "6-stelligen Code eingeben",
       "submit": "Anmelden",
       "resend": "Code erneut senden",
+      "resend-countdown": "Code erneut senden in {{seconds}} s",
       "back": "Zurück zur Anmeldung",
       "code-resent": "Code erneut gesendet.",
       "errors": {

@@ -33,6 +33,7 @@ public class MfaTwoFactorSignInHandler(IMfaService mfaService) : ITwoFactorSignI
             TwoFactorToken = result.TwoFactorToken,
             Provider = result.Provider,
             Providers = result.Providers,
+            ResendSecondsRemaining = result.ResendSecondsRemaining,
         });
     }
 

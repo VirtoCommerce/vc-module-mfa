@@ -19,6 +19,7 @@
       "code-placeholder": "6 桁のコードを入力",
       "submit": "サインイン",
       "resend": "コードを再送信",
+      "resend-countdown": "{{seconds}} 秒後にコードを再送信できます",
       "back": "サインインに戻る",
       "code-resent": "コードを再送信しました。",
       "errors": {

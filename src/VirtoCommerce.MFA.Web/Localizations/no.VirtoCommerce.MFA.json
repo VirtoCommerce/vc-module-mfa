@@ -19,6 +19,7 @@
       "code-placeholder": "Skriv inn den 6-sifrede koden",
       "submit": "Logg på",
       "resend": "Send koden på nytt",
+      "resend-countdown": "Send koden på nytt om {{seconds}} s",
       "back": "Tilbake til pålogging",
       "code-resent": "Koden er sendt på nytt.",
       "errors": {

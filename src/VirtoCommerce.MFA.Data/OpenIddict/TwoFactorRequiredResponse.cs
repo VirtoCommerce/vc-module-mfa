@@ -11,4 +11,6 @@ public class TwoFactorRequiredResponse : TokenResponse
     public string Provider { get; set; }
 
     public IList<MfaProviderInfo> Providers { get; set; }
+
+    public int? ResendSecondsRemaining { get; set; }
 }

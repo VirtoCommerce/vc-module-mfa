@@ -19,6 +19,7 @@
       "code-placeholder": "Inserisci il codice a 6 cifre",
       "submit": "Accedi",
       "resend": "Invia di nuovo il codice",
+      "resend-countdown": "Invia di nuovo il codice tra {{seconds}} s",
       "back": "Torna all'accesso",
       "code-resent": "Codice inviato di nuovo.",
       "errors": {

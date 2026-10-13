@@ -15,6 +15,8 @@ public class MfaResult
 
     public IList<MfaProviderInfo> Providers { get; set; }
 
+    public int? ResendSecondsRemaining { get; set; }
+
     public static MfaResult Succeed(ApplicationUser user, string twoFactorToken = null, string provider = null, IList<MfaProviderInfo> providers = null)
     {
         return new MfaResult

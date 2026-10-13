@@ -1,8 +1,10 @@
 using System;
 using System.IO;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using VirtoCommerce.MFA.Core;
 using VirtoCommerce.MFA.Core.Models;
 using VirtoCommerce.MFA.Core.Notifications;
@@ -30,7 +32,21 @@ public class Module : IModule, IHasConfiguration
         serviceCollection.AddOptions<MfaOptions>()
             .Bind(Configuration.GetSection("MultiFactorAuthentication"))
             .Validate(x => x.TwoFactorTokenLifetime > TimeSpan.Zero, "MultiFactorAuthentication:TwoFactorTokenLifetime must be positive.")
+            .Validate(x => x.CodeResendInterval > TimeSpan.Zero && x.CodeResendInterval < x.TwoFactorTokenLifetime, "MultiFactorAuthentication:CodeResendInterval must be positive and shorter than TwoFactorTokenLifetime.")
             .ValidateOnStart();
+
+        serviceCollection.AddKeyedSingleton(MfaService.CodeDeliveryLimiterKey, (serviceProvider, _) =>
+        {
+            var interval = serviceProvider.GetRequiredService<IOptions<MfaOptions>>().Value.CodeResendInterval;
+
+            return PartitionedRateLimiter.Create<string, string>(key =>
+                RateLimitPartition.GetFixedWindowLimiter(key, _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 1,
+                    Window = interval,
+                    QueueLimit = 0,
+                }));
+        });
 
         serviceCollection.AddTransient<IMfaProvider, EmailMfaProvider>();
         serviceCollection.AddTransient<ITwoFactorTokenService, TwoFactorTokenService>();

@@ -19,6 +19,7 @@
       "code-placeholder": "Saisissez le code à 6 chiffres",
       "submit": "Se connecter",
       "resend": "Renvoyer le code",
+      "resend-countdown": "Renvoyer le code dans {{seconds}} s",
       "back": "Retour à la connexion",
       "code-resent": "Code renvoyé.",
       "errors": {

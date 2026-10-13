@@ -19,6 +19,7 @@
       "code-placeholder": "Syötä 6-numeroinen koodi",
       "submit": "Kirjaudu sisään",
       "resend": "Lähetä koodi uudelleen",
+      "resend-countdown": "Lähetä koodi uudelleen {{seconds}} s kuluttua",
       "back": "Takaisin kirjautumiseen",
       "code-resent": "Koodi lähetetty uudelleen.",
       "errors": {

@@ -16,4 +16,6 @@ public class MfaSendCodeResult
     public IList<MfaProviderInfo> Providers { get; set; }
 
     public int? LockoutSecondsRemaining { get; set; }
+
+    public int? ResendSecondsRemaining { get; set; }
 }

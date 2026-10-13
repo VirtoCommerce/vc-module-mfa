@@ -1,9 +1,12 @@
 angular.module('virtoCommerce.mfa')
     .controller('virtoCommerce.mfa.twoFactorSignInController', [
-        '$scope', '$state', '$stateParams', '$translate', 'platformWebApp.authService', 'virtoCommerce.mfa.mfaApi',
-        function ($scope, $state, $stateParams, $translate, authService, mfaApi) {
+        '$scope', '$state', '$stateParams', '$translate', '$interval', 'platformWebApp.authService', 'virtoCommerce.mfa.mfaApi',
+        function ($scope, $state, $stateParams, $translate, $interval, authService, mfaApi) {
             var CODE_PATTERN = /^\d{6}$/;
-            var FINAL_ERRORS = ['invalid_two_factor_token', 'lockout_disabled', 'mfa_provider_not_available', 'sign_in_not_allowed', 'user_is_locked_out', 'user_is_temporary_locked_out'];
+            var RESEND_TOO_SOON = 'resend_too_soon';
+            var FINAL_ERRORS = ['invalid_two_factor_token', 'lockout_disabled', 'mfa_provider_not_available', 'sign_in_not_allowed', 'user_is_locked_out', 'user_is_temporary_locked_out', 'login_failed'];
+            var resendDeadline = 0;
+            var resendTimer = null;
 
             $scope.model = { code: '' };
             $scope.destination = null;
@@ -12,13 +15,14 @@ angular.module('virtoCommerce.mfa')
             $scope.notice = null;
             $scope.isFinalError = false;
             $scope.inProgress = false;
+            $scope.resendSecondsLeft = 0;
 
             $scope.isCodeComplete = function () {
                 return CODE_PATTERN.test($scope.model.code || '');
             };
 
             $scope.sendCode = function (isResend) {
-                if ($scope.inProgress) {
+                if ($scope.inProgress || (isResend && $scope.resendSecondsLeft > 0)) {
                     return;
                 }
 
@@ -28,8 +32,10 @@ angular.module('virtoCommerce.mfa')
 
                 mfaApi.sendSignInCode({ provider: $scope.provider }, function (result) {
                     $scope.inProgress = false;
+                    startResendCountdown(result.resendSecondsRemaining);
 
-                    if (!result.succeeded) {
+                    var isResendTooSoon = !result.succeeded && result.error && result.error.code === RESEND_TOO_SOON;
+                    if (!result.succeeded && !isResendTooSoon) {
                         showError(result.error);
                         return;
                     }
@@ -40,7 +46,7 @@ angular.module('virtoCommerce.mfa')
                     $scope.provider = result.provider;
                     $scope.destination = provider ? provider.destination : null;
 
-                    if (isResend) {
+                    if (isResend && result.succeeded) {
                         $scope.model.code = '';
                         $scope.notice = $translate.instant('mfa.sign-in.code-resent');
                     }
@@ -86,6 +92,34 @@ angular.module('virtoCommerce.mfa')
                     ? message
                     : $translate.instant('platform.blades.login.errors.login-failed');
             }
+
+            function startResendCountdown(seconds) {
+                if (!seconds) {
+                    return;
+                }
+
+                resendDeadline = Date.now() + seconds * 1000;
+                updateResendCountdown();
+
+                if (!resendTimer) {
+                    resendTimer = $interval(updateResendCountdown, 1000);
+                }
+            }
+
+            function updateResendCountdown() {
+                $scope.resendSecondsLeft = Math.max(0, Math.ceil((resendDeadline - Date.now()) / 1000));
+
+                if ($scope.resendSecondsLeft === 0 && resendTimer) {
+                    $interval.cancel(resendTimer);
+                    resendTimer = null;
+                }
+            }
+
+            $scope.$on('$destroy', function () {
+                if (resendTimer) {
+                    $interval.cancel(resendTimer);
+                }
+            });
 
             function onTechnicalError(response) {
                 $scope.inProgress = false;

@@ -28,6 +28,23 @@ public class MfaControllerTests : MfaTestsBase
         Assert.Equal(MaskedActiveUserEmail, Assert.Single(result.Providers).Destination);
     }
 
+    [Fact]
+    public async Task ResendCode_Should_ReportTheSecondsBeforeANewCode_When_ACodeWasJustSent()
+    {
+        // Arrange
+        var controller = CreateController();
+        var twoFactorToken = CreateTwoFactorToken();
+        await ResendCodeAsync(controller, twoFactorToken);
+
+        // Act
+        var result = await ResendCodeAsync(controller, twoFactorToken);
+
+        // Assert
+        Assert.Equal("resend_too_soon", result.Error.Code);
+        Assert.Null(result.TwoFactorToken);
+        Assert.True(result.ResendSecondsRemaining > 0);
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]

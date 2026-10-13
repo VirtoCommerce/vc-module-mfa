@@ -19,6 +19,7 @@
       "code-placeholder": "Ange den 6-siffriga koden",
       "submit": "Logga in",
       "resend": "Skicka koden igen",
+      "resend-countdown": "Skicka koden igen om {{seconds}} s",
       "back": "Tillbaka till inloggningen",
       "code-resent": "Koden har skickats igen.",
       "errors": {

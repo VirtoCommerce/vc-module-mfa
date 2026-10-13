@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.RateLimiting;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using VirtoCommerce.MFA.Core;
 using VirtoCommerce.MFA.Core.Models;
 using VirtoCommerce.MFA.Core.Services;
@@ -20,9 +23,13 @@ public class MfaService(
     IStoreService storeService,
     ISettingsManager settingsManager,
     ITwoFactorTokenService twoFactorTokenService,
-    IEnumerable<IMfaProvider> providers)
+    IEnumerable<IMfaProvider> providers,
+    IOptions<MfaOptions> options,
+    [FromKeyedServices(MfaService.CodeDeliveryLimiterKey)] PartitionedRateLimiter<string> codeDeliveryLimiter)
     : IMfaService
 {
+    public const string CodeDeliveryLimiterKey = "VirtoCommerce.MFA.CodeDeliveryLimiter";
+
     private readonly IList<IMfaProvider> _providers = providers.ToList();
 
     public virtual async Task<bool> IsRequiredAsync(ApplicationUser user, string storeId)
@@ -82,7 +89,15 @@ public class MfaService(
             SecurityStamp = await userManager.GetSecurityStampAsync(user),
         };
 
-        return await SendCodeForTicketAsync(ticket, user, provider);
+        var store = await GetStoreAsync(ticket.StoreId);
+        var deliveryResult = await DeliverCodeAsync(store, user, provider);
+
+        if (deliveryResult.Outcome == MfaOutcome.ResendTooSoon)
+        {
+            deliveryResult.Outcome = MfaOutcome.Success;
+        }
+
+        return IssueTwoFactorToken(ticket, deliveryResult);
     }
 
     public virtual async Task<MfaResult> ResendCodeAsync(string twoFactorToken, string provider = null)
@@ -97,7 +112,10 @@ public class MfaService(
             return result;
         }
 
-        return await SendCodeForTicketAsync(ticket, result.User, provider);
+        var store = await GetStoreAsync(ticket.StoreId);
+        var deliveryResult = await DeliverCodeAsync(store, result.User, provider);
+
+        return IssueTwoFactorToken(ticket, deliveryResult);
     }
 
     public virtual async Task<MfaResult> VerifyCodeAsync(string storeId, string twoFactorToken, string code)
@@ -177,11 +195,8 @@ public class MfaService(
         return MfaResult.Succeed(user);
     }
 
-    protected virtual async Task<MfaResult> SendCodeForTicketAsync(TwoFactorTicket ticket, ApplicationUser user, string provider)
+    protected virtual MfaResult IssueTwoFactorToken(TwoFactorTicket ticket, MfaResult result)
     {
-        var store = await GetStoreAsync(ticket.StoreId);
-
-        var result = await DeliverCodeAsync(store, user, provider);
         if (result.Outcome != MfaOutcome.Success)
         {
             return result;
@@ -202,9 +217,31 @@ public class MfaService(
             return MfaResult.Fail(MfaOutcome.ProviderNotAvailable, user);
         }
 
-        await GenerateAndSendCodeAsync(store, user, mfaProvider);
+        var result = MfaResult.Succeed(user, provider: mfaProvider.Name, providers: ToProviderInfos(user, availableProviders));
 
-        return MfaResult.Succeed(user, provider: mfaProvider.Name, providers: ToProviderInfos(user, availableProviders));
+        using var lease = codeDeliveryLimiter.AttemptAcquire(GetCodeDeliveryPartitionKey(user, mfaProvider));
+        if (!lease.IsAcquired)
+        {
+            result.Outcome = MfaOutcome.ResendTooSoon;
+            result.ResendSecondsRemaining = ToSeconds(lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter) ? retryAfter : options.Value.CodeResendInterval);
+
+            return result;
+        }
+
+        await GenerateAndSendCodeAsync(store, user, mfaProvider);
+        result.ResendSecondsRemaining = ToSeconds(options.Value.CodeResendInterval);
+
+        return result;
+    }
+
+    protected virtual string GetCodeDeliveryPartitionKey(ApplicationUser user, IMfaProvider mfaProvider)
+    {
+        return $"{user.Id}:{mfaProvider.Name}";
+    }
+
+    private static int ToSeconds(TimeSpan value)
+    {
+        return (int)Math.Ceiling(value.TotalSeconds);
     }
 
     protected virtual async Task GenerateAndSendCodeAsync(Store store, ApplicationUser user, IMfaProvider mfaProvider)

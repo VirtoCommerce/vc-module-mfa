@@ -76,16 +76,88 @@ public class MfaServiceTests : MfaTestsBase
     public async Task ResendCodeAsync_Should_KeepTheExpiryOfTheFirstToken()
     {
         // Arrange
+        var twoFactorToken = CreateTwoFactorToken();
+
+        // Act
+        var result = await MfaService.ResendCodeAsync(twoFactorToken);
+
+        // Assert
+        Assert.Equal(MfaOutcome.Success, result.Outcome);
+        Assert.Equal(
+            TwoFactorTokenService.ReadToken(twoFactorToken).IssuedAt,
+            TwoFactorTokenService.ReadToken(result.TwoFactorToken).IssuedAt);
+    }
+
+    [Fact]
+    public async Task ChallengeAsync_Should_ReportTheResendInterval()
+    {
+        // Act
+        var result = await MfaService.ChallengeAsync(StoreId, ActiveUser);
+
+        // Assert
+        Assert.Equal((int)MfaOptions.CodeResendInterval.TotalSeconds, result.ResendSecondsRemaining);
+    }
+
+    [Fact]
+    public async Task ChallengeAsync_Should_IssueTokenWithoutSendingCode_When_ACodeWasJustSent()
+    {
+        // Arrange
+        await MfaService.ChallengeAsync(StoreId, ActiveUser);
+
+        // Act
+        var result = await MfaService.ChallengeAsync(StoreId, ActiveUser);
+
+        // Assert
+        Assert.Equal(MfaOutcome.Success, result.Outcome);
+        Assert.Equal(ActiveUserId, TwoFactorTokenService.ReadToken(result.TwoFactorToken).UserId);
+        Assert.InRange(result.ResendSecondsRemaining.GetValueOrDefault(), 1, (int)MfaOptions.CodeResendInterval.TotalSeconds);
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ResendCodeAsync_Should_NotSendCode_When_ACodeWasJustSent()
+    {
+        // Arrange
         var challenge = await MfaService.ChallengeAsync(StoreId, ActiveUser);
 
         // Act
         var result = await MfaService.ResendCodeAsync(challenge.TwoFactorToken);
 
         // Assert
+        Assert.Equal(MfaOutcome.ResendTooSoon, result.Outcome);
+        Assert.Null(result.TwoFactorToken);
+        Assert.Equal(EmailProvider, result.Provider);
+        Assert.InRange(result.ResendSecondsRemaining.GetValueOrDefault(), 1, (int)MfaOptions.CodeResendInterval.TotalSeconds);
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendCodeAsync_Should_NotSendCode_When_ACodeWasJustSent()
+    {
+        // Arrange
+        await MfaService.SendCodeAsync(BackofficeUser);
+
+        // Act
+        var result = await MfaService.SendCodeAsync(BackofficeUser);
+
+        // Assert
+        Assert.Equal(MfaOutcome.ResendTooSoon, result.Outcome);
+        Assert.Equal(EmailProvider, Assert.Single(result.Providers).Name);
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendCodeAsync_Should_LimitEachUserSeparately()
+    {
+        // Arrange
+        await MfaService.SendCodeAsync(BackofficeUser);
+
+        // Act
+        var result = await MfaService.SendCodeAsync(ActiveUser);
+
+        // Assert
         Assert.Equal(MfaOutcome.Success, result.Outcome);
-        Assert.Equal(
-            TwoFactorTokenService.ReadToken(challenge.TwoFactorToken).IssuedAt,
-            TwoFactorTokenService.ReadToken(result.TwoFactorToken).IssuedAt);
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Exactly(2));
     }
 
     [Fact]

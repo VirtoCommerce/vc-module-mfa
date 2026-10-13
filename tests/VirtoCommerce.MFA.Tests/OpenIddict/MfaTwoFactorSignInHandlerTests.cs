@@ -41,6 +41,7 @@ public class MfaTwoFactorSignInHandlerTests : MfaTestsBase
         Assert.Equal(storeId, TwoFactorTokenService.ReadToken(response.TwoFactorToken).StoreId);
         Assert.Equal(EmailProvider, response.Provider);
         Assert.Equal(MaskedActiveUserEmail, Assert.Single(response.Providers).Destination);
+        Assert.Equal((int)MfaOptions.CodeResendInterval.TotalSeconds, response.ResendSecondsRemaining);
         Assert.Null(requestContext.FailureReason);
     }
 
@@ -61,6 +62,7 @@ public class MfaTwoFactorSignInHandlerTests : MfaTestsBase
         Assert.False(string.IsNullOrEmpty((string)json["twoFactorToken"]));
         Assert.Equal(EmailProvider, (string)json["providers"]![0]!["name"]);
         Assert.Equal(MaskedActiveUserEmail, (string)json["providers"]![0]!["destination"]);
+        Assert.Equal((int)MfaOptions.CodeResendInterval.TotalSeconds, (int)json["resendSecondsRemaining"]);
     }
 
     [Theory]
