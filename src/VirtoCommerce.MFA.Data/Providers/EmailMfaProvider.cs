@@ -56,6 +56,18 @@ public class EmailMfaProvider(
             return false;
         }
 
+        notification.To = user.Email;
+        notification.Code = code;
+        notification.LanguageCode = await GetLanguageAsync(store, user);
+        notification.From = GetSender(store) ?? notification.From;
+
+        await notificationSender.ScheduleSendNotificationAsync(notification);
+
+        return true;
+    }
+
+    protected virtual async Task<string> GetLanguageAsync(Store store, ApplicationUser user)
+    {
         var member = string.IsNullOrEmpty(user.MemberId)
             ? null
             : await memberService.GetByIdAsync(user.MemberId, nameof(MemberResponseGroup.Default));
@@ -67,18 +79,11 @@ public class EmailMfaProvider(
             _ => null,
         };
 
-        notification.To = user.Email;
-        notification.Code = code;
-        notification.LanguageCode = memberLanguage ?? store?.DefaultLanguage;
+        return memberLanguage ?? store?.DefaultLanguage;
+    }
 
-        var storeSender = store?.AdminEmailWithName ?? store?.EmailWithName;
-        if (!string.IsNullOrEmpty(storeSender))
-        {
-            notification.From = storeSender;
-        }
-
-        await notificationSender.ScheduleSendNotificationAsync(notification);
-
-        return true;
+    protected virtual string GetSender(Store store)
+    {
+        return (store?.AdminEmailWithName ?? store?.EmailWithName).EmptyToNull();
     }
 }
