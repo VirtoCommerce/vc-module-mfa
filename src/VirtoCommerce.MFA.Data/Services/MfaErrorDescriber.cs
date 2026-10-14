@@ -16,7 +16,7 @@ public class MfaErrorDescriber(TimeProvider timeProvider)
     public virtual IdentityError TwoFactorRequired() => new()
     {
         Code = "two_factor_required",
-        Description = "A sign-in code has been sent. Enter it to complete the sign-in.",
+        Description = "Enter the sign-in code to complete the sign-in.",
     };
 
     public virtual IdentityError MissingParameters(IEnumerable<string> parameters) => new()
@@ -49,6 +49,12 @@ public class MfaErrorDescriber(TimeProvider timeProvider)
         Description = "The code is invalid or has expired.",
     };
 
+    public virtual IdentityError CodeAttemptsExceeded() => new()
+    {
+        Code = "code_attempts_exceeded",
+        Description = "Too many incorrect codes. Wait a few minutes and sign in again.",
+    };
+
     public virtual IdentityError ResendTooSoon() => new()
     {
         Code = "resend_too_soon",
@@ -64,8 +70,9 @@ public class MfaErrorDescriber(TimeProvider timeProvider)
         return outcome switch
         {
             MfaOutcome.Success => null,
-            MfaOutcome.InvalidTwoFactorToken or MfaOutcome.CodeAttemptsExceeded or MfaOutcome.FailedAttemptNotRecorded => InvalidTwoFactorToken(),
+            MfaOutcome.InvalidTwoFactorToken or MfaOutcome.FailedAttemptNotRecorded => InvalidTwoFactorToken(),
             MfaOutcome.InvalidCode => InvalidCode(),
+            MfaOutcome.CodeAttemptsExceeded => CodeAttemptsExceeded(),
             MfaOutcome.AccountLocked => GetLockoutError(user),
             MfaOutcome.LockoutDisabled => LockoutDisabled(),
             MfaOutcome.ProviderNotAvailable => ProviderNotAvailable(),
@@ -73,6 +80,20 @@ public class MfaErrorDescriber(TimeProvider timeProvider)
             MfaOutcome.SignInNotAllowed => SignInNotAllowed(),
             _ => LoginFailed(),
         };
+    }
+
+    public virtual IdentityError GetError(MfaResult result, bool reportLockout, IdentityError hiddenLockoutError = null)
+    {
+        return IsLockoutHidden(result, reportLockout)
+            ? hiddenLockoutError ?? LoginFailed()
+            : GetError(result.Outcome, result.User);
+    }
+
+    public virtual int? GetLockoutSecondsRemaining(MfaResult result, bool reportLockout)
+    {
+        return result.Outcome == MfaOutcome.AccountLocked && reportLockout
+            ? GetLockoutSecondsRemaining(result.User)
+            : null;
     }
 
     public virtual string GetFailureReason(MfaOutcome outcome)
@@ -120,6 +141,18 @@ public class MfaErrorDescriber(TimeProvider timeProvider)
         response.LockoutSecondsRemaining = lockoutSecondsRemaining;
 
         return response;
+    }
+
+    public virtual TokenResponse ToTokenResponse(MfaResult result, bool reportLockout, IdentityError hiddenLockoutError = null)
+    {
+        return ToTokenResponse(
+            GetError(result, reportLockout, hiddenLockoutError),
+            lockoutSecondsRemaining: GetLockoutSecondsRemaining(result, reportLockout));
+    }
+
+    protected virtual bool IsLockoutHidden(MfaResult result, bool reportLockout)
+    {
+        return result.Outcome == MfaOutcome.AccountLocked && !reportLockout;
     }
 
     protected virtual IdentityError ToIdentityError(TokenResponse response) => new()

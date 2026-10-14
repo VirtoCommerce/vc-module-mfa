@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
@@ -48,6 +49,7 @@ public class MfaServiceTests : MfaTestsBase
     {
         // Arrange
         var twoFactorToken = CreateTwoFactorToken();
+        TimeProvider.Advance(MfaOptions.CodeResendInterval);
 
         // Act
         var result = await MfaService.ResendCodeAsync(twoFactorToken);
@@ -556,7 +558,106 @@ public class MfaServiceTests : MfaTestsBase
 
         // Assert
         Assert.Equal(MfaOutcome.FailedAttemptNotRecorded, result.Outcome);
-        Assert.Equal(MfaOutcome.CodeAttemptsExceeded, retry.Outcome);
+        Assert.Equal(MfaOutcome.InvalidTwoFactorToken, retry.Outcome);
+    }
+
+    [Fact]
+    public async Task ChallengeAsync_Should_SendTheCodeInTheStoreLanguage_When_TheUserHasNoMember()
+    {
+        // Arrange
+        ActiveUser.MemberId = null;
+
+        // Act
+        await MfaService.ChallengeAsync(ActiveUser, StoreId);
+
+        // Assert
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.Is<Notification>(n => n.LanguageCode == StoreLanguage)), Times.Once);
+    }
+
+    [Fact]
+    public async Task VerifyCodeAsync_Should_CountWrongCodesAcrossPasswordSteps()
+    {
+        // Arrange
+        for (var i = 0; i < MfaOptions.MaxCodeAttempts; i++)
+        {
+            await MfaService.VerifyCodeAsync(CreateTwoFactorToken(), InvalidCode, StoreId);
+        }
+
+        // Act
+        var result = await MfaService.VerifyCodeAsync(CreateTwoFactorToken(), ValidCode, StoreId);
+
+        // Assert
+        Assert.Equal(MfaOutcome.CodeAttemptsExceeded, result.Outcome);
+        UserManager.Verify(x => x.VerifyTwoFactorTokenAsync(It.IsAny<ApplicationUser>(), EmailProvider, It.IsAny<string>()), Times.Exactly(MfaOptions.MaxCodeAttempts));
+    }
+
+    [Fact]
+    public async Task VerifyCodeAsync_Should_CheckTheCodeAtMostMaxCodeAttemptsTimes_When_WrongCodesArriveInParallel()
+    {
+        // Arrange
+        var twoFactorTokens = Enumerable.Range(0, 20).Select(_ => CreateTwoFactorToken()).ToList();
+
+        // Act
+        var results = await Task.WhenAll(twoFactorTokens.Select(x => Task.Run(() => MfaService.VerifyCodeAsync(x, InvalidCode, StoreId))));
+
+        // Assert
+        Assert.Equal(MfaOptions.MaxCodeAttempts, results.Count(x => x.Outcome == MfaOutcome.InvalidCode));
+        Assert.All(results, x => Assert.Contains(x.Outcome, new[] { MfaOutcome.InvalidCode, MfaOutcome.CodeAttemptsExceeded }));
+        UserManager.Verify(x => x.VerifyTwoFactorTokenAsync(It.IsAny<ApplicationUser>(), EmailProvider, It.IsAny<string>()), Times.Exactly(MfaOptions.MaxCodeAttempts));
+    }
+
+    [Fact]
+    public async Task VerifyCodeAsync_Should_RestoreTheAttempts_When_TheCodeIsAccepted()
+    {
+        // Arrange
+        for (var i = 0; i < MfaOptions.MaxCodeAttempts - 1; i++)
+        {
+            await MfaService.VerifyCodeAsync(CreateTwoFactorToken(), InvalidCode, StoreId);
+        }
+
+        Assert.Equal(MfaOutcome.Success, (await MfaService.VerifyCodeAsync(CreateTwoFactorToken(), ValidCode, StoreId)).Outcome);
+
+        // Act
+        var result = await MfaService.VerifyCodeAsync(CreateTwoFactorToken(), InvalidCode, StoreId);
+
+        // Assert
+        Assert.Equal(MfaOutcome.InvalidCode, result.Outcome);
+    }
+
+    [Fact]
+    public async Task ChallengeAsync_Should_NotSendCode_When_TheWrongCodeLimitIsReached()
+    {
+        // Arrange
+        for (var i = 0; i < MfaOptions.MaxCodeAttempts; i++)
+        {
+            await MfaService.VerifyCodeAsync(CreateTwoFactorToken(), InvalidCode, StoreId);
+        }
+
+        // Act
+        var result = await MfaService.ChallengeAsync(ActiveUser, StoreId);
+
+        // Assert
+        Assert.Equal(MfaOutcome.CodeAttemptsExceeded, result.Outcome);
+        Assert.Null(result.TwoFactorToken);
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ChallengeAsync_Should_SendCode_When_TheWrongCodeWindowHasEnded()
+    {
+        // Arrange
+        for (var i = 0; i < MfaOptions.MaxCodeAttempts; i++)
+        {
+            await MfaService.VerifyCodeAsync(CreateTwoFactorToken(), InvalidCode, StoreId);
+        }
+
+        TimeProvider.Advance(MfaOptions.TwoFactorTokenLifetime);
+
+        // Act
+        var result = await MfaService.ChallengeAsync(ActiveUser, StoreId);
+
+        // Assert
+        Assert.Equal(MfaOutcome.Success, result.Outcome);
     }
 
     [Fact]
@@ -677,7 +778,7 @@ public class MfaServiceTests : MfaTestsBase
         authenticator.SetupGet(x => x.Name).Returns(EmailProvider);
         authenticator.SetupGet(x => x.SendsCode).Returns(false);
         var mfaService = new MfaService(UserManager.Object, StoreService.Object, TwoFactorTokenService, TicketStore, [authenticator.Object],
-            CodeDeliveryLimiter, Options.Create(MfaOptions), TimeProvider);
+            CodeAttemptLimiter, CodeDeliveryLimiter, Options.Create(MfaOptions), TimeProvider);
 
         // Act
         var result = await mfaService.ChallengeAsync(ActiveUser, StoreId);

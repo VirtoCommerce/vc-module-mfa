@@ -25,6 +25,7 @@
       "errors": {
         "invalid_code": "Koodi ei kelpaa. Tarkista se ja yritä uudelleen.",
         "invalid_two_factor_token": "Kirjautumisistuntosi on vanhentunut. Kirjaudu uudelleen.",
+        "code_attempts_exceeded": "Liian monta virheellistä koodia. Odota muutama minuutti ja kirjaudu uudelleen.",
         "user_is_locked_out": "Tilisi on lukittu. Ota yhteyttä järjestelmänvalvojaan.",
         "user_is_temporary_locked_out": "Tilisi on lukittu tilapäisesti. Yritä myöhemmin uudelleen.",
         "sign_in_not_allowed": "Tällä tilillä ei voi kirjautua Backofficeen.",

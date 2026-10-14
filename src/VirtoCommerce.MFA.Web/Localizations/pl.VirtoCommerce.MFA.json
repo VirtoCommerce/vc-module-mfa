@@ -25,6 +25,7 @@
       "errors": {
         "invalid_code": "Kod jest nieprawidłowy. Sprawdź go i spróbuj ponownie.",
         "invalid_two_factor_token": "Sesja logowania wygasła. Zaloguj się ponownie.",
+        "code_attempts_exceeded": "Zbyt wiele nieprawidłowych kodów. Odczekaj kilka minut i zaloguj się ponownie.",
         "user_is_locked_out": "Twoje konto zostało zablokowane. Skontaktuj się z administratorem.",
         "user_is_temporary_locked_out": "Twoje konto zostało tymczasowo zablokowane. Spróbuj ponownie później.",
         "sign_in_not_allowed": "Tym kontem nie można zalogować się do Backoffice.",

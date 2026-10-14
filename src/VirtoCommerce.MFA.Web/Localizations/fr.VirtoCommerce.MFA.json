@@ -25,6 +25,7 @@
       "errors": {
         "invalid_code": "Ce code n'est pas valide. Vérifiez-le et réessayez.",
         "invalid_two_factor_token": "Votre session de connexion a expiré. Connectez-vous à nouveau.",
+        "code_attempts_exceeded": "Trop de codes incorrects. Patientez quelques minutes, puis reconnectez-vous.",
         "user_is_locked_out": "Votre compte a été verrouillé. Contactez votre administrateur.",
         "user_is_temporary_locked_out": "Votre compte a été temporairement verrouillé. Veuillez réessayer plus tard.",
         "sign_in_not_allowed": "Vous ne pouvez pas vous connecter au Backoffice avec ce compte.",

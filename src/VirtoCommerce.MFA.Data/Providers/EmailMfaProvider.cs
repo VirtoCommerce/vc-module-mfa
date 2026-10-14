@@ -20,6 +20,9 @@ public class EmailMfaProvider(
     ILogger<EmailMfaProvider> logger)
     : IMfaProvider
 {
+    private const int MinLengthToShowFirstCharacter = 2;
+    private const int MinLengthToShowLastCharacter = 3;
+
     public virtual string Name => TokenOptions.DefaultEmailProvider;
 
     public virtual bool SendsCode => true;
@@ -35,13 +38,10 @@ public class EmailMfaProvider(
 
         var localPart = email[..atIndex];
         var domainPart = email[atIndex..];
+        var firstCharacter = localPart.Length >= MinLengthToShowFirstCharacter ? localPart[..1] : string.Empty;
+        var lastCharacter = localPart.Length >= MinLengthToShowLastCharacter ? localPart[^1..] : string.Empty;
 
-        return localPart.Length switch
-        {
-            1 => $"•••{domainPart}",
-            2 => $"{localPart[0]}•••{domainPart}",
-            _ => $"{localPart[0]}•••{localPart[^1]}{domainPart}",
-        };
+        return $"{firstCharacter}•••{lastCharacter}{domainPart}";
     }
 
     public virtual async Task<bool> SendCodeAsync(Store store, ApplicationUser user, string code)

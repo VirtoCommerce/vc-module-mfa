@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using VirtoCommerce.MFA.Core.Models;
@@ -67,16 +66,7 @@ public class MfaController(
 
     protected virtual void FillSignInResult(MfaSignInResult signInResult, MfaResult result, bool reportLockout)
     {
-        var isLockoutReported = reportLockout && result.Outcome == MfaOutcome.AccountLocked;
-
-        signInResult.Error = GetError(result, reportLockout);
-        signInResult.LockoutSecondsRemaining = isLockoutReported ? errorDescriber.GetLockoutSecondsRemaining(result.User) : null;
-    }
-
-    protected virtual IdentityError GetError(MfaResult result, bool reportLockout)
-    {
-        return result.Outcome == MfaOutcome.AccountLocked && !reportLockout
-            ? errorDescriber.LoginFailed()
-            : errorDescriber.GetError(result.Outcome, result.User);
+        signInResult.Error = errorDescriber.GetError(result, reportLockout);
+        signInResult.LockoutSecondsRemaining = errorDescriber.GetLockoutSecondsRemaining(result, reportLockout);
     }
 }

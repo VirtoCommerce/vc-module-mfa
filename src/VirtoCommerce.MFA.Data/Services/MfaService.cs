@@ -19,6 +19,7 @@ public class MfaService(
     ITwoFactorTokenService twoFactorTokenService,
     ITwoFactorTicketStore ticketStore,
     IEnumerable<IMfaProvider> providers,
+    IMfaCodeAttemptLimiter codeAttemptLimiter,
     IMfaCodeDeliveryLimiter codeDeliveryLimiter,
     IOptions<MfaOptions> options,
     TimeProvider timeProvider)
@@ -114,7 +115,7 @@ public class MfaService(
             return MfaResult.Fail(MfaOutcome.ProviderNotAvailable, user, ticket.Provider);
         }
 
-        if (!ticketStore.TryConsumeAttempt(ticket))
+        if (!await codeAttemptLimiter.TryConsumeAttemptAsync(user.Id))
         {
             return MfaResult.Fail(MfaOutcome.CodeAttemptsExceeded, user, mfaProvider.Name);
         }
@@ -124,10 +125,12 @@ public class MfaService(
             return await FailCodeAsync(ticket, user, mfaProvider);
         }
 
-        if (!ticketStore.TryRedeem(ticket))
+        if (!await ticketStore.TryRedeemAsync(ticket))
         {
             return MfaResult.Fail(MfaOutcome.InvalidTwoFactorToken, user, mfaProvider.Name);
         }
+
+        await codeAttemptLimiter.ResetAsync(user.Id);
 
         return MfaResult.Succeed(user, mfaProvider.Name);
     }
@@ -146,6 +149,11 @@ public class MfaService(
             return MfaResult.Fail(MfaOutcome.AccountLocked, user);
         }
 
+        if (!await codeAttemptLimiter.HasAttemptsLeftAsync(user.Id))
+        {
+            return MfaResult.Fail(MfaOutcome.CodeAttemptsExceeded, user);
+        }
+
         return MfaResult.Succeed(user);
     }
 
@@ -161,7 +169,7 @@ public class MfaService(
         var accessFailedResult = await userManager.AccessFailedAsync(user);
         if (!accessFailedResult.Succeeded)
         {
-            ticketStore.Revoke(ticket);
+            await ticketStore.RevokeAsync(ticket);
             return MfaResult.Fail(MfaOutcome.FailedAttemptNotRecorded, user, mfaProvider.Name);
         }
 
@@ -185,17 +193,16 @@ public class MfaService(
 
         if (IsTicketExpired(ticket) ||
             ticket.SecurityStamp != await userManager.GetSecurityStampAsync(user) ||
-            IsTicketUsed(ticket, user))
+            await IsTicketUsedAsync(ticket, user))
         {
             return MfaResult.Fail(MfaOutcome.InvalidTwoFactorToken, user, ticket.Provider);
         }
 
-        if (!ticketStore.HasAttemptsLeft(ticket))
-        {
-            return MfaResult.Fail(MfaOutcome.CodeAttemptsExceeded, user, ticket.Provider);
-        }
+        var result = await ValidateUserAsync(user);
 
-        return await ValidateUserAsync(user);
+        return result.Outcome == MfaOutcome.Success
+            ? result
+            : MfaResult.Fail(result.Outcome, user, ticket.Provider);
     }
 
     protected virtual bool IsTicketExpired(TwoFactorTicket ticket)
@@ -203,9 +210,9 @@ public class MfaService(
         return timeProvider.GetUtcNow() >= ticket.IssuedAt + options.Value.TwoFactorTokenLifetime;
     }
 
-    protected virtual bool IsTicketUsed(TwoFactorTicket ticket, ApplicationUser user)
+    protected virtual async Task<bool> IsTicketUsedAsync(TwoFactorTicket ticket, ApplicationUser user)
     {
-        return user.LastLoginDate != ticket.LastLoginDate || ticketStore.IsRedeemed(ticket);
+        return user.LastLoginDate != ticket.LastLoginDate || await ticketStore.IsRedeemedAsync(ticket);
     }
 
     protected virtual MfaResult IssueTwoFactorToken(TwoFactorTicket ticket, MfaResult result)
@@ -238,10 +245,10 @@ public class MfaService(
         }
 
         var deliveryKey = GetCodeDeliveryKey(user, mfaProvider);
-        var isAcquired = codeDeliveryLimiter.TryAcquire(deliveryKey, out var retryAfter);
-        result.ResendSecondsRemaining = ToSeconds(retryAfter);
+        var delivery = await codeDeliveryLimiter.TryAcquireAsync(deliveryKey);
+        result.ResendSecondsRemaining = ToSeconds(delivery.RetryAfter);
 
-        if (!isAcquired)
+        if (!delivery.IsAcquired)
         {
             result.Outcome = MfaOutcome.ResendTooSoon;
             return result;
@@ -255,13 +262,13 @@ public class MfaService(
         }
         catch
         {
-            codeDeliveryLimiter.Release(deliveryKey);
+            await codeDeliveryLimiter.ReleaseAsync(deliveryKey);
             throw;
         }
 
         if (!isSent)
         {
-            codeDeliveryLimiter.Release(deliveryKey);
+            await codeDeliveryLimiter.ReleaseAsync(deliveryKey);
             return MfaResult.Fail(MfaOutcome.ProviderNotAvailable, user, mfaProvider.Name);
         }
 

@@ -1,10 +1,11 @@
-using System;
+using System.Threading.Tasks;
+using VirtoCommerce.MFA.Core.Models;
 
 namespace VirtoCommerce.MFA.Core.Services;
 
 public interface IMfaCodeDeliveryLimiter
 {
-    bool TryAcquire(string key, out TimeSpan retryAfter);
+    Task<MfaCodeDeliveryResult> TryAcquireAsync(string key);
 
-    void Release(string key);
+    Task ReleaseAsync(string key);
 }

@@ -19,11 +19,11 @@ public class MfaRequirementService(IStoreService storeService, ISettingsManager 
 
         var isGloballyEnabled = await settingsManager.GetValueAsync<bool>(MfaModuleSettings.MfaEnabled);
 
-        var store = await GetStoreAsync(storeId);
+        var store = await storeService.GetNoCloneAsync(storeId);
 
         if (store == null || !store.Id.EqualsIgnoreCase(user.StoreId))
         {
-            var userStore = await GetStoreAsync(user.StoreId);
+            var userStore = await storeService.GetNoCloneAsync(user.StoreId);
             if (GetStoreMode(userStore) == ModuleConstants.StoreModes.Enabled)
             {
                 return true;
@@ -43,11 +43,6 @@ public class MfaRequirementService(IStoreService storeService, ISettingsManager 
         return user.UserType.EqualsIgnoreCase(nameof(UserType.Customer)) &&
             user.StoreId.EqualsIgnoreCase(store.Id) &&
             !user.IsAdministrator;
-    }
-
-    protected virtual Task<Store> GetStoreAsync(string storeId)
-    {
-        return storeService.GetNoCloneAsync(storeId);
     }
 
     protected virtual string GetStoreMode(Store store)

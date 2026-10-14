@@ -72,6 +72,8 @@ public abstract class MfaTestsBase
 
     public ITwoFactorTicketStore TicketStore { get; }
 
+    public IMfaCodeAttemptLimiter CodeAttemptLimiter { get; }
+
     public bool IsNotificationActive { get; set; } = true;
 
     public ITwoFactorTokenService TwoFactorTokenService { get; }
@@ -142,7 +144,7 @@ public abstract class MfaTestsBase
         disabledStoreAdministrator.IsAdministrator = true;
         var disabledStoreManager = CreateUser(DisabledStoreManagerId, "store-manager@acme.com", userType: UserType.Manager, storeId: MfaDisabledStoreId);
         var enabledStoreCustomer = CreateUser(EnabledStoreCustomerId, "enabled@acme.com", storeId: MfaEnabledStoreId);
-        LockedUser = CreateUser(LockedUserId, "locked@acme.com", lockoutEnd: DateTimeOffset.UtcNow.AddSeconds(LockoutSeconds));
+        LockedUser = CreateUser(LockedUserId, "locked@acme.com", lockoutEnd: TimeProvider.GetUtcNow().AddSeconds(LockoutSeconds));
         LockoutDisabledUser = CreateUser(LockoutDisabledUserId, "lockout-disabled@acme.com", lockoutEnabled: false);
         NoEmailUser = CreateUser(NoEmailUserId, email: null);
         UnconfirmedEmailUser = CreateUser(UnconfirmedEmailUserId, "unconfirmed@acme.com", emailConfirmed: false);
@@ -167,7 +169,7 @@ public abstract class MfaTestsBase
 
         UserManager
             .Setup(x => x.IsLockedOutAsync(It.IsAny<ApplicationUser>()))
-            .ReturnsAsync((ApplicationUser user) => user.LockoutEnd > DateTimeOffset.UtcNow);
+            .ReturnsAsync((ApplicationUser user) => user.LockoutEnd > TimeProvider.GetUtcNow());
 
         // Like the Identity "Email" token provider: only a confirmed email can receive a code
         UserManager
@@ -235,11 +237,12 @@ public abstract class MfaTestsBase
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
         CodeDeliveryLimiter = new MfaCodeDeliveryLimiter(memoryCache, Options.Create(MfaOptions), TimeProvider);
         TicketStore = new TwoFactorTicketStore(memoryCache, Options.Create(MfaOptions));
+        CodeAttemptLimiter = new MfaCodeAttemptLimiter(memoryCache, Options.Create(MfaOptions), TimeProvider);
         ErrorDescriber = new MfaErrorDescriber(TimeProvider);
         RequirementService = new MfaRequirementService(StoreService.Object, settingsManager.Object);
 
         MfaService = new MfaService(UserManager.Object, StoreService.Object, TwoFactorTokenService, TicketStore, [emailProvider],
-            CodeDeliveryLimiter, Options.Create(MfaOptions), TimeProvider);
+            CodeAttemptLimiter, CodeDeliveryLimiter, Options.Create(MfaOptions), TimeProvider);
     }
 
     public MfaOptions MfaOptions { get; } = new();

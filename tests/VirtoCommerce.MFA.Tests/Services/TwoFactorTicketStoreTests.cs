@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using VirtoCommerce.MFA.Core.Models;
@@ -10,50 +11,34 @@ namespace VirtoCommerce.MFA.Tests.Services;
 [Trait("Category", "Unit")]
 public class TwoFactorTicketStoreTests
 {
-    private readonly MfaOptions _options = new() { MaxCodeAttempts = 2 };
-    private readonly TwoFactorTicketStore _store;
-
-    public TwoFactorTicketStoreTests()
-    {
-        _store = new TwoFactorTicketStore(new MemoryCache(new MemoryCacheOptions()), Options.Create(_options));
-    }
+    private readonly TwoFactorTicketStore _store = new(new MemoryCache(new MemoryCacheOptions()), Options.Create(new MfaOptions()));
 
     [Fact]
-    public void TryConsumeAttempt_Should_AllowTheConfiguredNumberOfAttemptsPerTicket()
+    public async Task TryRedeemAsync_Should_RedeemTheTicketOnce()
     {
         // Arrange
         var ticket = CreateTicket();
         var otherTicket = CreateTicket();
 
         // Act & Assert
-        Assert.True(_store.TryConsumeAttempt(ticket));
-        Assert.True(_store.TryConsumeAttempt(ticket));
-        Assert.False(_store.TryConsumeAttempt(ticket));
-        Assert.True(_store.TryConsumeAttempt(otherTicket));
+        Assert.True(await _store.TryRedeemAsync(ticket));
+        Assert.False(await _store.TryRedeemAsync(ticket));
+        Assert.True(await _store.IsRedeemedAsync(ticket));
+        Assert.False(await _store.IsRedeemedAsync(otherTicket));
     }
 
     [Fact]
-    public void TryRedeem_Should_RedeemTheTicketOnce()
-    {
-        // Arrange
-        var ticket = CreateTicket();
-
-        // Act & Assert
-        Assert.True(_store.TryRedeem(ticket));
-        Assert.False(_store.TryRedeem(ticket));
-    }
-
-    [Fact]
-    public void Revoke_Should_RefuseFurtherAttempts()
+    public async Task RevokeAsync_Should_RefuseTheTicket()
     {
         // Arrange
         var ticket = CreateTicket();
 
         // Act
-        _store.Revoke(ticket);
+        await _store.RevokeAsync(ticket);
 
         // Assert
-        Assert.False(_store.TryConsumeAttempt(ticket));
+        Assert.True(await _store.IsRedeemedAsync(ticket));
+        Assert.False(await _store.TryRedeemAsync(ticket));
     }
 
     private static TwoFactorTicket CreateTicket()

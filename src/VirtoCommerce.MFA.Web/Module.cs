@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using VirtoCommerce.MFA.Core;
 using VirtoCommerce.MFA.Core.Models;
@@ -46,6 +47,7 @@ public class Module : IModule, IHasConfiguration
             });
 
         serviceCollection.TryAddSingleton(TimeProvider.System);
+        serviceCollection.AddSingleton<IMfaCodeAttemptLimiter, MfaCodeAttemptLimiter>();
         serviceCollection.AddSingleton<IMfaCodeDeliveryLimiter, MfaCodeDeliveryLimiter>();
         serviceCollection.AddSingleton<ITwoFactorTicketStore, TwoFactorTicketStore>();
         serviceCollection.AddSingleton<MfaErrorDescriber>();
@@ -73,6 +75,12 @@ public class Module : IModule, IHasConfiguration
         var notificationRegistrar = serviceProvider.GetRequiredService<INotificationRegistrar>();
         notificationRegistrar.RegisterNotification<MfaSignInEmailNotification>()
             .WithTemplatesFromPath(Path.Combine(ModuleInfo.FullPhysicalPath, "NotificationTemplates"));
+
+        if (serviceProvider.GetRequiredService<IOptions<MfaOptions>>().Value.DisableEnforcement)
+        {
+            serviceProvider.GetRequiredService<ILogger<Module>>().LogWarning(
+                "Multi-factor authentication is not enforced: MultiFactorAuthentication:DisableEnforcement is on. Turn it off once access is restored.");
+        }
     }
 
     public void Uninstall()

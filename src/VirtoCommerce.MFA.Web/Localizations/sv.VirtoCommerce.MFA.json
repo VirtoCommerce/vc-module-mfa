@@ -25,6 +25,7 @@
       "errors": {
         "invalid_code": "Koden är ogiltig. Kontrollera den och försök igen.",
         "invalid_two_factor_token": "Din inloggningssession har gått ut. Logga in igen.",
+        "code_attempts_exceeded": "För många felaktiga koder. Vänta några minuter och logga in igen.",
         "user_is_locked_out": "Ditt konto har låsts. Kontakta administratören.",
         "user_is_temporary_locked_out": "Ditt konto har låsts tillfälligt. Försök igen senare.",
         "sign_in_not_allowed": "Du kan inte logga in i Backoffice med det här kontot.",

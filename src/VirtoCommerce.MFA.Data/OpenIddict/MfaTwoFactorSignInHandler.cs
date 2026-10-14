@@ -39,11 +39,7 @@ public class MfaTwoFactorSignInHandler(IMfaService mfaService, MfaErrorDescriber
     {
         context.FailureReason = errorDescriber.GetFailureReason(result.Outcome);
 
-        var error = result.Outcome == MfaOutcome.AccountLocked && !context.DetailedErrors
-            ? errorDescriber.LoginFailed()
-            : errorDescriber.GetError(result.Outcome, result.User);
-
-        return errorDescriber.ToTokenResponse(error);
+        return errorDescriber.ToTokenResponse(result, context.DetailedErrors);
     }
 
     protected virtual string GetStoreId(TokenRequestContext context)

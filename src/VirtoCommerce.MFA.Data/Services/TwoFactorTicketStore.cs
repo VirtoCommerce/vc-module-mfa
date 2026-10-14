@@ -1,4 +1,6 @@
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using VirtoCommerce.MFA.Core.Models;
@@ -8,86 +10,44 @@ namespace VirtoCommerce.MFA.Data.Services;
 
 public class TwoFactorTicketStore(IMemoryCache memoryCache, IOptions<MfaOptions> options) : ITwoFactorTicketStore
 {
-    private const string CacheKeyPrefix = "VirtoCommerce.MFA.TwoFactorTicket:";
+    private const string CacheKeyPrefix = "VirtoCommerce.MFA.RedeemedTwoFactorTicket:";
 
-    private readonly object _lock = new();
+    private readonly Lock _lock = new();
 
-    public virtual bool HasAttemptsLeft(TwoFactorTicket ticket)
+    public virtual Task<bool> IsRedeemedAsync(TwoFactorTicket ticket)
     {
-        lock (_lock)
-        {
-            return GetState(ticket).Attempts < options.Value.MaxCodeAttempts;
-        }
+        return Task.FromResult(memoryCache.TryGetValue(GetCacheKey(ticket), out _));
     }
 
-    public virtual bool IsRedeemed(TwoFactorTicket ticket)
+    public virtual Task<bool> TryRedeemAsync(TwoFactorTicket ticket)
     {
-        lock (_lock)
-        {
-            return GetState(ticket).IsRedeemed;
-        }
-    }
+        var cacheKey = GetCacheKey(ticket);
 
-    public virtual bool TryConsumeAttempt(TwoFactorTicket ticket)
-    {
         lock (_lock)
         {
-            var state = GetState(ticket);
-            if (state.Attempts >= options.Value.MaxCodeAttempts)
+            if (memoryCache.TryGetValue(cacheKey, out _))
             {
-                return false;
+                return Task.FromResult(false);
             }
 
-            state.Attempts++;
+            memoryCache.Set(cacheKey, true, options.Value.TwoFactorTokenLifetime);
 
-            return true;
+            return Task.FromResult(true);
         }
     }
 
-    public virtual bool TryRedeem(TwoFactorTicket ticket)
+    public virtual Task RevokeAsync(TwoFactorTicket ticket)
     {
-        lock (_lock)
-        {
-            var state = GetState(ticket);
-            if (state.IsRedeemed)
-            {
-                return false;
-            }
+        memoryCache.Set(GetCacheKey(ticket), true, options.Value.TwoFactorTokenLifetime);
 
-            state.IsRedeemed = true;
-
-            return true;
-        }
+        return Task.CompletedTask;
     }
 
-    public virtual void Revoke(TwoFactorTicket ticket)
-    {
-        lock (_lock)
-        {
-            GetState(ticket).Attempts = options.Value.MaxCodeAttempts;
-        }
-    }
-
-    private TicketState GetState(TwoFactorTicket ticket)
+    private static string GetCacheKey(TwoFactorTicket ticket)
     {
         ArgumentNullException.ThrowIfNull(ticket);
         ArgumentException.ThrowIfNullOrEmpty(ticket.Id);
 
-        var cacheKey = CacheKeyPrefix + ticket.Id;
-
-        if (!memoryCache.TryGetValue(cacheKey, out TicketState state))
-        {
-            state = new TicketState();
-            memoryCache.Set(cacheKey, state, options.Value.TwoFactorTokenLifetime);
-        }
-
-        return state;
-    }
-
-    private sealed class TicketState
-    {
-        public int Attempts { get; set; }
-
-        public bool IsRedeemed { get; set; }
+        return CacheKeyPrefix + ticket.Id;
     }
 }

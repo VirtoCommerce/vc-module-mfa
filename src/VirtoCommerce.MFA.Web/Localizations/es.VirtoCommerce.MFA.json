@@ -25,6 +25,7 @@
       "errors": {
         "invalid_code": "El código no es válido. Compruébelo e inténtelo de nuevo.",
         "invalid_two_factor_token": "Su sesión de inicio de sesión ha caducado. Inicie sesión de nuevo.",
+        "code_attempts_exceeded": "Demasiados códigos incorrectos. Espere unos minutos y vuelva a iniciar sesión.",
         "user_is_locked_out": "Su cuenta ha sido bloqueada. Póngase en contacto con su administrador.",
         "user_is_temporary_locked_out": "Su cuenta ha sido bloqueada temporalmente. Inténtelo de nuevo más tarde.",
         "sign_in_not_allowed": "No puede iniciar sesión en el Backoffice con esta cuenta.",

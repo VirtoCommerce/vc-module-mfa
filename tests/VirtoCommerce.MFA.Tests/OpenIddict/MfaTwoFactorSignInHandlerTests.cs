@@ -101,9 +101,9 @@ public class MfaTwoFactorSignInHandlerTests : MfaTestsBase
     }
 
     [Theory]
-    [InlineData(true, "user_is_temporary_locked_out")]
-    [InlineData(false, "login_failed")]
-    public async Task ChallengeAsync_Should_LogTheLockout_When_TheAccountIsLocked(bool detailedErrors, string expectedCode)
+    [InlineData(true, "user_is_temporary_locked_out", LockoutSeconds)]
+    [InlineData(false, "login_failed", null)]
+    public async Task ChallengeAsync_Should_LogTheLockout_When_TheAccountIsLocked(bool detailedErrors, string expectedCode, int? expectedSeconds)
     {
         // Arrange
         var requestContext = CreateRequestContext(LockedUser, StoreId, detailedErrors);
@@ -112,9 +112,30 @@ public class MfaTwoFactorSignInHandlerTests : MfaTestsBase
         var actionResult = await _handler.ChallengeAsync(requestContext);
 
         // Assert
-        var badRequest = Assert.IsType<BadRequestObjectResult>(actionResult);
-        Assert.Equal(expectedCode, Assert.IsType<TokenResponse>(badRequest.Value).Code);
+        var response = Assert.IsType<TokenResponse>(Assert.IsType<BadRequestObjectResult>(actionResult).Value);
+        Assert.Equal(expectedCode, response.Code);
+        Assert.Equal(expectedSeconds, response.LockoutSecondsRemaining);
         Assert.Equal(SignInFailureReason.LockedOut, requestContext.FailureReason);
+    }
+
+    [Fact]
+    public async Task ChallengeAsync_Should_RefuseSignIn_When_TheWrongCodeLimitIsReached()
+    {
+        // Arrange
+        for (var i = 0; i < MfaOptions.MaxCodeAttempts; i++)
+        {
+            await CodeAttemptLimiter.TryConsumeAttemptAsync(ActiveUserId);
+        }
+
+        var requestContext = CreateRequestContext(ActiveUser, StoreId);
+
+        // Act
+        var actionResult = await _handler.ChallengeAsync(requestContext);
+
+        // Assert
+        var response = Assert.IsType<TokenResponse>(Assert.IsType<BadRequestObjectResult>(actionResult).Value);
+        Assert.Equal("code_attempts_exceeded", response.Code);
+        Assert.Equal(ModuleConstants.Security.FailureReason.CodeAttemptsExceeded, requestContext.FailureReason);
     }
 
     private static TokenRequestContext CreateRequestContext(ApplicationUser user, string storeId, bool detailedErrors = false)

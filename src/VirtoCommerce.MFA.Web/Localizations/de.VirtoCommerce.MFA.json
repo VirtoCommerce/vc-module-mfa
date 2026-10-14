@@ -25,6 +25,7 @@
       "errors": {
         "invalid_code": "Der Code ist ungültig. Prüfen Sie ihn und versuchen Sie es erneut.",
         "invalid_two_factor_token": "Ihre Anmeldesitzung ist abgelaufen. Melden Sie sich erneut an.",
+        "code_attempts_exceeded": "Zu viele falsche Codes. Warten Sie einige Minuten und melden Sie sich erneut an.",
         "user_is_locked_out": "Ihr Konto wurde gesperrt. Wenden Sie sich an Ihren Administrator.",
         "user_is_temporary_locked_out": "Ihr Konto wurde vorübergehend gesperrt. Bitte versuchen Sie es später erneut.",
         "sign_in_not_allowed": "Mit diesem Konto können Sie sich nicht im Backoffice anmelden.",

@@ -77,6 +77,28 @@ public class MfaGrantTypeHandlerTests : MfaTestsBase
     }
 
     [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task HandleAsync_Should_ReportCodeAttemptsExceeded_When_TheWrongCodeLimitIsReached(bool detailedErrors)
+    {
+        // Arrange
+        for (var i = 0; i < MfaOptions.MaxCodeAttempts; i++)
+        {
+            await CodeAttemptLimiter.TryConsumeAttemptAsync(ActiveUserId);
+        }
+
+        var requestContext = CreateRequestContext(StoreId, CreateTwoFactorToken(), ValidCode, detailedErrors);
+
+        // Act
+        var actionResult = await _handler.HandleAsync(requestContext);
+
+        // Assert
+        var error = Assert.IsType<TokenResponse>(Assert.IsType<BadRequestObjectResult>(actionResult).Value);
+        Assert.Equal("code_attempts_exceeded", error.Code);
+        Assert.Equal(ModuleConstants.Security.FailureReason.CodeAttemptsExceeded, requestContext.FailureReason);
+    }
+
+    [Theory]
     [InlineData(true, true)]
     [InlineData(false, false)]
     public async Task HandleAsync_Should_ReportLockoutSeconds_Only_When_DetailedErrorsEnabled(bool detailedErrors, bool expectSeconds)
@@ -89,7 +111,7 @@ public class MfaGrantTypeHandlerTests : MfaTestsBase
 
         // Assert
         var error = Assert.IsType<TokenResponse>(Assert.IsType<BadRequestObjectResult>(actionResult).Value);
-        Assert.Equal(expectSeconds, error.LockoutSecondsRemaining > 0);
+        Assert.Equal(expectSeconds ? LockoutSeconds : null, error.LockoutSecondsRemaining);
         Assert.True(requestContext.SignInResult.IsLockedOut);
     }
 
@@ -135,6 +157,7 @@ public class MfaGrantTypeHandlerTests : MfaTestsBase
     {
         // Arrange
         var requestContext = CreateRequestContext(storeId, CreateTwoFactorToken(userId, storeId), ValidCode);
+        (await UserManager.Object.FindByIdAsync(userId))!.AccessFailedCount = 2;
 
         // Act
         var actionResult = await _handler.HandleAsync(requestContext);

@@ -1,8 +1,11 @@
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using VirtoCommerce.MFA.Core.Models;
 using VirtoCommerce.MFA.Core.Services;
+using VirtoCommerce.Platform.Core.Common;
 
 namespace VirtoCommerce.MFA.Data.Services;
 
@@ -14,14 +17,15 @@ public class MfaCodeDeliveryLimiter(
 {
     private const string CacheKeyPrefix = "VirtoCommerce.MFA.CodeDelivery:";
 
-    private readonly object _lock = new();
+    private readonly Lock _lock = new();
 
-    public virtual bool TryAcquire(string key, out TimeSpan retryAfter)
+    public virtual Task<MfaCodeDeliveryResult> TryAcquireAsync(string key)
     {
         ArgumentException.ThrowIfNullOrEmpty(key);
 
         var cacheKey = CacheKeyPrefix + key;
         var interval = options.Value.CodeResendInterval;
+        var result = AbstractTypeFactory<MfaCodeDeliveryResult>.TryCreateInstance();
 
         lock (_lock)
         {
@@ -29,18 +33,20 @@ public class MfaCodeDeliveryLimiter(
 
             if (memoryCache.TryGetValue(cacheKey, out DateTimeOffset allowedAt) && allowedAt > now)
             {
-                retryAfter = allowedAt - now;
-                return false;
+                result.RetryAfter = allowedAt - now;
+                return Task.FromResult(result);
             }
 
             memoryCache.Set(cacheKey, now + interval, interval);
-            retryAfter = interval;
-
-            return true;
         }
+
+        result.IsAcquired = true;
+        result.RetryAfter = interval;
+
+        return Task.FromResult(result);
     }
 
-    public virtual void Release(string key)
+    public virtual Task ReleaseAsync(string key)
     {
         ArgumentException.ThrowIfNullOrEmpty(key);
 
@@ -48,5 +54,7 @@ public class MfaCodeDeliveryLimiter(
         {
             memoryCache.Remove(CacheKeyPrefix + key);
         }
+
+        return Task.CompletedTask;
     }
 }

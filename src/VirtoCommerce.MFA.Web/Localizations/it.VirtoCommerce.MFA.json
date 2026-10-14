@@ -25,6 +25,7 @@
       "errors": {
         "invalid_code": "Il codice non è valido. Controllalo e riprova.",
         "invalid_two_factor_token": "La sessione di accesso è scaduta. Accedi di nuovo.",
+        "code_attempts_exceeded": "Troppi codici errati. Attendi qualche minuto e accedi di nuovo.",
         "user_is_locked_out": "Il tuo account è stato bloccato. Contatta l'amministratore.",
         "user_is_temporary_locked_out": "Il tuo account è stato bloccato temporaneamente. Riprova più tardi.",
         "sign_in_not_allowed": "Non puoi accedere al Backoffice con questo account.",

@@ -25,6 +25,7 @@
       "errors": {
         "invalid_code": "コードが正しくありません。確認してもう一度お試しください。",
         "invalid_two_factor_token": "サインインのセッションが期限切れになりました。もう一度サインインしてください。",
+        "code_attempts_exceeded": "誤ったコードの入力が多すぎます。数分待ってから、もう一度サインインしてください。",
         "user_is_locked_out": "アカウントがロックされています。管理者にお問い合わせください。",
         "user_is_temporary_locked_out": "アカウントが一時的にロックされています。後でもう一度お試しください。",
         "sign_in_not_allowed": "このアカウントでは Backoffice にサインインできません。",

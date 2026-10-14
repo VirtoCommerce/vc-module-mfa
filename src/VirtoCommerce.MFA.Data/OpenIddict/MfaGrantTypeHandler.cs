@@ -105,15 +105,6 @@ public class MfaGrantTypeHandler(
     {
         context.FailureReason = errorDescriber.GetFailureReason(verifyResult.Outcome);
 
-        if (verifyResult.Outcome == MfaOutcome.AccountLocked && !context.DetailedErrors)
-        {
-            return errorDescriber.ToTokenResponse(errorDescriber.InvalidCode());
-        }
-
-        var lockoutSecondsRemaining = verifyResult.Outcome == MfaOutcome.AccountLocked
-            ? errorDescriber.GetLockoutSecondsRemaining(verifyResult.User)
-            : null;
-
-        return errorDescriber.ToTokenResponse(errorDescriber.GetError(verifyResult.Outcome, verifyResult.User), lockoutSecondsRemaining: lockoutSecondsRemaining);
+        return errorDescriber.ToTokenResponse(verifyResult, context.DetailedErrors, errorDescriber.InvalidCode());
     }
 }

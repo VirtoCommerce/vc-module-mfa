@@ -69,7 +69,7 @@ public class MfaControllerTests : MfaTestsBase
 
         // Assert
         Assert.Equal(expectedCode, result.Error.Code);
-        Assert.Equal(expectSeconds, result.LockoutSecondsRemaining > 0);
+        Assert.Equal(expectSeconds ? LockoutSeconds : null, result.LockoutSecondsRemaining);
     }
 
     [Fact]
@@ -101,7 +101,7 @@ public class MfaControllerTests : MfaTestsBase
         // Assert
         var result = Assert.IsType<MfaSendCodeResult>(Assert.IsType<OkObjectResult>(actionResult.Result).Value);
         Assert.Equal("user_is_temporary_locked_out", result.Error.Code);
-        Assert.True(result.LockoutSecondsRemaining > 0);
+        Assert.Equal(LockoutSeconds, result.LockoutSecondsRemaining);
     }
 
     [Theory]
@@ -140,7 +140,7 @@ public class MfaControllerTests : MfaTestsBase
 
         // Assert
         Assert.Equal("user_is_temporary_locked_out", result.Error.Code);
-        Assert.True(result.LockoutSecondsRemaining > 0);
+        Assert.Equal(LockoutSeconds, result.LockoutSecondsRemaining);
     }
 
     [Fact]

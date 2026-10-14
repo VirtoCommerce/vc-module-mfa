@@ -17,6 +17,7 @@ namespace VirtoCommerce.MFA.Data.Services;
 public class BackofficeMfaSignInService(
     SignInManager<ApplicationUser> signInManager,
     IMfaService mfaService,
+    IMfaCodeAttemptLimiter codeAttemptLimiter,
     IEventPublisher eventPublisher,
     MfaErrorDescriber errorDescriber)
     : IBackofficeMfaSignInService
@@ -72,6 +73,11 @@ public class BackofficeMfaSignInService(
             return await FailAsync(MfaResult.Fail(MfaOutcome.ProviderNotAvailable, user, provider));
         }
 
+        if (!await codeAttemptLimiter.TryConsumeAttemptAsync(user.Id))
+        {
+            return await FailAsync(MfaResult.Fail(MfaOutcome.CodeAttemptsExceeded, user, mfaProvider.Name));
+        }
+
         var signInResult = await signInManager.TwoFactorSignInAsync(mfaProvider.Name, code, rememberMe, rememberClient: false);
 
         if (signInResult.IsLockedOut)
@@ -88,6 +94,8 @@ public class BackofficeMfaSignInService(
         {
             return await FailAsync(MfaResult.Fail(MfaOutcome.InvalidCode, user, mfaProvider.Name));
         }
+
+        await codeAttemptLimiter.ResetAsync(user.Id);
 
         user = await UserManager.FindByIdAsync(user.Id);
 

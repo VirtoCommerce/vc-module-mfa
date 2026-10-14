@@ -23,7 +23,7 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
 
     public BackofficeMfaSignInServiceTests()
     {
-        _service = new BackofficeMfaSignInService(SignInManager.Object, MfaService, _eventPublisher.Object, ErrorDescriber);
+        _service = new BackofficeMfaSignInService(SignInManager.Object, MfaService, CodeAttemptLimiter, _eventPublisher.Object, ErrorDescriber);
 
         UserManager
             .Setup(x => x.IsInRoleAsync(It.IsAny<ApplicationUser>(), PlatformConstants.Security.SystemRoles.Customer))
@@ -247,6 +247,87 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
         // Assert
         Assert.Equal(MfaOutcome.InvalidTwoFactorToken, result.Outcome);
         SignInManager.Verify(x => x.TwoFactorSignInAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SignInAsync_Should_NotCheckTheCode_When_TheWrongCodeLimitIsReached()
+    {
+        // Arrange
+        WaitForSecondFactor(BackofficeUser);
+        SignInManager
+            .Setup(x => x.TwoFactorSignInAsync(EmailProvider, It.IsAny<string>(), false, false))
+            .ReturnsAsync(IdentitySignInResult.Failed);
+
+        for (var i = 0; i < MfaOptions.MaxCodeAttempts; i++)
+        {
+            await _service.SignInAsync(InvalidCode);
+        }
+
+        // Act
+        var result = await _service.SignInAsync(ValidCode);
+
+        // Assert
+        Assert.Equal(MfaOutcome.CodeAttemptsExceeded, result.Outcome);
+        SignInManager.Verify(x => x.TwoFactorSignInAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Exactly(MfaOptions.MaxCodeAttempts));
+    }
+
+    [Fact]
+    public async Task SignInAsync_Should_ShareTheWrongCodeLimitWithTheTokenEndpoint()
+    {
+        // Arrange
+        WaitForSecondFactor(ActiveUser);
+        for (var i = 0; i < MfaOptions.MaxCodeAttempts; i++)
+        {
+            await MfaService.VerifyCodeAsync(CreateTwoFactorToken(), InvalidCode, StoreId);
+        }
+
+        // Act
+        var result = await _service.SignInAsync(ValidCode);
+
+        // Assert
+        Assert.Equal(MfaOutcome.CodeAttemptsExceeded, result.Outcome);
+        SignInManager.Verify(x => x.TwoFactorSignInAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Never);
+        VerifySignInAttempt(succeeded: false, ModuleConstants.Security.FailureReason.CodeAttemptsExceeded);
+    }
+
+    [Fact]
+    public async Task SendCodeAsync_Should_NotSendCode_When_TheWrongCodeLimitIsReached()
+    {
+        // Arrange
+        WaitForSecondFactor(BackofficeUser);
+        for (var i = 0; i < MfaOptions.MaxCodeAttempts; i++)
+        {
+            await CodeAttemptLimiter.TryConsumeAttemptAsync(BackofficeUserId);
+        }
+
+        // Act
+        var result = await _service.SendCodeAsync();
+
+        // Assert
+        Assert.Equal(MfaOutcome.CodeAttemptsExceeded, result.Outcome);
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SignInAsync_Should_RestoreTheAttempts_When_TheCodeIsAccepted()
+    {
+        // Arrange
+        WaitForSecondFactor(BackofficeUser);
+        SignInManager
+            .Setup(x => x.TwoFactorSignInAsync(EmailProvider, ValidCode, false, false))
+            .ReturnsAsync(IdentitySignInResult.Success);
+        await CodeAttemptLimiter.TryConsumeAttemptAsync(BackofficeUserId);
+        await CodeAttemptLimiter.TryConsumeAttemptAsync(BackofficeUserId);
+
+        // Act
+        var result = await _service.SignInAsync(ValidCode);
+
+        // Assert
+        Assert.Equal(MfaOutcome.Success, result.Outcome);
+        for (var i = 0; i < MfaOptions.MaxCodeAttempts; i++)
+        {
+            Assert.True(await CodeAttemptLimiter.TryConsumeAttemptAsync(BackofficeUserId));
+        }
     }
 
     private void WaitForSecondFactor(ApplicationUser user)

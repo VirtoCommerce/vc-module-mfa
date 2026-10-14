@@ -25,6 +25,7 @@
       "errors": {
         "invalid_code": "That code didn't work. Check it and try again.",
         "invalid_two_factor_token": "Your sign-in session has expired. Sign in again.",
+        "code_attempts_exceeded": "Too many incorrect codes. Wait a few minutes and sign in again.",
         "user_is_locked_out": "Your account has been locked. Contact your administrator.",
         "user_is_temporary_locked_out": "Your account has been temporarily locked. Please try again later.",
         "sign_in_not_allowed": "You can't sign in to the Backoffice with this account.",
