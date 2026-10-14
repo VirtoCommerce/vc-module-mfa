@@ -23,22 +23,25 @@ public class MfaGrantTypeHandler(
     IEnumerable<ITokenRequestHandler> requestHandlers,
     IEventPublisher eventPublisher,
     IMfaService mfaService,
-    UserManager<ApplicationUser> userManager)
+    MfaErrorDescriber errorDescriber)
     : GrantTypeHandlerBase(signInManager, identityOptions, requestValidators, claimProviders, requestHandlers, eventPublisher)
 {
+    private string _provider;
+
     public override string GrantType => ModuleConstants.Security.GrantType;
 
     protected override string SignInType => ModuleConstants.Security.SignInType;
 
-    protected override async Task AfterSignInAsync(TokenRequestContext context)
+    protected override Task<TokenResponse> UpdateLastLoginAsync(TokenRequestContext context)
     {
-        await userManager.ResetAccessFailedCountAsync(context.User);
-        await base.AfterSignInAsync(context);
+        context.User.AccessFailedCount = 0;
+
+        return base.UpdateLastLoginAsync(context);
     }
 
     protected override async Task<GrantValidationResult> ValidateGrantAsync(TokenRequestContext context)
     {
-        var missingParameters = new List<string>();
+        List<string> missingParameters = [];
 
         var storeId = (string)context.Request.GetParameter(ModuleConstants.Security.Parameters.StoreId);
         var twoFactorToken = GetRequiredParameter(context.Request, ModuleConstants.Security.Parameters.TwoFactorToken, missingParameters);
@@ -49,7 +52,8 @@ public class MfaGrantTypeHandler(
             return GrantValidationResult.Fail(BuildErrorResponse(context, missingParameters));
         }
 
-        var verifyResult = await mfaService.VerifyCodeAsync(storeId, twoFactorToken, code);
+        var verifyResult = await mfaService.VerifyCodeAsync(twoFactorToken, code, storeId);
+        _provider = verifyResult.Provider;
         context.SignInResult = GetSignInResult(verifyResult.Outcome);
 
         if (verifyResult.Outcome != MfaOutcome.Success)
@@ -58,6 +62,15 @@ public class MfaGrantTypeHandler(
         }
 
         return GrantValidationResult.Succeed(verifyResult.User);
+    }
+
+    protected override UserSignInAttemptEvent BuildSignInAttemptEvent(TokenRequestContext context, bool succeeded)
+    {
+        var attempt = base.BuildSignInAttemptEvent(context, succeeded);
+        attempt.UserName = context.User?.UserName;
+        attempt.Provider = _provider;
+
+        return attempt;
     }
 
     protected virtual string GetRequiredParameter(OpenIddictRequest request, string name, List<string> missingParameters)
@@ -85,44 +98,22 @@ public class MfaGrantTypeHandler(
     {
         context.FailureReason = ModuleConstants.Security.FailureReason.MissingParameter;
 
-        return CreateTokenResponse(Errors.InvalidRequest, MfaErrorDescriber.MissingParameters(missingParameters));
+        return errorDescriber.ToTokenResponse(errorDescriber.MissingParameters(missingParameters), Errors.InvalidRequest);
     }
 
     protected virtual TokenResponse BuildErrorResponse(TokenRequestContext context, MfaResult verifyResult)
     {
-        context.FailureReason = GetFailureReason(verifyResult.Outcome);
+        context.FailureReason = errorDescriber.GetFailureReason(verifyResult.Outcome);
 
-        return verifyResult.Outcome switch
+        if (verifyResult.Outcome == MfaOutcome.AccountLocked && !context.DetailedErrors)
         {
-            MfaOutcome.InvalidTwoFactorToken => CreateTokenResponse(Errors.InvalidGrant, MfaErrorDescriber.InvalidTwoFactorToken()),
-            MfaOutcome.LockoutDisabled => CreateTokenResponse(Errors.InvalidGrant, MfaErrorDescriber.LockoutDisabled()),
-            MfaOutcome.ProviderNotAvailable => CreateTokenResponse(Errors.InvalidGrant, MfaErrorDescriber.ProviderNotAvailable()),
-            MfaOutcome.AccountLocked when context.DetailedErrors => CreateTokenResponse(Errors.InvalidGrant, MfaErrorDescriber.GetLockoutError(verifyResult.User), MfaErrorDescriber.GetLockoutSecondsRemaining(verifyResult.User)),
-            _ => CreateTokenResponse(Errors.InvalidGrant, MfaErrorDescriber.InvalidCode()),
-        };
-    }
+            return errorDescriber.ToTokenResponse(errorDescriber.InvalidCode());
+        }
 
-    protected virtual string GetFailureReason(MfaOutcome outcome)
-    {
-        return outcome switch
-        {
-            MfaOutcome.InvalidTwoFactorToken => ModuleConstants.Security.FailureReason.InvalidTwoFactorToken,
-            MfaOutcome.LockoutDisabled => ModuleConstants.Security.FailureReason.LockoutDisabled,
-            MfaOutcome.ProviderNotAvailable => ModuleConstants.Security.FailureReason.ProviderNotAvailable,
-            MfaOutcome.AccountLocked => SignInFailureReason.LockedOut,
-            MfaOutcome.InvalidCode => ModuleConstants.Security.FailureReason.InvalidCode,
-            _ => SignInFailureReason.Unknown,
-        };
-    }
+        var lockoutSecondsRemaining = verifyResult.Outcome == MfaOutcome.AccountLocked
+            ? errorDescriber.GetLockoutSecondsRemaining(verifyResult.User)
+            : null;
 
-    protected virtual TokenResponse CreateTokenResponse(string error, IdentityError identityError, int? lockoutSecondsRemaining = null)
-    {
-        return new TokenResponse
-        {
-            Error = error,
-            Code = identityError.Code,
-            ErrorDescription = identityError.Description,
-            LockoutSecondsRemaining = lockoutSecondsRemaining,
-        };
+        return errorDescriber.ToTokenResponse(errorDescriber.GetError(verifyResult.Outcome, verifyResult.User), lockoutSecondsRemaining: lockoutSecondsRemaining);
     }
 }

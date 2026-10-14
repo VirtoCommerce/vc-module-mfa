@@ -13,6 +13,12 @@ angular.module(moduleName, [])
             params: {
                 rememberMe: false
             },
-            data: { allowAnonymous: true }
+            data: {
+                allowAnonymous: true,
+                twoFactorSignIn: true
+            }
         });
+    }])
+    .run(['platformWebApp.signInLogTypes', function (signInLogTypes) {
+        signInLogTypes.register({ label: 'mfa.sign-in-log.type-mfa', value: 'MFA' });
     }]);

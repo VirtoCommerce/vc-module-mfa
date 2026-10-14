@@ -4,6 +4,8 @@ namespace VirtoCommerce.MFA.Core.Models;
 
 public class TwoFactorTicket
 {
+    public string Id { get; set; }
+
     public string UserId { get; set; }
 
     public string StoreId { get; set; }

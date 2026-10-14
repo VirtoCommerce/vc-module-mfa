@@ -8,7 +8,9 @@ public interface IMfaProvider
 {
     string Name { get; }
 
+    bool SendsCode { get; }
+
     string GetDestination(ApplicationUser user);
 
-    Task SendCodeAsync(Store store, ApplicationUser user, string code);
+    Task<bool> SendCodeAsync(Store store, ApplicationUser user, string code);
 }

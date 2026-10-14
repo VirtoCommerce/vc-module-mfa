@@ -27,6 +27,8 @@ public static class ModuleConstants
             public const string LockoutDisabled = "LockoutDisabled";
             public const string ProviderNotAvailable = "ProviderNotAvailable";
             public const string InvalidCode = "InvalidCode";
+            public const string CodeAttemptsExceeded = "CodeAttemptsExceeded";
+            public const string FailedAttemptNotRecorded = "FailedAttemptNotRecorded";
         }
     }
 

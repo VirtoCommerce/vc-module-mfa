@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using VirtoCommerce.MFA.Core.Models;
 using VirtoCommerce.MFA.Core.Services;
 using VirtoCommerce.MFA.Data.Services;
+using VirtoCommerce.Platform.Core.Common;
 using VirtoCommerce.Platform.Core.Security;
 
 namespace VirtoCommerce.MFA.Web.Controllers.Api;
@@ -16,7 +17,8 @@ namespace VirtoCommerce.MFA.Web.Controllers.Api;
 public class MfaController(
     IMfaService mfaService,
     IBackofficeMfaSignInService backofficeSignInService,
-    IOptions<PasswordLoginOptions> passwordLoginOptions)
+    IOptions<PasswordLoginOptions> passwordLoginOptions,
+    MfaErrorDescriber errorDescriber)
     : Controller
 {
     private readonly PasswordLoginOptions _passwordLoginOptions = passwordLoginOptions.Value;
@@ -44,43 +46,37 @@ public class MfaController(
     public async Task<ActionResult<MfaSignInResult>> VerifySignInCode([FromBody] MfaSignInRequest request)
     {
         var result = await backofficeSignInService.SignInAsync(request.Code, request.Provider, request.RememberMe);
-        var isLockedOut = result.Outcome == MfaOutcome.AccountLocked;
 
-        return Ok(new MfaSignInResult
-        {
-            Error = GetError(result, reportLockout: true),
-            LockoutSecondsRemaining = isLockedOut ? MfaErrorDescriber.GetLockoutSecondsRemaining(result.User) : null,
-        });
+        var signInResult = AbstractTypeFactory<MfaSignInResult>.TryCreateInstance();
+        FillSignInResult(signInResult, result, reportLockout: true);
+
+        return Ok(signInResult);
     }
 
-    private static MfaSendCodeResult ToSendCodeResult(MfaResult result, bool reportLockout)
+    protected virtual MfaSendCodeResult ToSendCodeResult(MfaResult result, bool reportLockout)
+    {
+        var sendCodeResult = AbstractTypeFactory<MfaSendCodeResult>.TryCreateInstance();
+        FillSignInResult(sendCodeResult, result, reportLockout);
+        sendCodeResult.TwoFactorToken = result.TwoFactorToken;
+        sendCodeResult.Provider = result.Provider;
+        sendCodeResult.Providers = result.Providers;
+        sendCodeResult.ResendSecondsRemaining = result.ResendSecondsRemaining;
+
+        return sendCodeResult;
+    }
+
+    protected virtual void FillSignInResult(MfaSignInResult signInResult, MfaResult result, bool reportLockout)
     {
         var isLockoutReported = reportLockout && result.Outcome == MfaOutcome.AccountLocked;
 
-        return new MfaSendCodeResult
-        {
-            Error = GetError(result, reportLockout),
-            TwoFactorToken = result.TwoFactorToken,
-            Provider = result.Provider,
-            Providers = result.Providers,
-            LockoutSecondsRemaining = isLockoutReported ? MfaErrorDescriber.GetLockoutSecondsRemaining(result.User) : null,
-            ResendSecondsRemaining = result.ResendSecondsRemaining,
-        };
+        signInResult.Error = GetError(result, reportLockout);
+        signInResult.LockoutSecondsRemaining = isLockoutReported ? errorDescriber.GetLockoutSecondsRemaining(result.User) : null;
     }
 
-    private static IdentityError GetError(MfaResult result, bool reportLockout)
+    protected virtual IdentityError GetError(MfaResult result, bool reportLockout)
     {
-        return result.Outcome switch
-        {
-            MfaOutcome.Success => null,
-            MfaOutcome.InvalidTwoFactorToken => MfaErrorDescriber.InvalidTwoFactorToken(),
-            MfaOutcome.InvalidCode => MfaErrorDescriber.InvalidCode(),
-            MfaOutcome.SignInNotAllowed => MfaErrorDescriber.SignInNotAllowed(),
-            MfaOutcome.AccountLocked when reportLockout => MfaErrorDescriber.GetLockoutError(result.User),
-            MfaOutcome.LockoutDisabled => MfaErrorDescriber.LockoutDisabled(),
-            MfaOutcome.ProviderNotAvailable => MfaErrorDescriber.ProviderNotAvailable(),
-            MfaOutcome.ResendTooSoon => MfaErrorDescriber.ResendTooSoon(),
-            _ => MfaErrorDescriber.LoginFailed(),
-        };
+        return result.Outcome == MfaOutcome.AccountLocked && !reportLockout
+            ? errorDescriber.LoginFailed()
+            : errorDescriber.GetError(result.Outcome, result.User);
     }
 }

@@ -31,6 +31,9 @@
         "lockout_disabled": "Denne kontoen kan ikke logge på med en kode. Kontakt administratoren.",
         "mfa_provider_not_available": "Vi kan ikke sende en påloggingskode til denne kontoen. Bekreft e-posten eller kontakt administratoren."
       }
+    },
+    "sign-in-log": {
+      "type-mfa": "Påloggingskode"
     }
   }
 }

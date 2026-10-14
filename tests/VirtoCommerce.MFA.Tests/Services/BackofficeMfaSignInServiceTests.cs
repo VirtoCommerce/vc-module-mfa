@@ -23,7 +23,7 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
 
     public BackofficeMfaSignInServiceTests()
     {
-        _service = new BackofficeMfaSignInService(SignInManager.Object, MfaService, _eventPublisher.Object);
+        _service = new BackofficeMfaSignInService(SignInManager.Object, MfaService, _eventPublisher.Object, ErrorDescriber);
 
         UserManager
             .Setup(x => x.IsInRoleAsync(It.IsAny<ApplicationUser>(), PlatformConstants.Security.SystemRoles.Customer))
@@ -70,6 +70,38 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
         // Assert
         Assert.Equal(MfaOutcome.SignInNotAllowed, result.Outcome);
         NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Never);
+        _eventPublisher.Verify(x => x.Publish(It.Is<UserSignInAttemptEvent>(e =>
+            !e.Succeeded && e.UserId == ActiveUserId && e.FailureReason == SignInFailureReason.NotAllowed)), Times.Once);
+    }
+
+    [Theory]
+    [InlineData(LockoutDisabledUserId, MfaOutcome.LockoutDisabled, ModuleConstants.Security.FailureReason.LockoutDisabled)]
+    [InlineData(UnconfirmedEmailUserId, MfaOutcome.ProviderNotAvailable, ModuleConstants.Security.FailureReason.ProviderNotAvailable)]
+    public async Task SendCodeAsync_Should_LogTheReason_When_NoCodeCanBeSent(string userId, MfaOutcome expectedOutcome, string expectedReason)
+    {
+        // Arrange
+        WaitForSecondFactor(await UserManager.Object.FindByIdAsync(userId));
+
+        // Act
+        var result = await _service.SendCodeAsync();
+
+        // Assert
+        Assert.Equal(expectedOutcome, result.Outcome);
+        _eventPublisher.Verify(x => x.Publish(It.Is<UserSignInAttemptEvent>(e =>
+            !e.Succeeded && e.UserId == userId && e.FailureReason == expectedReason)), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendCodeAsync_Should_NotLog_When_TheCodeIsSent()
+    {
+        // Arrange
+        WaitForSecondFactor(BackofficeUser);
+
+        // Act
+        await _service.SendCodeAsync();
+
+        // Assert
+        _eventPublisher.Verify(x => x.Publish(It.IsAny<UserSignInAttemptEvent>()), Times.Never);
     }
 
     [Fact]

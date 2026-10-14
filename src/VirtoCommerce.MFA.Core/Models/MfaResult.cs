@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using VirtoCommerce.Platform.Core.Common;
 using VirtoCommerce.Platform.Core.Security;
 
 namespace VirtoCommerce.MFA.Core.Models;
@@ -17,24 +18,24 @@ public class MfaResult
 
     public int? ResendSecondsRemaining { get; set; }
 
-    public static MfaResult Succeed(ApplicationUser user, string twoFactorToken = null, string provider = null, IList<MfaProviderInfo> providers = null)
+    public static MfaResult Succeed(ApplicationUser user, string provider = null, IList<MfaProviderInfo> providers = null)
     {
-        return new MfaResult
-        {
-            Outcome = MfaOutcome.Success,
-            User = user,
-            TwoFactorToken = twoFactorToken,
-            Provider = provider,
-            Providers = providers,
-        };
+        var result = AbstractTypeFactory<MfaResult>.TryCreateInstance();
+        result.Outcome = MfaOutcome.Success;
+        result.User = user;
+        result.Provider = provider;
+        result.Providers = providers;
+
+        return result;
     }
 
-    public static MfaResult Fail(MfaOutcome outcome, ApplicationUser user = null)
+    public static MfaResult Fail(MfaOutcome outcome, ApplicationUser user = null, string provider = null)
     {
-        return new MfaResult
-        {
-            Outcome = outcome,
-            User = user,
-        };
+        var result = AbstractTypeFactory<MfaResult>.TryCreateInstance();
+        result.Outcome = outcome;
+        result.User = user;
+        result.Provider = provider;
+
+        return result;
     }
 }

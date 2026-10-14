@@ -31,6 +31,9 @@
         "lockout_disabled": "Det här kontot kan inte logga in med en kod. Kontakta administratören.",
         "mfa_provider_not_available": "Vi kan inte skicka en inloggningskod till det här kontot. Bekräfta e-posten eller kontakta administratören."
       }
+    },
+    "sign-in-log": {
+      "type-mfa": "Inloggningskod"
     }
   }
 }

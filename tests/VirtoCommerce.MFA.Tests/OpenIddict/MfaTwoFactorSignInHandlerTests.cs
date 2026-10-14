@@ -7,6 +7,7 @@ using VirtoCommerce.MFA.Core;
 using VirtoCommerce.MFA.Data.OpenIddict;
 using VirtoCommerce.Platform.Core.JsonConverters;
 using VirtoCommerce.Platform.Core.Security;
+using VirtoCommerce.Platform.Core.Security.SignInLog;
 using VirtoCommerce.Platform.Security.OpenIddict;
 using Xunit;
 
@@ -19,7 +20,7 @@ public class MfaTwoFactorSignInHandlerTests : MfaTestsBase
 
     public MfaTwoFactorSignInHandlerTests()
     {
-        _handler = new MfaTwoFactorSignInHandler(MfaService);
+        _handler = new MfaTwoFactorSignInHandler(MfaService, ErrorDescriber);
     }
 
     [Theory]
@@ -97,6 +98,23 @@ public class MfaTwoFactorSignInHandlerTests : MfaTestsBase
         var badRequest = Assert.IsType<BadRequestObjectResult>(actionResult);
         Assert.Equal(expectedCode, Assert.IsType<TokenResponse>(badRequest.Value).Code);
         Assert.Equal(ModuleConstants.Security.FailureReason.ProviderNotAvailable, requestContext.FailureReason);
+    }
+
+    [Theory]
+    [InlineData(true, "user_is_temporary_locked_out")]
+    [InlineData(false, "login_failed")]
+    public async Task ChallengeAsync_Should_LogTheLockout_When_TheAccountIsLocked(bool detailedErrors, string expectedCode)
+    {
+        // Arrange
+        var requestContext = CreateRequestContext(LockedUser, StoreId, detailedErrors);
+
+        // Act
+        var actionResult = await _handler.ChallengeAsync(requestContext);
+
+        // Assert
+        var badRequest = Assert.IsType<BadRequestObjectResult>(actionResult);
+        Assert.Equal(expectedCode, Assert.IsType<TokenResponse>(badRequest.Value).Code);
+        Assert.Equal(SignInFailureReason.LockedOut, requestContext.FailureReason);
     }
 
     private static TokenRequestContext CreateRequestContext(ApplicationUser user, string storeId, bool detailedErrors = false)

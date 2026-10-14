@@ -31,6 +31,9 @@
         "lockout_disabled": "此账户无法使用验证码登录，请联系管理员。",
         "mfa_provider_not_available": "无法向此账户发送登录验证码。请确认电子邮件或联系管理员。"
       }
+    },
+    "sign-in-log": {
+      "type-mfa": "登录验证码"
     }
   }
 }

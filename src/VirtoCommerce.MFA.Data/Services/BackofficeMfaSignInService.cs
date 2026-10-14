@@ -17,7 +17,8 @@ namespace VirtoCommerce.MFA.Data.Services;
 public class BackofficeMfaSignInService(
     SignInManager<ApplicationUser> signInManager,
     IMfaService mfaService,
-    IEventPublisher eventPublisher)
+    IEventPublisher eventPublisher,
+    MfaErrorDescriber errorDescriber)
     : IBackofficeMfaSignInService
 {
     private UserManager<ApplicationUser> UserManager => signInManager.UserManager;
@@ -32,10 +33,16 @@ public class BackofficeMfaSignInService(
 
         if (await IsBackofficeAccessDeniedAsync(user))
         {
-            return MfaResult.Fail(MfaOutcome.SignInNotAllowed, user);
+            return await FailAsync(MfaResult.Fail(MfaOutcome.SignInNotAllowed, user, provider));
         }
 
-        return await mfaService.SendCodeAsync(user, provider);
+        var result = await mfaService.SendCodeAsync(user, provider);
+        if (result.Outcome is MfaOutcome.Success or MfaOutcome.ResendTooSoon)
+        {
+            return result;
+        }
+
+        return await FailAsync(result);
     }
 
     public virtual async Task<MfaResult> SignInAsync(string code, string provider = null, bool rememberMe = false)
@@ -50,36 +57,36 @@ public class BackofficeMfaSignInService(
 
         if (await IsBackofficeAccessDeniedAsync(user))
         {
-            return await FailAsync(MfaOutcome.SignInNotAllowed, user, SignInFailureReason.NotAllowed);
+            return await FailAsync(MfaResult.Fail(MfaOutcome.SignInNotAllowed, user, provider));
         }
 
         var validation = await mfaService.ValidateUserAsync(user);
         if (validation.Outcome != MfaOutcome.Success)
         {
-            return await FailAsync(validation.Outcome, user, GetFailureReason(validation.Outcome));
+            return await FailAsync(validation);
         }
 
         var mfaProvider = await mfaService.GetProviderAsync(user, provider);
         if (mfaProvider == null)
         {
-            return await FailAsync(MfaOutcome.ProviderNotAvailable, user, ModuleConstants.Security.FailureReason.ProviderNotAvailable);
+            return await FailAsync(MfaResult.Fail(MfaOutcome.ProviderNotAvailable, user, provider));
         }
 
         var signInResult = await signInManager.TwoFactorSignInAsync(mfaProvider.Name, code, rememberMe, rememberClient: false);
 
         if (signInResult.IsLockedOut)
         {
-            return await FailAsync(MfaOutcome.AccountLocked, await UserManager.FindByIdAsync(user.Id), SignInFailureReason.LockedOut);
+            return await FailAsync(MfaResult.Fail(MfaOutcome.AccountLocked, await UserManager.FindByIdAsync(user.Id), mfaProvider.Name));
         }
 
         if (signInResult.IsNotAllowed)
         {
-            return await FailAsync(MfaOutcome.SignInNotAllowed, user, SignInFailureReason.NotAllowed);
+            return await FailAsync(MfaResult.Fail(MfaOutcome.SignInNotAllowed, user, mfaProvider.Name));
         }
 
         if (!signInResult.Succeeded)
         {
-            return await FailAsync(MfaOutcome.InvalidCode, user, ModuleConstants.Security.FailureReason.InvalidCode);
+            return await FailAsync(MfaResult.Fail(MfaOutcome.InvalidCode, user, mfaProvider.Name));
         }
 
         user = await UserManager.FindByIdAsync(user.Id);
@@ -92,13 +99,15 @@ public class BackofficeMfaSignInService(
         catch (DuplicateEmailException)
         {
             await signInManager.SignOutAsync();
-            return await FailAsync(MfaOutcome.DuplicateEmail, user, SignInFailureReason.DuplicateEmail);
+            return await FailAsync(MfaResult.Fail(MfaOutcome.DuplicateEmail, user, mfaProvider.Name));
         }
 
         await eventPublisher.Publish(new UserLoginEvent(user));
-        await PublishSignInAttemptAsync(user, succeeded: true, failureReason: null);
 
-        return MfaResult.Succeed(user);
+        var result = MfaResult.Succeed(user, mfaProvider.Name);
+        await PublishSignInAttemptAsync(result);
+
+        return result;
     }
 
     protected virtual Task<bool> IsBackofficeAccessDeniedAsync(ApplicationUser user)
@@ -106,34 +115,26 @@ public class BackofficeMfaSignInService(
         return UserManager.IsInRoleAsync(user, PlatformConstants.Security.SystemRoles.Customer);
     }
 
-    protected virtual string GetFailureReason(MfaOutcome outcome)
+    protected virtual async Task<MfaResult> FailAsync(MfaResult result)
     {
-        return outcome switch
-        {
-            MfaOutcome.LockoutDisabled => ModuleConstants.Security.FailureReason.LockoutDisabled,
-            MfaOutcome.AccountLocked => SignInFailureReason.LockedOut,
-            _ => SignInFailureReason.Unknown,
-        };
+        await PublishSignInAttemptAsync(result);
+
+        return result;
     }
 
-    protected virtual async Task<MfaResult> FailAsync(MfaOutcome outcome, ApplicationUser user, string failureReason)
+    protected virtual Task PublishSignInAttemptAsync(MfaResult result)
     {
-        await PublishSignInAttemptAsync(user, succeeded: false, failureReason);
-
-        return MfaResult.Fail(outcome, user);
-    }
-
-    protected virtual Task PublishSignInAttemptAsync(ApplicationUser user, bool succeeded, string failureReason)
-    {
+        var isSucceeded = result.Outcome == MfaOutcome.Success;
         var attempt = AbstractTypeFactory<UserSignInAttemptEvent>.TryCreateInstance();
 
-        attempt.UserName = user.UserName;
-        attempt.UserId = user.Id;
-        attempt.Succeeded = succeeded;
-        attempt.FailureReason = failureReason;
+        attempt.UserName = result.User.UserName;
+        attempt.UserId = result.User.Id;
+        attempt.Succeeded = isSucceeded;
+        attempt.FailureReason = isSucceeded ? null : errorDescriber.GetFailureReason(result.Outcome);
         attempt.SignInType = ModuleConstants.Security.SignInType;
-        attempt.StoreId = user.StoreId;
-        attempt.MemberId = user.MemberId;
+        attempt.Provider = result.Provider;
+        attempt.StoreId = result.User.StoreId;
+        attempt.MemberId = result.User.MemberId;
 
         return eventPublisher.Publish(attempt);
     }

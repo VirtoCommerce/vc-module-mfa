@@ -31,6 +31,9 @@
         "lockout_disabled": "Esta cuenta no puede iniciar sesión con un código. Póngase en contacto con su administrador.",
         "mfa_provider_not_available": "No podemos enviar un código a esta cuenta. Confirme su correo o póngase en contacto con su administrador."
       }
+    },
+    "sign-in-log": {
+      "type-mfa": "Código de inicio de sesión"
     }
   }
 }

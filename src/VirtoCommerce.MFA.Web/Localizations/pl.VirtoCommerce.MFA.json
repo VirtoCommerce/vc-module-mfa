@@ -31,6 +31,9 @@
         "lockout_disabled": "To konto nie może logować się kodem. Skontaktuj się z administratorem.",
         "mfa_provider_not_available": "Nie możemy wysłać kodu logowania na to konto. Potwierdź adres e-mail lub skontaktuj się z administratorem."
       }
+    },
+    "sign-in-log": {
+      "type-mfa": "Kod logowania"
     }
   }
 }

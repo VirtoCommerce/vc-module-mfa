@@ -9,6 +9,8 @@ public enum MfaOutcome
     AccountLocked,
     ProviderNotAvailable,
     InvalidCode,
+    CodeAttemptsExceeded,
+    FailedAttemptNotRecorded,
     ResendTooSoon,
     SignInNotAllowed,
     DuplicateEmail,

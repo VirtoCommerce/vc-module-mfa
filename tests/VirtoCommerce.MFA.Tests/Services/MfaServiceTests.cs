@@ -1,11 +1,15 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using Moq;
 using VirtoCommerce.MFA.Core.Models;
 using VirtoCommerce.MFA.Core.Notifications;
+using VirtoCommerce.MFA.Core.Services;
+using VirtoCommerce.MFA.Data.Services;
 using VirtoCommerce.NotificationsModule.Core.Model;
 using VirtoCommerce.Platform.Core.Security;
+using VirtoCommerce.StoreModule.Core.Model;
 using Xunit;
 
 namespace VirtoCommerce.MFA.Tests.Services;
@@ -13,44 +17,11 @@ namespace VirtoCommerce.MFA.Tests.Services;
 [Trait("Category", "Unit")]
 public class MfaServiceTests : MfaTestsBase
 {
-    [Theory]
-    [InlineData(null, false, ActiveUserId, false)]
-    [InlineData(null, true, ActiveUserId, true)]
-    [InlineData(null, false, BackofficeUserId, false)]
-    [InlineData(null, true, BackofficeUserId, true)]
-    [InlineData(UnknownStoreId, true, ActiveUserId, true)]
-    [InlineData(UnknownStoreId, false, ActiveUserId, false)]
-    [InlineData(StoreId, false, ActiveUserId, false)]
-    [InlineData(StoreId, true, ActiveUserId, true)]
-    [InlineData(MfaEnabledStoreId, false, ActiveUserId, true)]
-    [InlineData(MfaEnabledStoreId, false, BackofficeUserId, true)]
-    [InlineData(null, false, EnabledStoreCustomerId, true)]
-    [InlineData(StoreId, false, EnabledStoreCustomerId, true)]
-    [InlineData(MfaDisabledStoreId, false, EnabledStoreCustomerId, true)]
-    [InlineData(MfaDisabledStoreId, true, DisabledStoreCustomerId, false)]
-    [InlineData(MfaDisabledStoreId, true, DisabledStoreAdministratorId, true)]
-    [InlineData(null, true, DisabledStoreCustomerId, true)]
-    [InlineData(MfaDisabledStoreId, true, ActiveUserId, true)]
-    [InlineData(MfaDisabledStoreId, true, BackofficeUserId, true)]
-    [InlineData(MfaDisabledStoreId, false, BackofficeUserId, false)]
-    public async Task IsRequiredAsync_Should_FollowTheGlobalAndTheStoreSettings(string storeId, bool isGloballyEnabled, string userId, bool expected)
-    {
-        // Arrange
-        IsGloballyEnabled = isGloballyEnabled;
-        var user = await UserManager.Object.FindByIdAsync(userId);
-
-        // Act
-        var isRequired = await MfaService.IsRequiredAsync(user, storeId);
-
-        // Assert
-        Assert.Equal(expected, isRequired);
-    }
-
     [Fact]
     public async Task ChallengeAsync_Should_SendCodeAndIssueToken()
     {
         // Act
-        var result = await MfaService.ChallengeAsync(StoreId, ActiveUser);
+        var result = await MfaService.ChallengeAsync(ActiveUser, StoreId);
 
         // Assert
         Assert.Equal(MfaOutcome.Success, result.Outcome);
@@ -92,7 +63,7 @@ public class MfaServiceTests : MfaTestsBase
     public async Task ChallengeAsync_Should_ReportTheResendInterval()
     {
         // Act
-        var result = await MfaService.ChallengeAsync(StoreId, ActiveUser);
+        var result = await MfaService.ChallengeAsync(ActiveUser, StoreId);
 
         // Assert
         Assert.Equal(ResendIntervalSeconds, result.ResendSecondsRemaining);
@@ -102,11 +73,11 @@ public class MfaServiceTests : MfaTestsBase
     public async Task ChallengeAsync_Should_IssueTokenWithoutSendingCode_When_ACodeWasJustSent()
     {
         // Arrange
-        await MfaService.ChallengeAsync(StoreId, ActiveUser);
+        await MfaService.ChallengeAsync(ActiveUser, StoreId);
         TimeProvider.Advance(TimeSpan.FromSeconds(10));
 
         // Act
-        var result = await MfaService.ChallengeAsync(StoreId, ActiveUser);
+        var result = await MfaService.ChallengeAsync(ActiveUser, StoreId);
 
         // Assert
         Assert.Equal(MfaOutcome.Success, result.Outcome);
@@ -119,7 +90,7 @@ public class MfaServiceTests : MfaTestsBase
     public async Task ResendCodeAsync_Should_NotSendCode_When_ACodeWasJustSent()
     {
         // Arrange
-        var challenge = await MfaService.ChallengeAsync(StoreId, ActiveUser);
+        var challenge = await MfaService.ChallengeAsync(ActiveUser, StoreId);
         TimeProvider.Advance(TimeSpan.FromSeconds(12.5));
 
         // Act
@@ -137,7 +108,7 @@ public class MfaServiceTests : MfaTestsBase
     public async Task ResendCodeAsync_Should_SendCode_When_TheResendIntervalHasPassed()
     {
         // Arrange
-        var challenge = await MfaService.ChallengeAsync(StoreId, ActiveUser);
+        var challenge = await MfaService.ChallengeAsync(ActiveUser, StoreId);
         TimeProvider.Advance(MfaOptions.CodeResendInterval);
 
         // Act
@@ -183,7 +154,7 @@ public class MfaServiceTests : MfaTestsBase
     public async Task ResendCodeAsync_Should_RejectToken_When_TheUserSignedInAfterItWasIssued()
     {
         // Arrange
-        var challenge = await MfaService.ChallengeAsync(StoreId, ActiveUser);
+        var challenge = await MfaService.ChallengeAsync(ActiveUser, StoreId);
         ActiveUser.LastLoginDate = DateTime.UtcNow;
 
         // Act
@@ -199,10 +170,10 @@ public class MfaServiceTests : MfaTestsBase
     {
         // Arrange
         ActiveUser.LastLoginDate = DateTime.UtcNow.AddDays(-1);
-        var challenge = await MfaService.ChallengeAsync(StoreId, ActiveUser);
+        var challenge = await MfaService.ChallengeAsync(ActiveUser, StoreId);
 
         // Act
-        var result = await MfaService.VerifyCodeAsync(StoreId, challenge.TwoFactorToken, ValidCode);
+        var result = await MfaService.VerifyCodeAsync(challenge.TwoFactorToken, ValidCode, StoreId);
 
         // Assert
         Assert.Equal(MfaOutcome.Success, result.Outcome);
@@ -212,7 +183,7 @@ public class MfaServiceTests : MfaTestsBase
     public async Task ChallengeAsync_Should_IssueTokenWithoutStore_When_TheSignInHasNoStore()
     {
         // Act
-        var result = await MfaService.ChallengeAsync(storeId: null, BackofficeUser);
+        var result = await MfaService.ChallengeAsync(BackofficeUser, storeId: null);
 
         // Assert
         Assert.Equal(MfaOutcome.Success, result.Outcome);
@@ -224,8 +195,8 @@ public class MfaServiceTests : MfaTestsBase
     public async Task ChallengeAsync_Should_SendCodeWithTheGlobalTemplate_When_TheStoreIsUnknown()
     {
         // Act
-        var result = await MfaService.ChallengeAsync(UnknownStoreId, ActiveUser);
-        var verifyResult = await MfaService.VerifyCodeAsync(UnknownStoreId, result.TwoFactorToken, ValidCode);
+        var result = await MfaService.ChallengeAsync(ActiveUser, UnknownStoreId);
+        var verifyResult = await MfaService.VerifyCodeAsync(result.TwoFactorToken, ValidCode, UnknownStoreId);
 
         // Assert
         Assert.Equal(MfaOutcome.Success, result.Outcome);
@@ -238,7 +209,7 @@ public class MfaServiceTests : MfaTestsBase
     public async Task ChallengeAsync_Should_NotSendCode_When_LockoutIsDisabled()
     {
         // Act
-        var result = await MfaService.ChallengeAsync(StoreId, LockoutDisabledUser);
+        var result = await MfaService.ChallengeAsync(LockoutDisabledUser, StoreId);
 
         // Assert
         Assert.Equal(MfaOutcome.LockoutDisabled, result.Outcome);
@@ -255,7 +226,7 @@ public class MfaServiceTests : MfaTestsBase
         var user = userId == NoEmailUserId ? NoEmailUser : UnconfirmedEmailUser;
 
         // Act
-        var result = await MfaService.ChallengeAsync(StoreId, user);
+        var result = await MfaService.ChallengeAsync(user, StoreId);
 
         // Assert
         Assert.Equal(MfaOutcome.ProviderNotAvailable, result.Outcome);
@@ -266,7 +237,7 @@ public class MfaServiceTests : MfaTestsBase
     public async Task ChallengeAsync_Should_ReportProviderNotAvailable_When_ProviderIsUnknown()
     {
         // Act
-        var result = await MfaService.ChallengeAsync(StoreId, ActiveUser, "Sms");
+        var result = await MfaService.ChallengeAsync(ActiveUser, StoreId, "Sms");
 
         // Assert
         Assert.Equal(MfaOutcome.ProviderNotAvailable, result.Outcome);
@@ -360,7 +331,7 @@ public class MfaServiceTests : MfaTestsBase
     public async Task VerifyCodeAsync_Should_Succeed_When_CodeIsValid()
     {
         // Act
-        var result = await MfaService.VerifyCodeAsync(StoreId, CreateTwoFactorToken(), ValidCode);
+        var result = await MfaService.VerifyCodeAsync(CreateTwoFactorToken(), ValidCode, StoreId);
 
         // Assert
         Assert.Equal(MfaOutcome.Success, result.Outcome);
@@ -376,7 +347,7 @@ public class MfaServiceTests : MfaTestsBase
         ActiveUser.LastLoginDate = DateTime.UtcNow.AddSeconds(1);
 
         // Act
-        var result = await MfaService.VerifyCodeAsync(StoreId, twoFactorToken, ValidCode);
+        var result = await MfaService.VerifyCodeAsync(twoFactorToken, ValidCode, StoreId);
 
         // Assert
         Assert.Equal(MfaOutcome.InvalidTwoFactorToken, result.Outcome);
@@ -388,7 +359,7 @@ public class MfaServiceTests : MfaTestsBase
     public async Task VerifyCodeAsync_Should_RejectTokenWithTheUser_When_SecurityStampChanged()
     {
         // Act
-        var result = await MfaService.VerifyCodeAsync(StoreId, CreateTwoFactorToken(securityStamp: "old-stamp"), ValidCode);
+        var result = await MfaService.VerifyCodeAsync(CreateTwoFactorToken(securityStamp: "old-stamp"), ValidCode, StoreId);
 
         // Assert
         Assert.Equal(MfaOutcome.InvalidTwoFactorToken, result.Outcome);
@@ -399,7 +370,7 @@ public class MfaServiceTests : MfaTestsBase
     public async Task VerifyCodeAsync_Should_RejectTokenWithoutUser_When_UserNoLongerExists()
     {
         // Act
-        var result = await MfaService.VerifyCodeAsync(StoreId, CreateTwoFactorToken(userId: UnknownUserId), ValidCode);
+        var result = await MfaService.VerifyCodeAsync(CreateTwoFactorToken(userId: UnknownUserId), ValidCode, StoreId);
 
         // Assert
         Assert.Equal(MfaOutcome.InvalidTwoFactorToken, result.Outcome);
@@ -416,7 +387,7 @@ public class MfaServiceTests : MfaTestsBase
             .ReturnsAsync(IdentityResult.Success);
 
         // Act
-        var result = await MfaService.VerifyCodeAsync(StoreId, CreateTwoFactorToken(), InvalidCode);
+        var result = await MfaService.VerifyCodeAsync(CreateTwoFactorToken(), InvalidCode, StoreId);
 
         // Assert
         Assert.Equal(MfaOutcome.AccountLocked, result.Outcome);
@@ -427,7 +398,7 @@ public class MfaServiceTests : MfaTestsBase
     public async Task VerifyCodeAsync_Should_IgnoreTheCaseOfTheStoreId()
     {
         // Act
-        var result = await MfaService.VerifyCodeAsync(StoreId.ToUpperInvariant(), CreateTwoFactorToken(), ValidCode);
+        var result = await MfaService.VerifyCodeAsync(CreateTwoFactorToken(), ValidCode, StoreId.ToUpperInvariant());
 
         // Assert
         Assert.Equal(MfaOutcome.Success, result.Outcome);
@@ -437,7 +408,7 @@ public class MfaServiceTests : MfaTestsBase
     public async Task VerifyCodeAsync_Should_Succeed_When_TheSignInHasNoStore()
     {
         // Act
-        var result = await MfaService.VerifyCodeAsync(storeId: null, CreateTwoFactorToken(BackofficeUserId, storeId: null), ValidCode);
+        var result = await MfaService.VerifyCodeAsync(CreateTwoFactorToken(BackofficeUserId, storeId: null), ValidCode, storeId: null);
 
         // Assert
         Assert.Equal(MfaOutcome.Success, result.Outcome);
@@ -447,7 +418,7 @@ public class MfaServiceTests : MfaTestsBase
     public async Task VerifyCodeAsync_Should_CountFailure_When_CodeIsWrong()
     {
         // Act
-        var result = await MfaService.VerifyCodeAsync(StoreId, CreateTwoFactorToken(), InvalidCode);
+        var result = await MfaService.VerifyCodeAsync(CreateTwoFactorToken(), InvalidCode, StoreId);
 
         // Assert
         Assert.Equal(MfaOutcome.InvalidCode, result.Outcome);
@@ -461,7 +432,7 @@ public class MfaServiceTests : MfaTestsBase
     public async Task VerifyCodeAsync_Should_RejectToken_When_IssuedForAnotherSignIn(string requestStoreId, string ticketStoreId)
     {
         // Act
-        var result = await MfaService.VerifyCodeAsync(requestStoreId, CreateTwoFactorToken(storeId: ticketStoreId), ValidCode);
+        var result = await MfaService.VerifyCodeAsync(CreateTwoFactorToken(storeId: ticketStoreId), ValidCode, requestStoreId);
 
         // Assert
         Assert.Equal(MfaOutcome.InvalidTwoFactorToken, result.Outcome);
@@ -473,7 +444,7 @@ public class MfaServiceTests : MfaTestsBase
     public async Task VerifyCodeAsync_Should_RejectCode_When_ProviderItWasSentWithIsNotAvailable()
     {
         // Act
-        var result = await MfaService.VerifyCodeAsync(StoreId, CreateTwoFactorToken(provider: "Sms"), ValidCode);
+        var result = await MfaService.VerifyCodeAsync(CreateTwoFactorToken(provider: "Sms"), ValidCode, StoreId);
 
         // Assert
         Assert.Equal(MfaOutcome.ProviderNotAvailable, result.Outcome);
@@ -484,7 +455,7 @@ public class MfaServiceTests : MfaTestsBase
     public async Task VerifyCodeAsync_Should_NotCheckCode_When_AccountIsLocked()
     {
         // Act
-        var result = await MfaService.VerifyCodeAsync(StoreId, CreateTwoFactorToken(userId: LockedUserId), ValidCode);
+        var result = await MfaService.VerifyCodeAsync(CreateTwoFactorToken(userId: LockedUserId), ValidCode, StoreId);
 
         // Assert
         Assert.Equal(MfaOutcome.AccountLocked, result.Outcome);
@@ -495,9 +466,241 @@ public class MfaServiceTests : MfaTestsBase
     public async Task VerifyCodeAsync_Should_RejectCode_When_LockoutIsDisabled()
     {
         // Act
-        var result = await MfaService.VerifyCodeAsync(StoreId, CreateTwoFactorToken(userId: LockoutDisabledUserId), ValidCode);
+        var result = await MfaService.VerifyCodeAsync(CreateTwoFactorToken(userId: LockoutDisabledUserId), ValidCode, StoreId);
 
         // Assert
         Assert.Equal(MfaOutcome.LockoutDisabled, result.Outcome);
+    }
+
+    [Fact]
+    public async Task VerifyCodeAsync_Should_RefuseTheToken_When_TheWrongCodeLimitIsReached()
+    {
+        // Arrange
+        var twoFactorToken = CreateTwoFactorToken();
+        for (var i = 0; i < MfaOptions.MaxCodeAttempts; i++)
+        {
+            Assert.Equal(MfaOutcome.InvalidCode, (await MfaService.VerifyCodeAsync(twoFactorToken, InvalidCode, StoreId)).Outcome);
+        }
+
+        // Act
+        var result = await MfaService.VerifyCodeAsync(twoFactorToken, ValidCode, StoreId);
+
+        // Assert
+        Assert.Equal(MfaOutcome.CodeAttemptsExceeded, result.Outcome);
+        Assert.Equal(ActiveUserId, result.User.Id);
+        Assert.Equal(EmailProvider, result.Provider);
+        UserManager.Verify(x => x.VerifyTwoFactorTokenAsync(It.IsAny<ApplicationUser>(), EmailProvider, It.IsAny<string>()), Times.Exactly(MfaOptions.MaxCodeAttempts));
+    }
+
+    [Fact]
+    public async Task VerifyCodeAsync_Should_CountWrongCodesAcrossResends()
+    {
+        // Arrange
+        var twoFactorToken = CreateTwoFactorToken();
+        for (var i = 0; i < MfaOptions.MaxCodeAttempts - 1; i++)
+        {
+            await MfaService.VerifyCodeAsync(twoFactorToken, InvalidCode, StoreId);
+        }
+
+        var resent = await MfaService.ResendCodeAsync(twoFactorToken);
+        await MfaService.VerifyCodeAsync(resent.TwoFactorToken, InvalidCode, StoreId);
+
+        // Act
+        var result = await MfaService.VerifyCodeAsync(resent.TwoFactorToken, ValidCode, StoreId);
+
+        // Assert
+        Assert.Equal(MfaOutcome.CodeAttemptsExceeded, result.Outcome);
+    }
+
+    [Fact]
+    public async Task VerifyCodeAsync_Should_RefuseTheToken_When_ItWasAlreadyRedeemed()
+    {
+        // Arrange
+        var twoFactorToken = CreateTwoFactorToken();
+        Assert.Equal(MfaOutcome.Success, (await MfaService.VerifyCodeAsync(twoFactorToken, ValidCode, StoreId)).Outcome);
+
+        // Act
+        var result = await MfaService.VerifyCodeAsync(twoFactorToken, ValidCode, StoreId);
+
+        // Assert
+        Assert.Equal(MfaOutcome.InvalidTwoFactorToken, result.Outcome);
+    }
+
+    [Fact]
+    public async Task VerifyCodeAsync_Should_RedeemTheTokenOnce_When_TwoRequestsUseItAtTheSameTime()
+    {
+        // Arrange
+        var twoFactorToken = CreateTwoFactorToken();
+
+        // Act
+        var results = await Task.WhenAll(
+            Task.Run(() => MfaService.VerifyCodeAsync(twoFactorToken, ValidCode, StoreId)),
+            Task.Run(() => MfaService.VerifyCodeAsync(twoFactorToken, ValidCode, StoreId)));
+
+        // Assert
+        Assert.Single(results, x => x.Outcome == MfaOutcome.Success);
+    }
+
+    [Fact]
+    public async Task VerifyCodeAsync_Should_RevokeTheToken_When_TheFailedAttemptIsNotRecorded()
+    {
+        // Arrange
+        var twoFactorToken = CreateTwoFactorToken();
+        UserManager
+            .Setup(x => x.AccessFailedAsync(It.IsAny<ApplicationUser>()))
+            .ReturnsAsync(IdentityResult.Failed(new IdentityError { Code = "concurrency_failure" }));
+
+        // Act
+        var result = await MfaService.VerifyCodeAsync(twoFactorToken, InvalidCode, StoreId);
+        var retry = await MfaService.VerifyCodeAsync(twoFactorToken, ValidCode, StoreId);
+
+        // Assert
+        Assert.Equal(MfaOutcome.FailedAttemptNotRecorded, result.Outcome);
+        Assert.Equal(MfaOutcome.CodeAttemptsExceeded, retry.Outcome);
+    }
+
+    [Fact]
+    public async Task VerifyCodeAsync_Should_RejectTokenWithTheUser_When_TokenExpired()
+    {
+        // Arrange
+        var twoFactorToken = CreateTwoFactorToken();
+        TimeProvider.Advance(MfaOptions.TwoFactorTokenLifetime);
+
+        // Act
+        var result = await MfaService.VerifyCodeAsync(twoFactorToken, ValidCode, StoreId);
+
+        // Assert
+        Assert.Equal(MfaOutcome.InvalidTwoFactorToken, result.Outcome);
+        Assert.Equal(ActiveUserId, result.User.Id);
+    }
+
+    [Fact]
+    public async Task ChallengeAsync_Should_ReportProviderNotAvailableAndKeepTheResendSlot_When_TheNotificationIsNotActive()
+    {
+        // Arrange
+        IsNotificationActive = false;
+
+        // Act
+        var result = await MfaService.ChallengeAsync(ActiveUser, StoreId);
+        IsNotificationActive = true;
+        var retry = await MfaService.ChallengeAsync(ActiveUser, StoreId);
+
+        // Assert
+        Assert.Equal(MfaOutcome.ProviderNotAvailable, result.Outcome);
+        Assert.Null(result.TwoFactorToken);
+        Assert.Equal(MfaOutcome.Success, retry.Outcome);
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ChallengeAsync_Should_SendTheStoreTemplateFromTheStoreAddress_When_TheSignInNamesAStore()
+    {
+        // Act
+        await MfaService.ChallengeAsync(ActiveUser, StoreId);
+
+        // Assert
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.Is<Notification>(n =>
+            n.TenantIdentity.Id == StoreId &&
+            ((MfaSignInEmailNotification)n).From == StoreSender)), Times.Once);
+        MemberService.Verify(x => x.GetByIdAsync(ContactId, "Default", null), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendCodeAsync_Should_SendTheGlobalTemplateFromTheDefaultAddress_When_TheSignInHasNoStore()
+    {
+        // Act
+        await MfaService.SendCodeAsync(BackofficeUser);
+
+        // Assert
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.Is<Notification>(n =>
+            (n.TenantIdentity == null || n.TenantIdentity.Id == null) &&
+            ((MfaSignInEmailNotification)n).From == null)), Times.Once);
+    }
+
+    [Fact]
+    public async Task ResendCodeAsync_Should_RefuseTheToken_When_TheWrongCodeLimitIsReached()
+    {
+        // Arrange
+        var twoFactorToken = CreateTwoFactorToken();
+        for (var i = 0; i < MfaOptions.MaxCodeAttempts; i++)
+        {
+            await MfaService.VerifyCodeAsync(twoFactorToken, InvalidCode, StoreId);
+        }
+
+        // Act
+        var result = await MfaService.ResendCodeAsync(twoFactorToken);
+
+        // Assert
+        Assert.Equal(MfaOutcome.CodeAttemptsExceeded, result.Outcome);
+        Assert.Null(result.TwoFactorToken);
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ResendCodeAsync_Should_RefuseTheToken_When_ItWasRedeemed()
+    {
+        // Arrange
+        var twoFactorToken = CreateTwoFactorToken();
+        await MfaService.VerifyCodeAsync(twoFactorToken, ValidCode, StoreId);
+
+        // Act
+        var result = await MfaService.ResendCodeAsync(twoFactorToken);
+
+        // Assert
+        Assert.Equal(MfaOutcome.InvalidTwoFactorToken, result.Outcome);
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SendCodeAsync_Should_FreeTheResendSlot_When_SendingFails()
+    {
+        // Arrange
+        NotificationSender
+            .SetupSequence(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()))
+            .ThrowsAsync(new InvalidOperationException("Delivery failed"))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await Assert.ThrowsAsync<InvalidOperationException>(() => MfaService.SendCodeAsync(BackofficeUser));
+        var retry = await MfaService.SendCodeAsync(BackofficeUser);
+
+        // Assert
+        Assert.Equal(MfaOutcome.Success, retry.Outcome);
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task ChallengeAsync_Should_IssueTokenWithoutSendingCode_When_TheProviderSendsNothing()
+    {
+        // Arrange
+        var authenticator = new Mock<IMfaProvider>();
+        authenticator.SetupGet(x => x.Name).Returns(EmailProvider);
+        authenticator.SetupGet(x => x.SendsCode).Returns(false);
+        var mfaService = new MfaService(UserManager.Object, StoreService.Object, TwoFactorTokenService, TicketStore, [authenticator.Object],
+            CodeDeliveryLimiter, Options.Create(MfaOptions), TimeProvider);
+
+        // Act
+        var result = await mfaService.ChallengeAsync(ActiveUser, StoreId);
+
+        // Assert
+        Assert.Equal(MfaOutcome.Success, result.Outcome);
+        Assert.NotNull(result.TwoFactorToken);
+        Assert.Null(result.ResendSecondsRemaining);
+        authenticator.Verify(x => x.SendCodeAsync(It.IsAny<Store>(), It.IsAny<ApplicationUser>(), It.IsAny<string>()), Times.Never);
+        UserManager.Verify(x => x.GenerateTwoFactorTokenAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ChallengeAsync_Should_ShareTheResendLimitWithTheBackofficeCode()
+    {
+        // Arrange
+        await MfaService.SendCodeAsync(ActiveUser);
+
+        // Act
+        var result = await MfaService.ChallengeAsync(ActiveUser, StoreId);
+
+        // Assert
+        Assert.Equal(MfaOutcome.Success, result.Outcome);
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Once);
     }
 }

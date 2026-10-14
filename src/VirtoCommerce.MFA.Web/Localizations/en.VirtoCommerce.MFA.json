@@ -31,6 +31,9 @@
         "lockout_disabled": "This account can't sign in with a code. Contact your administrator.",
         "mfa_provider_not_available": "We can't send a sign-in code to this account. Confirm its email or contact your administrator."
       }
+    },
+    "sign-in-log": {
+      "type-mfa": "Sign-in code"
     }
   }
 }

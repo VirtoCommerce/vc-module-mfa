@@ -39,4 +39,14 @@ public class MfaCodeDeliveryLimiter(
             return true;
         }
     }
+
+    public virtual void Release(string key)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(key);
+
+        lock (_lock)
+        {
+            memoryCache.Remove(CacheKeyPrefix + key);
+        }
+    }
 }

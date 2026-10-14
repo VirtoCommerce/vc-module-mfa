@@ -143,10 +143,26 @@ public class MfaGrantTypeHandlerTests : MfaTestsBase
         var signInResult = Assert.IsType<SignInResult>(actionResult);
         Assert.Equal(ModuleConstants.Security.AuthenticationMethod, signInResult.Principal.FindFirst(OpenIddictConstants.Claims.AuthenticationMethodReference)?.Value);
         Assert.True(requestContext.SignInResult.Succeeded);
-        UserManager.Verify(x => x.ResetAccessFailedCountAsync(It.Is<ApplicationUser>(u => u.Id == userId)), Times.Once);
+        UserManager.Verify(x => x.UpdateAsync(It.Is<ApplicationUser>(u => u.Id == userId && u.AccessFailedCount == 0)), Times.Once);
+        UserManager.Verify(x => x.ResetAccessFailedCountAsync(It.IsAny<ApplicationUser>()), Times.Never);
         _eventPublisher.Verify(x => x.Publish(It.IsAny<UserLoginEvent>()), Times.Once);
         _eventPublisher.Verify(x => x.Publish(It.Is<UserSignInAttemptEvent>(e =>
-            e.Succeeded && e.UserId == userId && e.SignInType == ModuleConstants.Security.SignInType)), Times.Once);
+            e.Succeeded && e.UserId == userId && e.SignInType == ModuleConstants.Security.SignInType && e.Provider == EmailProvider)), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_LogTheUserNameOfTheToken_When_TheRequestNamesAnotherUser()
+    {
+        // Arrange
+        var requestContext = CreateRequestContext(StoreId, CreateTwoFactorToken(), InvalidCode);
+        requestContext.Request.Username = "someone-else";
+
+        // Act
+        await _handler.HandleAsync(requestContext);
+
+        // Assert
+        _eventPublisher.Verify(x => x.Publish(It.Is<UserSignInAttemptEvent>(e =>
+            e.UserId == ActiveUserId && e.UserName == ActiveUser.UserName)), Times.Once);
     }
 
     [Fact]
@@ -167,7 +183,7 @@ public class MfaGrantTypeHandlerTests : MfaTestsBase
         // Assert
         var error = Assert.IsType<TokenResponse>(Assert.IsType<BadRequestObjectResult>(actionResult).Value);
         Assert.Equal("user_cannot_login_in_store", error.Code);
-        UserManager.Verify(x => x.ResetAccessFailedCountAsync(It.IsAny<ApplicationUser>()), Times.Never);
+        UserManager.Verify(x => x.UpdateAsync(It.IsAny<ApplicationUser>()), Times.Never);
     }
 
     [Theory]
@@ -193,7 +209,7 @@ public class MfaGrantTypeHandlerTests : MfaTestsBase
 
     private MfaGrantTypeHandler CreateHandler(params ITokenRequestValidator[] requestValidators)
     {
-        return new MfaGrantTypeHandler(SignInManager.Object, IdentityOptions, requestValidators, [new MfaAuthenticationMethodClaimProvider()], [], _eventPublisher.Object, MfaService, UserManager.Object);
+        return new MfaGrantTypeHandler(SignInManager.Object, IdentityOptions, requestValidators, [new MfaAuthenticationMethodClaimProvider()], [], _eventPublisher.Object, MfaService, ErrorDescriber);
     }
 
     private static TokenRequestContext CreateRequestContext(string storeId, string twoFactorToken, string code, bool detailedErrors = false)

@@ -31,6 +31,9 @@
         "lockout_disabled": "Tällä tilillä ei voi kirjautua koodilla. Ota yhteyttä järjestelmänvalvojaan.",
         "mfa_provider_not_available": "Tälle tilille ei voi lähettää kirjautumiskoodia. Vahvista sähköposti tai ota yhteyttä järjestelmänvalvojaan."
       }
+    },
+    "sign-in-log": {
+      "type-mfa": "Kirjautumiskoodi"
     }
   }
 }

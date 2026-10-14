@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
 using VirtoCommerce.CustomerModule.Core.Model;
@@ -20,6 +21,7 @@ using VirtoCommerce.MFA.Data.Providers;
 using VirtoCommerce.MFA.Data.Services;
 using VirtoCommerce.NotificationsModule.Core.Model;
 using VirtoCommerce.NotificationsModule.Core.Services;
+using VirtoCommerce.Platform.Core.Common;
 using VirtoCommerce.Platform.Core.Security;
 using VirtoCommerce.Platform.Core.Settings;
 using VirtoCommerce.StoreModule.Core.Model;
@@ -45,6 +47,8 @@ public abstract class MfaTestsBase
     public const string BackofficeUserId = "backoffice-user";
     public const string DisabledStoreCustomerId = "disabled-store-customer";
     public const string DisabledStoreAdministratorId = "disabled-store-administrator";
+    public const string DisabledStoreManagerId = "disabled-store-manager";
+    public const string StoreSender = "store-admin@acme.com";
     public const string EnabledStoreCustomerId = "enabled-store-customer";
     public const string LockedUserId = "locked-user";
     public const string LockoutDisabledUserId = "lockout-disabled-user";
@@ -61,6 +65,14 @@ public abstract class MfaTestsBase
     public const int LockoutSeconds = 600;
 
     public IMfaService MfaService { get; }
+
+    public IMfaRequirementService RequirementService { get; }
+
+    public MfaErrorDescriber ErrorDescriber { get; }
+
+    public ITwoFactorTicketStore TicketStore { get; }
+
+    public bool IsNotificationActive { get; set; } = true;
 
     public ITwoFactorTokenService TwoFactorTokenService { get; }
 
@@ -120,7 +132,7 @@ public abstract class MfaTestsBase
         var memberService = new Mock<IMemberService>();
 
         memberService
-            .Setup(x => x.GetByIdAsync(It.IsAny<string>(), null, null))
+            .Setup(x => x.GetByIdAsync(It.IsAny<string>(), It.IsAny<string>(), null))
             .ReturnsAsync((string id, string _, string _) => members.FirstOrDefault(x => x.Id == id));
 
         ActiveUser = CreateUser(ActiveUserId, ActiveUserEmail);
@@ -128,13 +140,14 @@ public abstract class MfaTestsBase
         DisabledStoreCustomer = CreateUser(DisabledStoreCustomerId, "customer@acme.com", storeId: MfaDisabledStoreId);
         var disabledStoreAdministrator = CreateUser(DisabledStoreAdministratorId, "admin@acme.com", storeId: MfaDisabledStoreId);
         disabledStoreAdministrator.IsAdministrator = true;
+        var disabledStoreManager = CreateUser(DisabledStoreManagerId, "store-manager@acme.com", userType: UserType.Manager, storeId: MfaDisabledStoreId);
         var enabledStoreCustomer = CreateUser(EnabledStoreCustomerId, "enabled@acme.com", storeId: MfaEnabledStoreId);
         LockedUser = CreateUser(LockedUserId, "locked@acme.com", lockoutEnd: DateTimeOffset.UtcNow.AddSeconds(LockoutSeconds));
         LockoutDisabledUser = CreateUser(LockoutDisabledUserId, "lockout-disabled@acme.com", lockoutEnabled: false);
         NoEmailUser = CreateUser(NoEmailUserId, email: null);
         UnconfirmedEmailUser = CreateUser(UnconfirmedEmailUserId, "unconfirmed@acme.com", emailConfirmed: false);
 
-        var users = new[] { ActiveUser, BackofficeUser, DisabledStoreCustomer, disabledStoreAdministrator, enabledStoreCustomer, LockedUser, LockoutDisabledUser, NoEmailUser, UnconfirmedEmailUser };
+        var users = new[] { ActiveUser, BackofficeUser, DisabledStoreCustomer, disabledStoreAdministrator, disabledStoreManager, enabledStoreCustomer, LockedUser, LockoutDisabledUser, NoEmailUser, UnconfirmedEmailUser };
 
         UserManager = new Mock<UserManager<ApplicationUser>>(Mock.Of<IUserStore<ApplicationUser>>(), null, null, null, null, null, null, null, null);
 
@@ -174,10 +187,6 @@ public abstract class MfaTestsBase
             .ReturnsAsync(IdentityResult.Success);
 
         UserManager
-            .Setup(x => x.ResetAccessFailedCountAsync(It.IsAny<ApplicationUser>()))
-            .ReturnsAsync(IdentityResult.Success);
-
-        UserManager
             .Setup(x => x.UpdateAsync(It.IsAny<ApplicationUser>()))
             .ReturnsAsync(IdentityResult.Success);
 
@@ -204,17 +213,33 @@ public abstract class MfaTestsBase
 
         notificationSearchService
             .Setup(x => x.SearchNotificationsAsync(It.IsAny<NotificationSearchCriteria>()))
-            .ReturnsAsync(() => new NotificationSearchResult { Results = [new MfaSignInEmailNotification()] });
+            .ReturnsAsync((NotificationSearchCriteria criteria) => new NotificationSearchResult
+            {
+                Results =
+                [
+                    new MfaSignInEmailNotification
+                    {
+                        IsActive = IsNotificationActive,
+                        TenantIdentity = new TenantIdentity(criteria.TenantId, criteria.TenantType),
+                    },
+                ],
+            });
 
         NotificationSender = new Mock<INotificationSender>();
 
-        TwoFactorTokenService = new TwoFactorTokenService(new EphemeralDataProtectionProvider(), Options.Create(new MfaOptions()));
+        TwoFactorTokenService = new TwoFactorTokenService(new EphemeralDataProtectionProvider());
 
-        var emailProvider = new EmailMfaProvider(memberService.Object, notificationSearchService.Object, NotificationSender.Object);
+        MemberService = memberService;
+        var emailProvider = new EmailMfaProvider(memberService.Object, notificationSearchService.Object, NotificationSender.Object, NullLogger<EmailMfaProvider>.Instance);
 
-        CodeDeliveryLimiter = new MfaCodeDeliveryLimiter(new MemoryCache(new MemoryCacheOptions()), Options.Create(MfaOptions), TimeProvider);
+        var memoryCache = new MemoryCache(new MemoryCacheOptions());
+        CodeDeliveryLimiter = new MfaCodeDeliveryLimiter(memoryCache, Options.Create(MfaOptions), TimeProvider);
+        TicketStore = new TwoFactorTicketStore(memoryCache, Options.Create(MfaOptions));
+        ErrorDescriber = new MfaErrorDescriber(TimeProvider);
+        RequirementService = new MfaRequirementService(StoreService.Object, settingsManager.Object);
 
-        MfaService = new MfaService(UserManager.Object, StoreService.Object, settingsManager.Object, TwoFactorTokenService, [emailProvider], CodeDeliveryLimiter);
+        MfaService = new MfaService(UserManager.Object, StoreService.Object, TwoFactorTokenService, TicketStore, [emailProvider],
+            CodeDeliveryLimiter, Options.Create(MfaOptions), TimeProvider);
     }
 
     public MfaOptions MfaOptions { get; } = new();
@@ -223,15 +248,18 @@ public abstract class MfaTestsBase
 
     public IMfaCodeDeliveryLimiter CodeDeliveryLimiter { get; }
 
+    public Mock<IMemberService> MemberService { get; }
+
     public int ResendIntervalSeconds => (int)MfaOptions.CodeResendInterval.TotalSeconds;
 
     public string CreateTwoFactorToken(string userId = ActiveUserId, string storeId = StoreId, string securityStamp = SecurityStamp, string provider = EmailProvider)
     {
         return TwoFactorTokenService.CreateToken(new TwoFactorTicket
         {
+            Id = Guid.NewGuid().ToString("N"),
             UserId = userId,
             StoreId = storeId,
-            IssuedAt = DateTimeOffset.UtcNow,
+            IssuedAt = TimeProvider.GetUtcNow(),
             SecurityStamp = securityStamp,
             Provider = provider,
         });
@@ -243,6 +271,7 @@ public abstract class MfaTestsBase
         {
             Id = id,
             DefaultLanguage = StoreLanguage,
+            AdminEmail = StoreSender,
             Settings = [new() { Name = MfaModuleSettings.StoreMode.Name, Value = mfaMode }],
         };
     }

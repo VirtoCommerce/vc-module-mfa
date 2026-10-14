@@ -31,6 +31,9 @@
         "lockout_disabled": "Dieses Konto kann sich nicht mit einem Code anmelden. Wenden Sie sich an Ihren Administrator.",
         "mfa_provider_not_available": "An dieses Konto kann kein Anmeldecode gesendet werden. Bestätigen Sie die E-Mail-Adresse oder wenden Sie sich an Ihren Administrator."
       }
+    },
+    "sign-in-log": {
+      "type-mfa": "Anmeldecode"
     }
   }
 }

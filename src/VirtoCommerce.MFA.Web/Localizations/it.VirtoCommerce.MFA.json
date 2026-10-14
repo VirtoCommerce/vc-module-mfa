@@ -31,6 +31,9 @@
         "lockout_disabled": "Questo account non può accedere con un codice. Contatta l'amministratore.",
         "mfa_provider_not_available": "Impossibile inviare un codice di accesso a questo account. Conferma l'e-mail o contatta l'amministratore."
       }
+    },
+    "sign-in-log": {
+      "type-mfa": "Codice di accesso"
     }
   }
 }

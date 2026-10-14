@@ -1,5 +1,7 @@
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -91,7 +93,7 @@ public class MfaControllerTests : MfaTestsBase
     public async Task SendSignInCode_Should_ReportLockout_EvenWithoutDetailedErrors()
     {
         // Arrange
-        var lockedUser = new ApplicationUser { Id = LockedUserId, LockoutEnd = DateTimeOffset.UtcNow.AddSeconds(LockoutSeconds) };
+        var lockedUser = LockedUser;
         _backofficeSignInService.Setup(x => x.SendCodeAsync(null)).ReturnsAsync(MfaResult.Fail(MfaOutcome.AccountLocked, lockedUser));
 
         // Act
@@ -129,7 +131,7 @@ public class MfaControllerTests : MfaTestsBase
     public async Task VerifySignInCode_Should_ReportLockout_EvenWithoutDetailedErrors()
     {
         // Arrange
-        var lockedUser = new ApplicationUser { Id = LockedUserId, LockoutEnd = DateTimeOffset.UtcNow.AddSeconds(LockoutSeconds) };
+        var lockedUser = LockedUser;
         _backofficeSignInService
             .Setup(x => x.SignInAsync(InvalidCode, null, false))
             .ReturnsAsync(MfaResult.Fail(MfaOutcome.AccountLocked, lockedUser));
@@ -142,9 +144,25 @@ public class MfaControllerTests : MfaTestsBase
         Assert.True(result.LockoutSecondsRemaining > 0);
     }
 
+    [Fact]
+    public void MfaController_Should_AllowAnonymousCallsOnTheMfaRoutes()
+    {
+        // Assert
+        Assert.NotNull(typeof(MfaController).GetCustomAttribute<AllowAnonymousAttribute>());
+        Assert.Equal("api/mfa", typeof(MfaController).GetCustomAttribute<RouteAttribute>()?.Template);
+        Assert.Equal("resend", GetRoute(nameof(MfaController.ResendCode)));
+        Assert.Equal("signin/send", GetRoute(nameof(MfaController.SendSignInCode)));
+        Assert.Equal("signin/verify", GetRoute(nameof(MfaController.VerifySignInCode)));
+    }
+
+    private static string GetRoute(string methodName)
+    {
+        return typeof(MfaController).GetMethod(methodName)?.GetCustomAttribute<RouteAttribute>()?.Template;
+    }
+
     private MfaController CreateController(bool detailedErrors = false)
     {
-        return new MfaController(MfaService, _backofficeSignInService.Object, Options.Create(new PasswordLoginOptions { DetailedErrors = detailedErrors }));
+        return new MfaController(MfaService, _backofficeSignInService.Object, Options.Create(new PasswordLoginOptions { DetailedErrors = detailedErrors }), ErrorDescriber);
     }
 
     private static async Task<MfaSendCodeResult> ResendCodeAsync(MfaController controller, string twoFactorToken)

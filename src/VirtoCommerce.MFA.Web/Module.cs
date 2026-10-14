@@ -1,9 +1,12 @@
 using System;
 using System.IO;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using VirtoCommerce.MFA.Core;
 using VirtoCommerce.MFA.Core.Models;
 using VirtoCommerce.MFA.Core.Notifications;
@@ -32,13 +35,24 @@ public class Module : IModule, IHasConfiguration
             .Bind(Configuration.GetSection("MultiFactorAuthentication"))
             .Validate(x => x.TwoFactorTokenLifetime > TimeSpan.Zero, "MultiFactorAuthentication:TwoFactorTokenLifetime must be positive.")
             .Validate(x => x.CodeResendInterval > TimeSpan.Zero && x.CodeResendInterval < x.TwoFactorTokenLifetime, "MultiFactorAuthentication:CodeResendInterval must be positive and shorter than TwoFactorTokenLifetime.")
+            .Validate(x => x.MaxCodeAttempts > 0, "MultiFactorAuthentication:MaxCodeAttempts must be positive.")
             .ValidateOnStart();
+
+        serviceCollection.AddOptions<CookieAuthenticationOptions>(IdentityConstants.TwoFactorUserIdScheme)
+            .Configure<IOptions<MfaOptions>>((cookieOptions, mfaOptions) =>
+            {
+                cookieOptions.ExpireTimeSpan = mfaOptions.Value.TwoFactorTokenLifetime;
+                cookieOptions.SlidingExpiration = false;
+            });
 
         serviceCollection.TryAddSingleton(TimeProvider.System);
         serviceCollection.AddSingleton<IMfaCodeDeliveryLimiter, MfaCodeDeliveryLimiter>();
+        serviceCollection.AddSingleton<ITwoFactorTicketStore, TwoFactorTicketStore>();
+        serviceCollection.AddSingleton<MfaErrorDescriber>();
 
         serviceCollection.AddTransient<IMfaProvider, EmailMfaProvider>();
         serviceCollection.AddTransient<ITwoFactorTokenService, TwoFactorTokenService>();
+        serviceCollection.AddTransient<IMfaRequirementService, MfaRequirementService>();
         serviceCollection.AddTransient<IMfaService, MfaService>();
         serviceCollection.AddTransient<IBackofficeMfaSignInService, BackofficeMfaSignInService>();
 

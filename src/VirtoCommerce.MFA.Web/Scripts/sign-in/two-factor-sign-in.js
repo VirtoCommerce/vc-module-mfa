@@ -4,7 +4,7 @@ angular.module('virtoCommerce.mfa')
         function ($scope, $state, $stateParams, $translate, $interval, authService, mfaApi) {
             var CODE_PATTERN = /^\d{6}$/;
             var RESEND_TOO_SOON = 'resend_too_soon';
-            var FINAL_ERRORS = ['invalid_two_factor_token', 'lockout_disabled', 'mfa_provider_not_available', 'sign_in_not_allowed', 'user_is_locked_out', 'user_is_temporary_locked_out', 'login_failed'];
+            var INVALID_CODE = 'invalid_code';
             var resendDeadline = 0;
             var resendTimer = null;
 
@@ -83,7 +83,7 @@ angular.module('virtoCommerce.mfa')
             function showError(error) {
                 var code = error && error.code;
 
-                $scope.isFinalError = FINAL_ERRORS.indexOf(code) >= 0;
+                $scope.isFinalError = code !== INVALID_CODE;
 
                 var key = 'mfa.sign-in.errors.' + code;
                 var message = code ? $translate.instant(key) : null;
