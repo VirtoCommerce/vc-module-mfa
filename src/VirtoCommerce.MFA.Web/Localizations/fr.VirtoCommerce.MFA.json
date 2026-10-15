@@ -1,0 +1,40 @@
+{
+  "settings": {
+    "MultiFactorAuthentication": {
+      "Enabled": {
+        "title": "Authentification multifacteur",
+        "description": "Exige, en plus du mot de passe, un code à usage unique envoyé par e-mail pour chaque connexion par mot de passe sans boutique : le Backoffice ainsi que les applications et clients d'API qui se connectent avec un mot de passe. Les boutiques suivent ce paramètre sauf si elles le remplacent. Les utilisateurs sans e-mail confirmé ou dont le verrouillage est désactivé ne pourront pas se connecter tant que ce paramètre est actif. Le compte administrateur par défaut a le verrouillage désactivé : confirmez son e-mail et activez son verrouillage avant d'activer ce paramètre, sinon vous ne pourrez pas vous connecter au Backoffice."
+      },
+      "StoreMode": {
+        "title": "Authentification multifacteur",
+        "description": "Indique si les clients de cette boutique ont besoin, en plus du mot de passe, d'un code à usage unique envoyé par e-mail. Use global setting : suivre le paramètre global d'authentification multifacteur. Enabled : toujours exigé. Disabled : non exigé pour les comptes clients propres à cette boutique qui ne sont pas administrateurs ; les autres suivent le paramètre global."
+      }
+    }
+  },
+  "mfa": {
+    "sign-in": {
+      "title": "Saisissez le code de connexion",
+      "subtitle": "Nous avons envoyé un code à {{destination}}.",
+      "code": "Code",
+      "code-placeholder": "Saisissez le code à 6 chiffres",
+      "submit": "Se connecter",
+      "resend": "Renvoyer le code",
+      "resend-countdown": "Renvoyer le code dans {{seconds}} s",
+      "back": "Retour à la connexion",
+      "code-resent": "Code renvoyé.",
+      "errors": {
+        "invalid_code": "Ce code n'est pas valide. Vérifiez-le et réessayez.",
+        "invalid_two_factor_token": "Votre session de connexion a expiré. Connectez-vous à nouveau.",
+        "code_attempts_exceeded": "Trop de codes incorrects. Patientez quelques minutes, puis reconnectez-vous.",
+        "user_is_locked_out": "Votre compte a été verrouillé. Contactez votre administrateur.",
+        "user_is_temporary_locked_out": "Votre compte a été temporairement verrouillé. Veuillez réessayer plus tard.",
+        "sign_in_not_allowed": "Vous ne pouvez pas vous connecter au Backoffice avec ce compte.",
+        "lockout_disabled": "Ce compte ne peut pas se connecter avec un code. Contactez votre administrateur.",
+        "mfa_provider_not_available": "Impossible d'envoyer un code de connexion à ce compte. Confirmez son e-mail ou contactez votre administrateur."
+      }
+    },
+    "sign-in-log": {
+      "type-mfa": "Code de connexion"
+    }
+  }
+}

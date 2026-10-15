@@ -1,0 +1,40 @@
+{
+  "settings": {
+    "MultiFactorAuthentication": {
+      "Enabled": {
+        "title": "Uwierzytelnianie wieloskładnikowe",
+        "description": "Wymaga, oprócz hasła, jednorazowego kodu wysyłanego e-mailem przy każdym logowaniu hasłem bez sklepu: w Backoffice oraz w aplikacjach i klientach API logujących się hasłem. Sklepy stosują to ustawienie, chyba że je zastąpią. Użytkownicy bez potwierdzonego adresu e-mail lub z wyłączoną blokadą nie zalogują się, gdy to ustawienie jest włączone. Domyślne konto administratora ma wyłączoną blokadę: przed włączeniem potwierdź jego e-mail i włącz blokadę, inaczej nie zalogujesz się do Backoffice."
+      },
+      "StoreMode": {
+        "title": "Uwierzytelnianie wieloskładnikowe",
+        "description": "Czy klienci tego sklepu muszą oprócz hasła podać jednorazowy kod wysłany e-mailem. Use global setting: zgodnie z globalnym ustawieniem uwierzytelniania wieloskładnikowego. Enabled: zawsze wymagany. Disabled: niewymagany dla własnych kont klientów tego sklepu, które nie są administratorami; pozostali podlegają ustawieniu globalnemu."
+      }
+    }
+  },
+  "mfa": {
+    "sign-in": {
+      "title": "Wprowadź kod logowania",
+      "subtitle": "Wysłaliśmy kod na adres {{destination}}.",
+      "code": "Kod",
+      "code-placeholder": "Wprowadź 6-cyfrowy kod",
+      "submit": "Zaloguj się",
+      "resend": "Wyślij kod ponownie",
+      "resend-countdown": "Wyślij kod ponownie za {{seconds}} s",
+      "back": "Wróć do logowania",
+      "code-resent": "Kod wysłano ponownie.",
+      "errors": {
+        "invalid_code": "Kod jest nieprawidłowy. Sprawdź go i spróbuj ponownie.",
+        "invalid_two_factor_token": "Sesja logowania wygasła. Zaloguj się ponownie.",
+        "code_attempts_exceeded": "Zbyt wiele nieprawidłowych kodów. Odczekaj kilka minut i zaloguj się ponownie.",
+        "user_is_locked_out": "Twoje konto zostało zablokowane. Skontaktuj się z administratorem.",
+        "user_is_temporary_locked_out": "Twoje konto zostało tymczasowo zablokowane. Spróbuj ponownie później.",
+        "sign_in_not_allowed": "Tym kontem nie można zalogować się do Backoffice.",
+        "lockout_disabled": "To konto nie może logować się kodem. Skontaktuj się z administratorem.",
+        "mfa_provider_not_available": "Nie możemy wysłać kodu logowania na to konto. Potwierdź adres e-mail lub skontaktuj się z administratorem."
+      }
+    },
+    "sign-in-log": {
+      "type-mfa": "Kod logowania"
+    }
+  }
+}

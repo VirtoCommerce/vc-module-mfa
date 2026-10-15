@@ -1,8 +1,40 @@
 {
-  "permissions": {
-    "mfa:create": "Create MFA related data",
-    "mfa:read": "View MFA related data",
-    "mfa:update": "Update MFA related data",
-    "mfa:delete": "Delete MFA related data"
+  "settings": {
+    "MultiFactorAuthentication": {
+      "Enabled": {
+        "title": "Multi-factor authentication",
+        "description": "Require a one-time code sent by email, in addition to the password, for every password sign-in without a store: the Backoffice, apps and API clients that sign in with a password. Stores follow this setting unless they override it. Users without a confirmed email or with lockout disabled can't sign in while this is on. The default administrator account has lockout disabled: confirm its email and enable its lockout before turning this on, or you will not be able to sign in to the Backoffice."
+      },
+      "StoreMode": {
+        "title": "Multi-factor authentication",
+        "description": "Whether customers of this store need a one-time code sent by email in addition to the password. Use global setting: follow the global multi-factor authentication setting. Enabled: always required. Disabled: not required for this store's own customer accounts that are not administrators; everyone else follows the global setting."
+      }
+    }
+  },
+  "mfa": {
+    "sign-in": {
+      "title": "Enter the sign-in code",
+      "subtitle": "We sent a code to {{destination}}.",
+      "code": "Code",
+      "code-placeholder": "Enter the 6-digit code",
+      "submit": "Sign in",
+      "resend": "Resend code",
+      "resend-countdown": "Resend code in {{seconds}} s",
+      "back": "Back to sign in",
+      "code-resent": "Code sent again.",
+      "errors": {
+        "invalid_code": "That code didn't work. Check it and try again.",
+        "invalid_two_factor_token": "Your sign-in session has expired. Sign in again.",
+        "code_attempts_exceeded": "Too many incorrect codes. Wait a few minutes and sign in again.",
+        "user_is_locked_out": "Your account has been locked. Contact your administrator.",
+        "user_is_temporary_locked_out": "Your account has been temporarily locked. Please try again later.",
+        "sign_in_not_allowed": "You can't sign in to the Backoffice with this account.",
+        "lockout_disabled": "This account can't sign in with a code. Contact your administrator.",
+        "mfa_provider_not_available": "We can't send a sign-in code to this account. Confirm its email or contact your administrator."
+      }
+    },
+    "sign-in-log": {
+      "type-mfa": "Sign-in code"
+    }
   }
 }

@@ -1,0 +1,40 @@
+{
+  "settings": {
+    "MultiFactorAuthentication": {
+      "Enabled": {
+        "title": "Multifaktorautentisering",
+        "description": "Kräver, utöver lösenordet, en engångskod som skickas via e-post vid varje lösenordsinloggning utan butik: Backoffice samt appar och API-klienter som loggar in med lösenord. Butikerna följer den här inställningen om de inte åsidosätter den. Användare utan bekräftad e-post eller med inaktiverad låsning kan inte logga in medan detta är aktiverat. Standardadministratörskontot har låsning inaktiverad: bekräfta dess e-post och aktivera låsning innan du aktiverar detta, annars kan du inte logga in i Backoffice."
+      },
+      "StoreMode": {
+        "title": "Multifaktorautentisering",
+        "description": "Om kunderna i den här butiken behöver en engångskod via e-post utöver lösenordet. Use global setting: följ den globala inställningen för multifaktorautentisering. Enabled: alltid obligatorisk. Disabled: inte obligatorisk för butikens egna kundkonton som inte är administratörer; alla andra följer den globala inställningen."
+      }
+    }
+  },
+  "mfa": {
+    "sign-in": {
+      "title": "Ange inloggningskoden",
+      "subtitle": "Vi har skickat en kod till {{destination}}.",
+      "code": "Kod",
+      "code-placeholder": "Ange den 6-siffriga koden",
+      "submit": "Logga in",
+      "resend": "Skicka koden igen",
+      "resend-countdown": "Skicka koden igen om {{seconds}} s",
+      "back": "Tillbaka till inloggningen",
+      "code-resent": "Koden har skickats igen.",
+      "errors": {
+        "invalid_code": "Koden är ogiltig. Kontrollera den och försök igen.",
+        "invalid_two_factor_token": "Din inloggningssession har gått ut. Logga in igen.",
+        "code_attempts_exceeded": "För många felaktiga koder. Vänta några minuter och logga in igen.",
+        "user_is_locked_out": "Ditt konto har låsts. Kontakta administratören.",
+        "user_is_temporary_locked_out": "Ditt konto har låsts tillfälligt. Försök igen senare.",
+        "sign_in_not_allowed": "Du kan inte logga in i Backoffice med det här kontot.",
+        "lockout_disabled": "Det här kontot kan inte logga in med en kod. Kontakta administratören.",
+        "mfa_provider_not_available": "Vi kan inte skicka en inloggningskod till det här kontot. Bekräfta e-posten eller kontakta administratören."
+      }
+    },
+    "sign-in-log": {
+      "type-mfa": "Inloggningskod"
+    }
+  }
+}
