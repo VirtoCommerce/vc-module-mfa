@@ -272,6 +272,32 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
     }
 
     [Fact]
+    public async Task SignInAsync_Should_CountTheAttemptBeforeTheCodeIsChecked()
+    {
+        // Arrange
+        WaitForSecondFactor(BackofficeUser);
+        for (var i = 0; i < MfaOptions.MaxCodeAttempts - 1; i++)
+        {
+            await CodeAttemptLimiter.TryConsumeAttemptAsync(BackofficeUserId);
+        }
+
+        bool? hadAttemptsLeftWhileChecking = null;
+        SignInManager
+            .Setup(x => x.TwoFactorSignInAsync(EmailProvider, InvalidCode, false, false))
+            .Returns(async () =>
+            {
+                hadAttemptsLeftWhileChecking = await CodeAttemptLimiter.HasAttemptsLeftAsync(BackofficeUserId);
+                return IdentitySignInResult.Failed;
+            });
+
+        // Act
+        await _service.SignInAsync(InvalidCode);
+
+        // Assert
+        Assert.False(hadAttemptsLeftWhileChecking);
+    }
+
+    [Fact]
     public async Task SignInAsync_Should_ShareTheWrongCodeLimitWithTheTokenEndpoint()
     {
         // Arrange

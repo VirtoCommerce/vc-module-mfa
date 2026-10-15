@@ -89,13 +89,6 @@ public class MfaErrorDescriber(TimeProvider timeProvider)
             : GetError(result.Outcome, result.User);
     }
 
-    public virtual int? GetLockoutSecondsRemaining(MfaResult result, bool reportLockout)
-    {
-        return result.Outcome == MfaOutcome.AccountLocked && reportLockout
-            ? GetLockoutSecondsRemaining(result.User)
-            : null;
-    }
-
     public virtual string GetFailureReason(MfaOutcome outcome)
     {
         return outcome switch
@@ -130,6 +123,13 @@ public class MfaErrorDescriber(TimeProvider timeProvider)
         var seconds = Math.Ceiling((user.LockoutEnd.Value - timeProvider.GetUtcNow()).TotalSeconds);
 
         return (int)Math.Clamp(seconds, 0, int.MaxValue);
+    }
+
+    public virtual int? GetLockoutSecondsRemaining(MfaResult result, bool reportLockout)
+    {
+        return result.Outcome == MfaOutcome.AccountLocked && !IsLockoutHidden(result, reportLockout)
+            ? GetLockoutSecondsRemaining(result.User)
+            : null;
     }
 
     public virtual TokenResponse ToTokenResponse(IdentityError error, string errorType = Errors.InvalidGrant, int? lockoutSecondsRemaining = null)
