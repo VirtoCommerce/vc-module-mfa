@@ -21,6 +21,7 @@ namespace VirtoCommerce.MFA.Tests.OpenIddict;
 public class MfaGrantTypeHandlerTests : MfaTestsBase
 {
     private readonly Mock<IEventPublisher> _eventPublisher = new();
+    private readonly Mock<ITwoFactorSignInService> _twoFactorSignInService = new();
     private readonly MfaGrantTypeHandler _handler;
 
     public MfaGrantTypeHandlerTests()
@@ -174,6 +175,21 @@ public class MfaGrantTypeHandlerTests : MfaTestsBase
     }
 
     [Fact]
+    public async Task HandleAsync_Should_NotChallengeAgain_When_TheUserRequiresTwoFactor()
+    {
+        // Arrange
+        SignInManager.Setup(x => x.IsTwoFactorEnabledAsync(It.IsAny<ApplicationUser>())).ReturnsAsync(true);
+        var requestContext = CreateRequestContext(StoreId, CreateTwoFactorToken(), ValidCode);
+
+        // Act
+        var actionResult = await _handler.HandleAsync(requestContext);
+
+        // Assert
+        Assert.IsType<SignInResult>(actionResult);
+        _twoFactorSignInService.Verify(x => x.ChallengeAsync(It.IsAny<TokenRequestContext>()), Times.Never);
+    }
+
+    [Fact]
     public async Task HandleAsync_Should_LogTheUserNameOfTheToken_When_TheRequestNamesAnotherUser()
     {
         // Arrange
@@ -232,7 +248,7 @@ public class MfaGrantTypeHandlerTests : MfaTestsBase
 
     private MfaGrantTypeHandler CreateHandler(params ITokenRequestValidator[] requestValidators)
     {
-        return new MfaGrantTypeHandler(SignInManager.Object, IdentityOptions, requestValidators, [new MfaAuthenticationMethodClaimProvider()], [], _eventPublisher.Object, MfaService, ErrorDescriber);
+        return new MfaGrantTypeHandler(SignInManager.Object, IdentityOptions, requestValidators, [new MfaAuthenticationMethodClaimProvider()], [], _eventPublisher.Object, _twoFactorSignInService.Object, MfaService, ErrorDescriber);
     }
 
     private static TokenRequestContext CreateRequestContext(string storeId, string twoFactorToken, string code, bool detailedErrors = false)

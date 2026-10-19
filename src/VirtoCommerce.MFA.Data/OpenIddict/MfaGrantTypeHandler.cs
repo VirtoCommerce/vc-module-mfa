@@ -22,9 +22,10 @@ public class MfaGrantTypeHandler(
     IEnumerable<ITokenClaimProvider> claimProviders,
     IEnumerable<ITokenRequestHandler> requestHandlers,
     IEventPublisher eventPublisher,
+    ITwoFactorSignInService twoFactorSignInService,
     IMfaService mfaService,
     MfaErrorDescriber errorDescriber)
-    : GrantTypeHandlerBase(signInManager, identityOptions, requestValidators, claimProviders, requestHandlers, eventPublisher)
+    : GrantTypeHandlerBase(signInManager, identityOptions, requestValidators, claimProviders, requestHandlers, eventPublisher, twoFactorSignInService)
 {
     private string _provider;
 
@@ -62,6 +63,11 @@ public class MfaGrantTypeHandler(
         }
 
         return GrantValidationResult.Succeed(verifyResult.User);
+    }
+
+    protected override Task<bool> IsTwoFactorRequiredAsync(TokenRequestContext context)
+    {
+        return Task.FromResult(false);
     }
 
     protected override UserSignInAttemptEvent BuildSignInAttemptEvent(TokenRequestContext context, bool succeeded)

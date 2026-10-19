@@ -4,7 +4,7 @@
 
 The module adds multi-factor authentication (MFA) to password sign-ins: after the password, the user enters a one-time code sent by email. It covers the Backoffice and any other password sign-in without a store, and the storefront password sign-in of each store.
 
-The module is built on the ASP.NET Core Identity two-factor mechanism. It tells Identity which sign-ins require a second factor through the platform `ITwoFactorPolicy`, which the platform `SignInManager.IsTwoFactorEnabledAsync` consults with the sign-in context: the grant type and the parameters of a token request, including `storeId`. Identity then answers `RequiresTwoFactor` to password sign-ins and keeps the failed access count until the second factor is passed.
+The module is built on the ASP.NET Core Identity two-factor mechanism. It tells Identity which sign-ins require a second factor through the platform `ITwoFactorPolicy`, which the platform `SignInManager.IsTwoFactorEnabledAsync` consults for every password sign-in. The policy takes the `storeId` of the token request, if there is one, and requires the second factor according to the platform and store settings. Identity then answers `RequiresTwoFactor` to password sign-ins and keeps the failed access count until the second factor is passed.
 
 ## Configuration
 
