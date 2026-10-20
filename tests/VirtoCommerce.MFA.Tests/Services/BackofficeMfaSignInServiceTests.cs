@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading.Tasks;
 using Moq;
 using VirtoCommerce.MFA.Core;
@@ -23,18 +24,18 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
 
     public BackofficeMfaSignInServiceTests()
     {
-        _service = new BackofficeMfaSignInService(SignInManager.Object, MfaService, CodeAttemptLimiter, _eventPublisher.Object, ErrorDescriber);
+        _service = new BackofficeMfaSignInService(SignInManager.Object, MfaService, CodeAttemptLimiter, UsedCodeStore, _eventPublisher.Object, ErrorDescriber);
 
         UserManager
-            .Setup(x => x.IsInRoleAsync(It.IsAny<ApplicationUser>(), PlatformConstants.Security.SystemRoles.Customer))
-            .ReturnsAsync(false);
+            .Setup(x => x.IsInRoleAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
+            .ReturnsAsync((ApplicationUser user, string role) => user.Roles?.Any(x => x.Name == role) == true);
     }
 
     [Fact]
     public async Task SendCodeAsync_Should_SendCodeToTheUserWaitingForTheSecondFactor()
     {
         // Arrange
-        WaitForSecondFactor(BackofficeUser);
+        TwoFactorAuthenticationUser = BackofficeUser;
 
         // Act
         var result = await _service.SendCodeAsync();
@@ -61,8 +62,8 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
     public async Task SendCodeAsync_Should_NotSendCodeToCustomers()
     {
         // Arrange
-        WaitForSecondFactor(ActiveUser);
-        UserManager.Setup(x => x.IsInRoleAsync(ActiveUser, PlatformConstants.Security.SystemRoles.Customer)).ReturnsAsync(true);
+        ActiveUser.Roles = [new Role { Name = PlatformConstants.Security.SystemRoles.Customer }];
+        TwoFactorAuthenticationUser = ActiveUser;
 
         // Act
         var result = await _service.SendCodeAsync();
@@ -80,7 +81,7 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
     public async Task SendCodeAsync_Should_LogTheReason_When_NoCodeCanBeSent(string userId, MfaOutcome expectedOutcome, string expectedReason)
     {
         // Arrange
-        WaitForSecondFactor(await UserManager.Object.FindByIdAsync(userId));
+        TwoFactorAuthenticationUser = await UserManager.Object.FindByIdAsync(userId);
 
         // Act
         var result = await _service.SendCodeAsync();
@@ -95,7 +96,7 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
     public async Task SendCodeAsync_Should_NotLog_When_TheCodeIsSent()
     {
         // Arrange
-        WaitForSecondFactor(BackofficeUser);
+        TwoFactorAuthenticationUser = BackofficeUser;
 
         // Act
         await _service.SendCodeAsync();
@@ -108,29 +109,52 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
     public async Task SignInAsync_Should_SignInWithTheIdentityTwoFactorFlow_When_CodeIsValid()
     {
         // Arrange
-        WaitForSecondFactor(BackofficeUser);
-        SignInManager
-            .Setup(x => x.TwoFactorSignInAsync(EmailProvider, ValidCode, true, false))
-            .ReturnsAsync(IdentitySignInResult.Success);
+        TwoFactorAuthenticationUser = BackofficeUser;
 
         // Act
         var result = await _service.SignInAsync(ValidCode, rememberMe: true);
 
         // Assert
         Assert.Equal(MfaOutcome.Success, result.Outcome);
+        SignInManager.Verify(x => x.TwoFactorSignInAsync(EmailProvider, ValidCode, true, false), Times.Once);
         UserManager.Verify(x => x.UpdateAsync(It.Is<ApplicationUser>(u => u.Id == BackofficeUserId && u.LastLoginDate != null)), Times.Once);
         _eventPublisher.Verify(x => x.Publish(It.IsAny<UserLoginEvent>()), Times.Once);
         VerifySignInAttempt(succeeded: true, failureReason: null);
     }
 
     [Fact]
+    public async Task SignInAsync_Should_RejectTheCode_When_ItWasAlreadyAccepted()
+    {
+        // Arrange
+        TwoFactorAuthenticationUser = BackofficeUser;
+        await _service.SignInAsync(ValidCode);
+
+        // Act
+        var result = await _service.SignInAsync(ValidCode);
+
+        // Assert
+        Assert.Equal(MfaOutcome.InvalidCode, result.Outcome);
+        SignInManager.Verify(x => x.TwoFactorSignInAsync(EmailProvider, ValidCode, false, false), Times.Once);
+    }
+
+    [Fact]
+    public async Task SignInAsync_Should_NotRememberTheCode_When_IdentityRejectsIt()
+    {
+        // Arrange
+        TwoFactorAuthenticationUser = BackofficeUser;
+
+        // Act
+        await _service.SignInAsync(InvalidCode);
+
+        // Assert
+        Assert.True(await UsedCodeStore.TryUseAsync(BackofficeUserId, EmailProvider, InvalidCode));
+    }
+
+    [Fact]
     public async Task SignInAsync_Should_SignOutAndReportDuplicateEmail_When_SeveralAccountsShareTheEmail()
     {
         // Arrange
-        WaitForSecondFactor(BackofficeUser);
-        SignInManager
-            .Setup(x => x.TwoFactorSignInAsync(EmailProvider, ValidCode, false, false))
-            .ReturnsAsync(IdentitySignInResult.Success);
+        TwoFactorAuthenticationUser = BackofficeUser;
         UserManager
             .Setup(x => x.UpdateAsync(It.IsAny<ApplicationUser>()))
             .ThrowsAsync(new DuplicateEmailException("manager@acme.com"));
@@ -148,10 +172,7 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
     public async Task SignInAsync_Should_ReportInvalidCode_When_IdentityRejectsTheCode()
     {
         // Arrange
-        WaitForSecondFactor(BackofficeUser);
-        SignInManager
-            .Setup(x => x.TwoFactorSignInAsync(EmailProvider, InvalidCode, false, false))
-            .ReturnsAsync(IdentitySignInResult.Failed);
+        TwoFactorAuthenticationUser = BackofficeUser;
 
         // Act
         var result = await _service.SignInAsync(InvalidCode);
@@ -163,13 +184,11 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
     }
 
     [Fact]
-    public async Task SignInAsync_Should_ReportLockout_When_IdentityLocksTheAccount()
+    public async Task SignInAsync_Should_ReportLockout_When_TheWrongCodeLocksTheAccount()
     {
         // Arrange
-        WaitForSecondFactor(BackofficeUser);
-        SignInManager
-            .Setup(x => x.TwoFactorSignInAsync(EmailProvider, InvalidCode, false, false))
-            .ReturnsAsync(IdentitySignInResult.LockedOut);
+        BackofficeUser.AccessFailedCount = IdentityOptions.Value.Lockout.MaxFailedAccessAttempts - 1;
+        TwoFactorAuthenticationUser = BackofficeUser;
 
         // Act
         var result = await _service.SignInAsync(InvalidCode);
@@ -183,7 +202,7 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
     public async Task SignInAsync_Should_RejectAProviderTheModuleDoesNotSendCodesWith()
     {
         // Arrange
-        WaitForSecondFactor(BackofficeUser);
+        TwoFactorAuthenticationUser = BackofficeUser;
 
         // Act
         var result = await _service.SignInAsync(ValidCode, "Authenticator");
@@ -197,8 +216,8 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
     public async Task SignInAsync_Should_NotSignInCustomers()
     {
         // Arrange
-        WaitForSecondFactor(ActiveUser);
-        UserManager.Setup(x => x.IsInRoleAsync(ActiveUser, PlatformConstants.Security.SystemRoles.Customer)).ReturnsAsync(true);
+        ActiveUser.Roles = [new Role { Name = PlatformConstants.Security.SystemRoles.Customer }];
+        TwoFactorAuthenticationUser = ActiveUser;
 
         // Act
         var result = await _service.SignInAsync(ValidCode);
@@ -213,7 +232,7 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
     public async Task SignInAsync_Should_NotCheckTheCode_When_LockoutIsDisabled()
     {
         // Arrange
-        WaitForSecondFactor(LockoutDisabledUser);
+        TwoFactorAuthenticationUser = LockoutDisabledUser;
 
         // Act
         var result = await _service.SignInAsync(ValidCode);
@@ -227,7 +246,7 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
     public async Task SignInAsync_Should_NotCheckTheCode_When_AccountIsAlreadyLocked()
     {
         // Arrange
-        WaitForSecondFactor(LockedUser);
+        TwoFactorAuthenticationUser = LockedUser;
 
         // Act
         var result = await _service.SignInAsync(ValidCode);
@@ -253,11 +272,7 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
     public async Task SignInAsync_Should_NotCheckTheCode_When_TheWrongCodeLimitIsReached()
     {
         // Arrange
-        WaitForSecondFactor(BackofficeUser);
-        SignInManager
-            .Setup(x => x.TwoFactorSignInAsync(EmailProvider, It.IsAny<string>(), false, false))
-            .ReturnsAsync(IdentitySignInResult.Failed);
-
+        TwoFactorAuthenticationUser = BackofficeUser;
         for (var i = 0; i < MfaOptions.MaxCodeAttempts; i++)
         {
             await _service.SignInAsync(InvalidCode);
@@ -275,7 +290,7 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
     public async Task SignInAsync_Should_CountTheAttemptBeforeTheCodeIsChecked()
     {
         // Arrange
-        WaitForSecondFactor(BackofficeUser);
+        TwoFactorAuthenticationUser = BackofficeUser;
         for (var i = 0; i < MfaOptions.MaxCodeAttempts - 1; i++)
         {
             await CodeAttemptLimiter.TryConsumeAttemptAsync(BackofficeUserId);
@@ -301,7 +316,7 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
     public async Task SignInAsync_Should_ShareTheWrongCodeLimitWithTheTokenEndpoint()
     {
         // Arrange
-        WaitForSecondFactor(ActiveUser);
+        TwoFactorAuthenticationUser = ActiveUser;
         for (var i = 0; i < MfaOptions.MaxCodeAttempts; i++)
         {
             await MfaService.VerifyCodeAsync(CreateTwoFactorToken(), InvalidCode, StoreId);
@@ -320,7 +335,7 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
     public async Task SendCodeAsync_Should_NotSendCode_When_TheWrongCodeLimitIsReached()
     {
         // Arrange
-        WaitForSecondFactor(BackofficeUser);
+        TwoFactorAuthenticationUser = BackofficeUser;
         for (var i = 0; i < MfaOptions.MaxCodeAttempts; i++)
         {
             await CodeAttemptLimiter.TryConsumeAttemptAsync(BackofficeUserId);
@@ -338,10 +353,7 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
     public async Task SignInAsync_Should_RestoreTheAttempts_When_TheCodeIsAccepted()
     {
         // Arrange
-        WaitForSecondFactor(BackofficeUser);
-        SignInManager
-            .Setup(x => x.TwoFactorSignInAsync(EmailProvider, ValidCode, false, false))
-            .ReturnsAsync(IdentitySignInResult.Success);
+        TwoFactorAuthenticationUser = BackofficeUser;
         await CodeAttemptLimiter.TryConsumeAttemptAsync(BackofficeUserId);
         await CodeAttemptLimiter.TryConsumeAttemptAsync(BackofficeUserId);
 
@@ -354,11 +366,6 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
         {
             Assert.True(await CodeAttemptLimiter.TryConsumeAttemptAsync(BackofficeUserId));
         }
-    }
-
-    private void WaitForSecondFactor(ApplicationUser user)
-    {
-        SignInManager.Setup(x => x.GetTwoFactorAuthenticationUserAsync()).ReturnsAsync(user);
     }
 
     private void VerifySignInAttempt(bool succeeded, string failureReason)

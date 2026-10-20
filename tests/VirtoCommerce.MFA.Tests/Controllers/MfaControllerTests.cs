@@ -146,12 +146,22 @@ public class MfaControllerTests : MfaTestsBase
     [Fact]
     public void MfaController_Should_AllowAnonymousCallsOnTheMfaRoutes()
     {
+        // Arrange
+        var controllerType = typeof(MfaController);
+
+        // Act
+        var allowAnonymous = controllerType.GetCustomAttribute<AllowAnonymousAttribute>();
+        var route = controllerType.GetCustomAttribute<RouteAttribute>()?.Template;
+        var resendRoute = GetRoute(nameof(MfaController.ResendCode));
+        var sendRoute = GetRoute(nameof(MfaController.SendSignInCode));
+        var verifyRoute = GetRoute(nameof(MfaController.VerifySignInCode));
+
         // Assert
-        Assert.NotNull(typeof(MfaController).GetCustomAttribute<AllowAnonymousAttribute>());
-        Assert.Equal("api/mfa", typeof(MfaController).GetCustomAttribute<RouteAttribute>()?.Template);
-        Assert.Equal("resend", GetRoute(nameof(MfaController.ResendCode)));
-        Assert.Equal("signin/send", GetRoute(nameof(MfaController.SendSignInCode)));
-        Assert.Equal("signin/verify", GetRoute(nameof(MfaController.VerifySignInCode)));
+        Assert.NotNull(allowAnonymous);
+        Assert.Equal("api/mfa", route);
+        Assert.Equal("resend", resendRoute);
+        Assert.Equal("signin/send", sendRoute);
+        Assert.Equal("signin/verify", verifyRoute);
     }
 
     private static string GetRoute(string methodName)

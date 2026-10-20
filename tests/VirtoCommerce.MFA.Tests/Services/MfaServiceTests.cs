@@ -342,6 +342,21 @@ public class MfaServiceTests : MfaTestsBase
     }
 
     [Fact]
+    public async Task VerifyCodeAsync_Should_RejectTheCode_When_ItWasAlreadyAcceptedWithAnotherToken()
+    {
+        // Arrange
+        await MfaService.VerifyCodeAsync(CreateTwoFactorToken(), ValidCode, StoreId);
+        var anotherToken = CreateTwoFactorToken();
+
+        // Act
+        var result = await MfaService.VerifyCodeAsync(anotherToken, ValidCode, StoreId);
+
+        // Assert
+        Assert.Equal(MfaOutcome.InvalidCode, result.Outcome);
+        Assert.Equal(ActiveUserId, result.User.Id);
+    }
+
+    [Fact]
     public async Task VerifyCodeAsync_Should_RejectToken_When_TheUserSignedInAfterItWasIssued()
     {
         // Arrange
@@ -383,10 +398,7 @@ public class MfaServiceTests : MfaTestsBase
     public async Task VerifyCodeAsync_Should_ReportLockout_When_TheWrongCodeLocksTheAccount()
     {
         // Arrange
-        UserManager
-            .Setup(x => x.AccessFailedAsync(ActiveUser))
-            .Callback((ApplicationUser user) => user.LockoutEnd = DateTimeOffset.UtcNow.AddMinutes(15))
-            .ReturnsAsync(IdentityResult.Success);
+        ActiveUser.AccessFailedCount = IdentityOptions.Value.Lockout.MaxFailedAccessAttempts - 1;
 
         // Act
         var result = await MfaService.VerifyCodeAsync(CreateTwoFactorToken(), InvalidCode, StoreId);
@@ -778,7 +790,7 @@ public class MfaServiceTests : MfaTestsBase
         authenticator.SetupGet(x => x.Name).Returns(EmailProvider);
         authenticator.SetupGet(x => x.SendsCode).Returns(false);
         var mfaService = new MfaService(UserManager.Object, StoreService.Object, TwoFactorTokenService, TicketStore, [authenticator.Object],
-            CodeAttemptLimiter, CodeDeliveryLimiter, Options.Create(MfaOptions), TimeProvider);
+            CodeAttemptLimiter, CodeDeliveryLimiter, UsedCodeStore, Options.Create(MfaOptions), TimeProvider);
 
         // Act
         var result = await mfaService.ChallengeAsync(ActiveUser, StoreId);

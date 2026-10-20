@@ -21,6 +21,7 @@ public class MfaService(
     IEnumerable<IMfaProvider> providers,
     IMfaCodeAttemptLimiter codeAttemptLimiter,
     IMfaCodeDeliveryLimiter codeDeliveryLimiter,
+    IMfaUsedCodeStore usedCodeStore,
     IOptions<MfaOptions> options,
     TimeProvider timeProvider)
     : IMfaService
@@ -50,15 +51,13 @@ public class MfaService(
             return result;
         }
 
-        var ticket = new TwoFactorTicket
-        {
-            Id = Guid.NewGuid().ToString("N"),
-            UserId = user.Id,
-            StoreId = storeId.EmptyToNull(),
-            IssuedAt = timeProvider.GetUtcNow(),
-            LastLoginDate = user.LastLoginDate,
-            SecurityStamp = await userManager.GetSecurityStampAsync(user),
-        };
+        var ticket = AbstractTypeFactory<TwoFactorTicket>.TryCreateInstance();
+        ticket.Id = Guid.NewGuid().ToString("N");
+        ticket.UserId = user.Id;
+        ticket.StoreId = storeId.EmptyToNull();
+        ticket.IssuedAt = timeProvider.GetUtcNow();
+        ticket.LastLoginDate = user.LastLoginDate;
+        ticket.SecurityStamp = await userManager.GetSecurityStampAsync(user);
 
         var store = await GetStoreAsync(ticket.StoreId);
         var deliveryResult = await DeliverCodeAsync(store, user, provider);
@@ -123,6 +122,11 @@ public class MfaService(
         if (!await userManager.VerifyTwoFactorTokenAsync(user, mfaProvider.Name, code))
         {
             return await FailCodeAsync(ticket, user, mfaProvider);
+        }
+
+        if (!await usedCodeStore.TryUseAsync(user.Id, mfaProvider.Name, code))
+        {
+            return MfaResult.Fail(MfaOutcome.InvalidCode, user, mfaProvider.Name);
         }
 
         if (!await ticketStore.TryRedeemAsync(ticket))

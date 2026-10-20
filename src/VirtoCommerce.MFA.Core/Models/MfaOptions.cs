@@ -10,5 +10,7 @@ public class MfaOptions
 
     public int MaxCodeAttempts { get; set; } = 3;
 
+    public TimeSpan UsedCodeLifetime { get; set; } = TimeSpan.FromMinutes(10);
+
     public bool DisableEnforcement { get; set; }
 }

@@ -1,7 +1,5 @@
-using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using OpenIddict.Abstractions;
@@ -11,6 +9,7 @@ using VirtoCommerce.Platform.Core.Events;
 using VirtoCommerce.Platform.Core.Security;
 using VirtoCommerce.Platform.Core.Security.Events;
 using VirtoCommerce.Platform.Core.Security.SignInLog;
+using VirtoCommerce.Platform.Security;
 using VirtoCommerce.Platform.Security.OpenIddict;
 using Xunit;
 using SignInResult = Microsoft.AspNetCore.Mvc.SignInResult;
@@ -26,13 +25,21 @@ public class MfaGrantTypeHandlerTests : MfaTestsBase
 
     public MfaGrantTypeHandlerTests()
     {
+        _twoFactorSignInService
+            .Setup(x => x.IsTwoFactorRequiredAsync(It.IsAny<ApplicationUser>()))
+            .ReturnsAsync((ApplicationUser user) => user.TwoFactorEnabled);
+
         _handler = CreateHandler();
     }
 
     [Fact]
     public void GrantType_Should_Be_Mfa()
     {
-        Assert.Equal(ModuleConstants.Security.GrantType, _handler.GrantType);
+        // Act
+        var grantType = _handler.GrantType;
+
+        // Assert
+        Assert.Equal(ModuleConstants.Security.GrantType, grantType);
     }
 
     [Fact]
@@ -178,7 +185,7 @@ public class MfaGrantTypeHandlerTests : MfaTestsBase
     public async Task HandleAsync_Should_NotChallengeAgain_When_TheUserRequiresTwoFactor()
     {
         // Arrange
-        SignInManager.Setup(x => x.IsTwoFactorEnabledAsync(It.IsAny<ApplicationUser>())).ReturnsAsync(true);
+        ActiveUser.TwoFactorEnabled = true;
         var requestContext = CreateRequestContext(StoreId, CreateTwoFactorToken(), ValidCode);
 
         // Act
@@ -231,10 +238,7 @@ public class MfaGrantTypeHandlerTests : MfaTestsBase
     public async Task HandleAsync_Should_ReportLockout_When_TheWrongCodeLocksTheAccount(bool detailedErrors, string expectedErrorCode)
     {
         // Arrange
-        UserManager
-            .Setup(x => x.AccessFailedAsync(It.Is<ApplicationUser>(u => u.Id == ActiveUserId)))
-            .Callback((ApplicationUser user) => user.LockoutEnd = DateTimeOffset.UtcNow.AddMinutes(15))
-            .ReturnsAsync(IdentityResult.Success);
+        ActiveUser.AccessFailedCount = IdentityOptions.Value.Lockout.MaxFailedAccessAttempts - 1;
         var requestContext = CreateRequestContext(StoreId, CreateTwoFactorToken(), InvalidCode, detailedErrors);
 
         // Act

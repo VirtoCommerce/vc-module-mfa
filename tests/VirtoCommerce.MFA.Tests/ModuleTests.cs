@@ -48,13 +48,17 @@ public class ModuleTests
     [InlineData("MultiFactorAuthentication:CodeResendInterval", "00:00:00")]
     [InlineData("MultiFactorAuthentication:CodeResendInterval", "00:10:00")]
     [InlineData("MultiFactorAuthentication:MaxCodeAttempts", "0")]
+    [InlineData("MultiFactorAuthentication:UsedCodeLifetime", "00:00:00")]
     public void Initialize_Should_RejectInvalidOptions(string key, string value)
     {
         // Arrange
         using var serviceProvider = Initialize(new() { [key] = value }).BuildServiceProvider();
 
-        // Act & Assert
-        Assert.Throws<OptionsValidationException>(() => serviceProvider.GetRequiredService<IOptions<MfaOptions>>().Value);
+        // Act
+        var readOptions = () => serviceProvider.GetRequiredService<IOptions<MfaOptions>>().Value;
+
+        // Assert
+        Assert.Throws<OptionsValidationException>(readOptions);
     }
 
     private static ServiceCollection Initialize(Dictionary<string, string> configuration = null)

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.DataProtection;
 using VirtoCommerce.MFA.Core;
 using VirtoCommerce.MFA.Core.Models;
 using VirtoCommerce.MFA.Core.Services;
+using VirtoCommerce.Platform.Core.Common;
 
 namespace VirtoCommerce.MFA.Data.Services;
 
@@ -13,7 +14,7 @@ public class TwoFactorTokenService(IDataProtectionProvider dataProtectionProvide
 
     public virtual string CreateToken(TwoFactorTicket ticket)
     {
-        return _protector.Protect(JsonSerializer.Serialize(ticket));
+        return _protector.Protect(JsonSerializer.Serialize(ticket, ticket.GetType()));
     }
 
     public virtual TwoFactorTicket ReadToken(string token)
@@ -25,7 +26,9 @@ public class TwoFactorTokenService(IDataProtectionProvider dataProtectionProvide
 
         try
         {
-            return JsonSerializer.Deserialize<TwoFactorTicket>(_protector.Unprotect(token));
+            var ticketType = AbstractTypeFactory<TwoFactorTicket>.TryCreateInstance().GetType();
+
+            return (TwoFactorTicket)JsonSerializer.Deserialize(_protector.Unprotect(token), ticketType);
         }
         catch (CryptographicException)
         {

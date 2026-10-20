@@ -37,6 +37,7 @@ public class Module : IModule, IHasConfiguration
             .Validate(x => x.TwoFactorTokenLifetime > TimeSpan.Zero, "MultiFactorAuthentication:TwoFactorTokenLifetime must be positive.")
             .Validate(x => x.CodeResendInterval > TimeSpan.Zero && x.CodeResendInterval < x.TwoFactorTokenLifetime, "MultiFactorAuthentication:CodeResendInterval must be positive and shorter than TwoFactorTokenLifetime.")
             .Validate(x => x.MaxCodeAttempts > 0, "MultiFactorAuthentication:MaxCodeAttempts must be positive.")
+            .Validate(x => x.UsedCodeLifetime > TimeSpan.Zero, "MultiFactorAuthentication:UsedCodeLifetime must be positive.")
             .ValidateOnStart();
 
         serviceCollection.AddOptions<CookieAuthenticationOptions>(IdentityConstants.TwoFactorUserIdScheme)
@@ -50,6 +51,7 @@ public class Module : IModule, IHasConfiguration
         serviceCollection.AddSingleton<IMfaCodeAttemptLimiter, MfaCodeAttemptLimiter>();
         serviceCollection.AddSingleton<IMfaCodeDeliveryLimiter, MfaCodeDeliveryLimiter>();
         serviceCollection.AddSingleton<ITwoFactorTicketStore, TwoFactorTicketStore>();
+        serviceCollection.AddSingleton<IMfaUsedCodeStore, MfaUsedCodeStore>();
         serviceCollection.AddSingleton<MfaErrorDescriber>();
 
         serviceCollection.AddTransient<IMfaProvider, EmailMfaProvider>();

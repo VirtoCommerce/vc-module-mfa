@@ -20,11 +20,17 @@ public class TwoFactorTicketStoreTests
         var ticket = CreateTicket();
         var otherTicket = CreateTicket();
 
-        // Act & Assert
-        Assert.True(await _store.TryRedeemAsync(ticket));
-        Assert.False(await _store.TryRedeemAsync(ticket));
-        Assert.True(await _store.IsRedeemedAsync(ticket));
-        Assert.False(await _store.IsRedeemedAsync(otherTicket));
+        // Act
+        var isFirstRedeemed = await _store.TryRedeemAsync(ticket);
+        var isSecondRedeemed = await _store.TryRedeemAsync(ticket);
+        var isTicketRedeemed = await _store.IsRedeemedAsync(ticket);
+        var isOtherTicketRedeemed = await _store.IsRedeemedAsync(otherTicket);
+
+        // Assert
+        Assert.True(isFirstRedeemed);
+        Assert.False(isSecondRedeemed);
+        Assert.True(isTicketRedeemed);
+        Assert.False(isOtherTicketRedeemed);
     }
 
     [Fact]

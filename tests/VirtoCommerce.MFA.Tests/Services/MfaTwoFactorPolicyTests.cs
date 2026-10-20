@@ -17,24 +17,32 @@ namespace VirtoCommerce.MFA.Tests.Services;
 [Trait("Category", "Unit")]
 public class MfaTwoFactorPolicyTests
 {
-    private const string StoreId = "B2B-store";
+    private const string MfaStoreId = "B2B-store";
 
     private readonly ApplicationUser _user = new() { Id = "user-1" };
     private readonly Mock<IMfaRequirementService> _requirementService = new();
     private readonly MfaOptions _options = new();
     private readonly DefaultHttpContext _httpContext = new();
 
+    public MfaTwoFactorPolicyTests()
+    {
+        // The store named in the token request requires MFA, a sign-in without a store doesn't.
+        _requirementService
+            .Setup(x => x.IsRequiredAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
+            .ReturnsAsync((ApplicationUser _, string storeId) => storeId == MfaStoreId);
+    }
+
     [Fact]
     public async Task IsTwoFactorRequiredAsync_Should_UseTheStoreOfTheTokenRequest()
     {
         // Arrange
         var request = new OpenIddictRequest { GrantType = "password" };
-        request.SetParameter(ModuleConstants.Security.Parameters.StoreId, StoreId);
+        request.SetParameter(ModuleConstants.Security.Parameters.StoreId, MfaStoreId);
         SetTokenRequest(request);
-        _requirementService.Setup(x => x.IsRequiredAsync(_user, StoreId)).ReturnsAsync(true);
+        var policy = CreatePolicy();
 
         // Act
-        var isRequired = await CreatePolicy().IsTwoFactorRequiredAsync(_user);
+        var isRequired = await policy.IsTwoFactorRequiredAsync(_user);
 
         // Assert
         Assert.True(isRequired);
@@ -44,13 +52,13 @@ public class MfaTwoFactorPolicyTests
     public async Task IsTwoFactorRequiredAsync_Should_UseNoStore_When_TheSignInIsNotATokenRequest()
     {
         // Arrange
-        _requirementService.Setup(x => x.IsRequiredAsync(_user, null)).ReturnsAsync(true);
+        var policy = CreatePolicy();
 
         // Act
-        var isRequired = await CreatePolicy().IsTwoFactorRequiredAsync(_user);
+        var isRequired = await policy.IsTwoFactorRequiredAsync(_user);
 
         // Assert
-        Assert.True(isRequired);
+        Assert.False(isRequired);
         _requirementService.Verify(x => x.IsRequiredAsync(_user, null), Times.Once);
     }
 
@@ -58,14 +66,13 @@ public class MfaTwoFactorPolicyTests
     public async Task IsTwoFactorRequiredAsync_Should_UseNoStore_When_ThereIsNoHttpContext()
     {
         // Arrange
-        _requirementService.Setup(x => x.IsRequiredAsync(_user, null)).ReturnsAsync(true);
         var policy = new MfaTwoFactorPolicy(_requirementService.Object, Options.Create(_options), new HttpContextAccessor());
 
         // Act
         var isRequired = await policy.IsTwoFactorRequiredAsync(_user);
 
         // Assert
-        Assert.True(isRequired);
+        Assert.False(isRequired);
         _requirementService.Verify(x => x.IsRequiredAsync(_user, null), Times.Once);
     }
 
@@ -74,10 +81,13 @@ public class MfaTwoFactorPolicyTests
     {
         // Arrange
         _options.DisableEnforcement = true;
-        _requirementService.Setup(x => x.IsRequiredAsync(_user, It.IsAny<string>())).ReturnsAsync(true);
+        var request = new OpenIddictRequest { GrantType = "password" };
+        request.SetParameter(ModuleConstants.Security.Parameters.StoreId, MfaStoreId);
+        SetTokenRequest(request);
+        var policy = CreatePolicy();
 
         // Act
-        var isRequired = await CreatePolicy().IsTwoFactorRequiredAsync(_user);
+        var isRequired = await policy.IsTwoFactorRequiredAsync(_user);
 
         // Assert
         Assert.False(isRequired);

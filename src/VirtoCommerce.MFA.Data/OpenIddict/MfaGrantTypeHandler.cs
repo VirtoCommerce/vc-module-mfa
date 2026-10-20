@@ -10,6 +10,7 @@ using VirtoCommerce.MFA.Data.Services;
 using VirtoCommerce.Platform.Core.Events;
 using VirtoCommerce.Platform.Core.Security;
 using VirtoCommerce.Platform.Core.Security.SignInLog;
+using VirtoCommerce.Platform.Security;
 using VirtoCommerce.Platform.Security.OpenIddict;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 

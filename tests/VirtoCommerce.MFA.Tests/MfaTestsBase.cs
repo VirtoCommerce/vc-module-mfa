@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
@@ -74,6 +75,8 @@ public abstract class MfaTestsBase
 
     public IMfaCodeAttemptLimiter CodeAttemptLimiter { get; }
 
+    public IMfaUsedCodeStore UsedCodeStore { get; }
+
     public bool IsNotificationActive { get; set; } = true;
 
     public ITwoFactorTokenService TwoFactorTokenService { get; }
@@ -83,6 +86,8 @@ public abstract class MfaTestsBase
     public Mock<SignInManager<ApplicationUser>> SignInManager { get; }
 
     public IOptions<IdentityOptions> IdentityOptions { get; } = Options.Create(new IdentityOptions());
+
+    public ApplicationUser TwoFactorAuthenticationUser { get; set; }
 
     public Mock<IStoreService> StoreService { get; }
 
@@ -186,7 +191,7 @@ public abstract class MfaTestsBase
 
         UserManager
             .Setup(x => x.AccessFailedAsync(It.IsAny<ApplicationUser>()))
-            .ReturnsAsync(IdentityResult.Success);
+            .ReturnsAsync((ApplicationUser user) => AccessFailed(user));
 
         UserManager
             .Setup(x => x.UpdateAsync(It.IsAny<ApplicationUser>()))
@@ -210,6 +215,14 @@ public abstract class MfaTestsBase
         SignInManager
             .Setup(x => x.CreateUserPrincipalAsync(It.IsAny<ApplicationUser>()))
             .ReturnsAsync(new ClaimsPrincipal(new ClaimsIdentity()));
+
+        SignInManager
+            .Setup(x => x.GetTwoFactorAuthenticationUserAsync())
+            .ReturnsAsync(() => TwoFactorAuthenticationUser);
+
+        SignInManager
+            .Setup(x => x.TwoFactorSignInAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>()))
+            .Returns((string provider, string code, bool _, bool _) => TwoFactorSignInAsync(provider, code));
 
         var notificationSearchService = new Mock<INotificationSearchService>();
 
@@ -238,11 +251,12 @@ public abstract class MfaTestsBase
         CodeDeliveryLimiter = new MfaCodeDeliveryLimiter(memoryCache, Options.Create(MfaOptions), TimeProvider);
         TicketStore = new TwoFactorTicketStore(memoryCache, Options.Create(MfaOptions));
         CodeAttemptLimiter = new MfaCodeAttemptLimiter(memoryCache, Options.Create(MfaOptions), TimeProvider);
+        UsedCodeStore = new MfaUsedCodeStore(memoryCache, Options.Create(MfaOptions), TimeProvider);
         ErrorDescriber = new MfaErrorDescriber(TimeProvider);
         RequirementService = new MfaRequirementService(StoreService.Object, settingsManager.Object);
 
         MfaService = new MfaService(UserManager.Object, StoreService.Object, TwoFactorTokenService, TicketStore, [emailProvider],
-            CodeAttemptLimiter, CodeDeliveryLimiter, Options.Create(MfaOptions), TimeProvider);
+            CodeAttemptLimiter, CodeDeliveryLimiter, UsedCodeStore, Options.Create(MfaOptions), TimeProvider);
     }
 
     public MfaOptions MfaOptions { get; } = new();
@@ -302,5 +316,44 @@ public abstract class MfaTestsBase
             LockoutEnd = lockoutEnd,
             LockoutEnabled = lockoutEnabled,
         };
+    }
+
+    // Like Identity: a wrong code counts toward the lockout, which starts at MaxFailedAccessAttempts
+    private IdentityResult AccessFailed(ApplicationUser user)
+    {
+        user.AccessFailedCount++;
+
+        if (user.AccessFailedCount >= IdentityOptions.Value.Lockout.MaxFailedAccessAttempts)
+        {
+            user.LockoutEnd = TimeProvider.GetUtcNow() + IdentityOptions.Value.Lockout.DefaultLockoutTimeSpan;
+            user.AccessFailedCount = 0;
+        }
+
+        return IdentityResult.Success;
+    }
+
+    // Like Identity: the code of the user waiting for the second factor, refused while the account is locked
+    private async Task<SignInResult> TwoFactorSignInAsync(string provider, string code)
+    {
+        var user = TwoFactorAuthenticationUser;
+        if (user == null)
+        {
+            return SignInResult.Failed;
+        }
+
+        if (await UserManager.Object.IsLockedOutAsync(user))
+        {
+            return SignInResult.LockedOut;
+        }
+
+        if (await UserManager.Object.VerifyTwoFactorTokenAsync(user, provider, code))
+        {
+            user.AccessFailedCount = 0;
+            return SignInResult.Success;
+        }
+
+        await UserManager.Object.AccessFailedAsync(user);
+
+        return await UserManager.Object.IsLockedOutAsync(user) ? SignInResult.LockedOut : SignInResult.Failed;
     }
 }

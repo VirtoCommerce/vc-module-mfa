@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
@@ -28,15 +29,21 @@ public class MfaCodeAttemptLimiterTests
     [Fact]
     public async Task TryConsumeAttemptAsync_Should_AllowTheConfiguredNumberOfAttemptsPerUser()
     {
-        // Act & Assert
-        for (var i = 0; i < MaxCodeAttempts; i++)
+        // Act
+        var results = new List<bool>();
+        for (var i = 0; i <= MaxCodeAttempts; i++)
         {
-            Assert.True(await _limiter.TryConsumeAttemptAsync("user-1"));
+            results.Add(await _limiter.TryConsumeAttemptAsync("user-1"));
         }
 
-        Assert.False(await _limiter.TryConsumeAttemptAsync("user-1"));
-        Assert.False(await _limiter.HasAttemptsLeftAsync("user-1"));
-        Assert.True(await _limiter.TryConsumeAttemptAsync("user-2"));
+        var hasAttemptsLeft = await _limiter.HasAttemptsLeftAsync("user-1");
+        var isOtherUserAllowed = await _limiter.TryConsumeAttemptAsync("user-2");
+
+        // Assert
+        Assert.All(results.Take(MaxCodeAttempts), Assert.True);
+        Assert.False(results[MaxCodeAttempts]);
+        Assert.False(hasAttemptsLeft);
+        Assert.True(isOtherUserAllowed);
     }
 
     [Fact]
@@ -60,9 +67,13 @@ public class MfaCodeAttemptLimiterTests
 
         _timeProvider.Advance(Window);
 
-        // Act & Assert
-        Assert.True(await _limiter.HasAttemptsLeftAsync("user-1"));
-        Assert.True(await _limiter.TryConsumeAttemptAsync("user-1"));
+        // Act
+        var hasAttemptsLeft = await _limiter.HasAttemptsLeftAsync("user-1");
+        var isAllowed = await _limiter.TryConsumeAttemptAsync("user-1");
+
+        // Assert
+        Assert.True(hasAttemptsLeft);
+        Assert.True(isAllowed);
     }
 
     [Fact]
@@ -75,8 +86,11 @@ public class MfaCodeAttemptLimiterTests
         await _limiter.TryConsumeAttemptAsync("user-1");
         _timeProvider.Advance(TimeSpan.FromSeconds(1));
 
-        // Act & Assert
-        Assert.True(await _limiter.TryConsumeAttemptAsync("user-1"));
+        // Act
+        var isAllowed = await _limiter.TryConsumeAttemptAsync("user-1");
+
+        // Assert
+        Assert.True(isAllowed);
     }
 
     [Fact]
