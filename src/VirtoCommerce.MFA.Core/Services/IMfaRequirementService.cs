@@ -6,4 +6,6 @@ namespace VirtoCommerce.MFA.Core.Services;
 public interface IMfaRequirementService
 {
     Task<bool> IsRequiredAsync(ApplicationUser user, string storeId);
+
+    Task<bool> IsRequiredForBackofficeAsync(ApplicationUser user);
 }

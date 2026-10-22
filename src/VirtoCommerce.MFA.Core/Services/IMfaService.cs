@@ -17,4 +17,6 @@ public interface IMfaService
     Task<MfaResult> ResendCodeAsync(string twoFactorToken, string provider = null);
 
     Task<MfaResult> VerifyCodeAsync(string twoFactorToken, string code, string storeId);
+
+    Task<bool> AcceptCodeAsync(ApplicationUser user, IMfaProvider mfaProvider);
 }

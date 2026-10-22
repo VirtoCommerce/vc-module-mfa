@@ -18,7 +18,6 @@ public class BackofficeMfaSignInService(
     SignInManager<ApplicationUser> signInManager,
     IMfaService mfaService,
     IMfaCodeAttemptLimiter codeAttemptLimiter,
-    IMfaUsedCodeStore usedCodeStore,
     IEventPublisher eventPublisher,
     MfaErrorDescriber errorDescriber)
     : IBackofficeMfaSignInService
@@ -79,17 +78,7 @@ public class BackofficeMfaSignInService(
             return await FailAsync(MfaResult.Fail(MfaOutcome.CodeAttemptsExceeded, user, mfaProvider.Name));
         }
 
-        if (!await usedCodeStore.TryUseAsync(user.Id, mfaProvider.Name, code))
-        {
-            return await FailAsync(MfaResult.Fail(MfaOutcome.InvalidCode, user, mfaProvider.Name));
-        }
-
         var signInResult = await signInManager.TwoFactorSignInAsync(mfaProvider.Name, code, rememberMe, rememberClient: false);
-        if (!signInResult.Succeeded)
-        {
-            await usedCodeStore.ReleaseAsync(user.Id, mfaProvider.Name, code);
-        }
-
         if (signInResult.IsLockedOut)
         {
             return await FailAsync(MfaResult.Fail(MfaOutcome.AccountLocked, await UserManager.FindByIdAsync(user.Id), mfaProvider.Name));
@@ -105,9 +94,15 @@ public class BackofficeMfaSignInService(
             return await FailAsync(MfaResult.Fail(MfaOutcome.InvalidCode, user, mfaProvider.Name));
         }
 
-        await codeAttemptLimiter.ResetAsync(user.Id);
-
         user = await UserManager.FindByIdAsync(user.Id);
+
+        if (!await mfaService.AcceptCodeAsync(user, mfaProvider))
+        {
+            await signInManager.SignOutAsync();
+            return await FailAsync(MfaResult.Fail(MfaOutcome.AcceptedCodeNotRecorded, user, mfaProvider.Name));
+        }
+
+        await codeAttemptLimiter.ResetAsync(user.Id);
 
         try
         {

@@ -1,7 +1,10 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
@@ -75,8 +78,6 @@ public abstract class MfaTestsBase
 
     public IMfaCodeAttemptLimiter CodeAttemptLimiter { get; }
 
-    public IMfaUsedCodeStore UsedCodeStore { get; }
-
     public bool IsNotificationActive { get; set; } = true;
 
     public ITwoFactorTokenService TwoFactorTokenService { get; }
@@ -108,6 +109,10 @@ public abstract class MfaTestsBase
     public ApplicationUser NoEmailUser { get; }
 
     public ApplicationUser UnconfirmedEmailUser { get; }
+
+    public IdentityResult CodeStampUpdateResult { get; set; } = IdentityResult.Success;
+
+    private readonly ConcurrentDictionary<string, string> _codeStamps = new();
 
     protected MfaTestsBase()
     {
@@ -183,11 +188,16 @@ public abstract class MfaTestsBase
 
         UserManager
             .Setup(x => x.GenerateTwoFactorTokenAsync(It.IsAny<ApplicationUser>(), EmailProvider))
-            .ReturnsAsync(ValidCode);
+            .ReturnsAsync((ApplicationUser user, string _) => CurrentCode(user));
 
         UserManager
             .Setup(x => x.VerifyTwoFactorTokenAsync(It.IsAny<ApplicationUser>(), EmailProvider, It.IsAny<string>()))
-            .ReturnsAsync((ApplicationUser _, string _, string code) => code == ValidCode);
+            .ReturnsAsync((ApplicationUser user, string _, string code) => code == CurrentCode(user));
+
+        UserManager
+            .Setup(x => x.SetAuthenticationTokenAsync(It.IsAny<ApplicationUser>(),
+                ModuleConstants.Security.CodeStampLoginProvider, ModuleConstants.Security.CodeStampName, It.IsAny<string>()))
+            .ReturnsAsync((ApplicationUser user, string _, string _, string codeStamp) => UpdateCodeStamp(user, codeStamp));
 
         UserManager
             .Setup(x => x.AccessFailedAsync(It.IsAny<ApplicationUser>()))
@@ -251,12 +261,11 @@ public abstract class MfaTestsBase
         CodeDeliveryLimiter = new MfaCodeDeliveryLimiter(memoryCache, Options.Create(MfaOptions), TimeProvider);
         TicketStore = new TwoFactorTicketStore(memoryCache, Options.Create(MfaOptions));
         CodeAttemptLimiter = new MfaCodeAttemptLimiter(memoryCache, Options.Create(MfaOptions), TimeProvider);
-        UsedCodeStore = new MfaUsedCodeStore(memoryCache, Options.Create(MfaOptions), TimeProvider);
         ErrorDescriber = new MfaErrorDescriber(TimeProvider);
         RequirementService = new MfaRequirementService(StoreService.Object, settingsManager.Object);
 
         MfaService = new MfaService(UserManager.Object, StoreService.Object, TwoFactorTokenService, TicketStore, [emailProvider],
-            CodeAttemptLimiter, CodeDeliveryLimiter, UsedCodeStore, Options.Create(MfaOptions), TimeProvider);
+            CodeAttemptLimiter, CodeDeliveryLimiter, Options.Create(MfaOptions), TimeProvider);
     }
 
     public MfaOptions MfaOptions { get; } = new();
@@ -268,6 +277,19 @@ public abstract class MfaTestsBase
     public Mock<IMemberService> MemberService { get; }
 
     public int ResendIntervalSeconds => (int)MfaOptions.CodeResendInterval.TotalSeconds;
+
+    // Like the Identity "Email" provider with the module's modifier: the code changes with the user's code stamp
+    public string CurrentCode(ApplicationUser user)
+    {
+        if (!_codeStamps.TryGetValue(user.Id, out var codeStamp))
+        {
+            return ValidCode;
+        }
+
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(codeStamp));
+
+        return (BitConverter.ToUInt32(hash) % 1_000_000).ToString("D6");
+    }
 
     public string CreateTwoFactorToken(string userId = ActiveUserId, string storeId = StoreId, string securityStamp = SecurityStamp, string provider = EmailProvider)
     {
@@ -316,6 +338,16 @@ public abstract class MfaTestsBase
             LockoutEnd = lockoutEnd,
             LockoutEnabled = lockoutEnabled,
         };
+    }
+
+    private IdentityResult UpdateCodeStamp(ApplicationUser user, string codeStamp)
+    {
+        if (CodeStampUpdateResult.Succeeded)
+        {
+            _codeStamps[user.Id] = codeStamp;
+        }
+
+        return CodeStampUpdateResult;
     }
 
     // Like Identity: a wrong code counts toward the lockout, which starts at MaxFailedAccessAttempts

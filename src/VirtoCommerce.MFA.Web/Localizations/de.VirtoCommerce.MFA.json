@@ -34,7 +34,7 @@
       }
     },
     "sign-in-log": {
-      "type-mfa": "Anmeldecode"
+      "type-mfa": "Multi-Faktor-Authentifizierung"
     }
   }
 }

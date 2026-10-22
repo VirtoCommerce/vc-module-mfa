@@ -11,6 +11,9 @@ public static class ModuleConstants
         public const string GrantType = "mfa";
         public const string AuthenticationMethod = "mfa";
         public const string TwoFactorTokenPurpose = "VirtoCommerce.MFA.TwoFactorToken";
+        public const string IdentityTwoFactorPurpose = "TwoFactor";
+        public const string CodeStampLoginProvider = "VirtoCommerce.MFA";
+        public const string CodeStampName = "CodeStamp";
 
         public static class Parameters
         {
@@ -29,6 +32,7 @@ public static class ModuleConstants
             public const string InvalidCode = "InvalidCode";
             public const string CodeAttemptsExceeded = "CodeAttemptsExceeded";
             public const string FailedAttemptNotRecorded = "FailedAttemptNotRecorded";
+            public const string AcceptedCodeNotRecorded = "AcceptedCodeNotRecorded";
         }
     }
 

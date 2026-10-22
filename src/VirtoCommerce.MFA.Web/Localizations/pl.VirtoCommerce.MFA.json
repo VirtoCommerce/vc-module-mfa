@@ -34,7 +34,7 @@
       }
     },
     "sign-in-log": {
-      "type-mfa": "Kod logowania"
+      "type-mfa": "Uwierzytelnianie wieloskładnikowe"
     }
   }
 }

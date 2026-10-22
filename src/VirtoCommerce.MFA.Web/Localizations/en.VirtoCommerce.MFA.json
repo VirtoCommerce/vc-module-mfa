@@ -34,7 +34,7 @@
       }
     },
     "sign-in-log": {
-      "type-mfa": "Sign-in code"
+      "type-mfa": "Multi-factor authentication"
     }
   }
 }

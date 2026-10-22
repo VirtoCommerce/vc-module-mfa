@@ -17,32 +17,21 @@ public class MfaRequirementService(IStoreService storeService, ISettingsManager 
     {
         ArgumentNullException.ThrowIfNull(user);
 
-        var isGloballyEnabled = await settingsManager.GetValueAsync<bool>(MfaModuleSettings.MfaEnabled);
-
         var store = await storeService.GetNoCloneAsync(storeId);
-
-        if (store == null || !store.Id.EqualsIgnoreCase(user.StoreId))
-        {
-            var userStore = await storeService.GetNoCloneAsync(user.StoreId);
-            if (GetStoreMode(userStore) == ModuleConstants.StoreModes.Enabled)
-            {
-                return true;
-            }
-        }
 
         return GetStoreMode(store) switch
         {
             ModuleConstants.StoreModes.Enabled => true,
-            ModuleConstants.StoreModes.Disabled when IsStoreCustomer(user, store) => false,
-            _ => isGloballyEnabled,
+            ModuleConstants.StoreModes.Disabled => false,
+            _ => await settingsManager.GetValueAsync<bool>(MfaModuleSettings.MfaEnabled),
         };
     }
 
-    protected virtual bool IsStoreCustomer(ApplicationUser user, Store store)
+    public virtual Task<bool> IsRequiredForBackofficeAsync(ApplicationUser user)
     {
-        return user.UserType.EqualsIgnoreCase(nameof(UserType.Customer)) &&
-            user.StoreId.EqualsIgnoreCase(store.Id) &&
-            !user.IsAdministrator;
+        ArgumentNullException.ThrowIfNull(user);
+
+        return settingsManager.GetValueAsync<bool>(MfaModuleSettings.MfaEnabled);
     }
 
     protected virtual string GetStoreMode(Store store)

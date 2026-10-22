@@ -4,10 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
+using VirtoCommerce.MFA.Core;
 using VirtoCommerce.MFA.Core.Models;
 using VirtoCommerce.MFA.Core.Services;
 using VirtoCommerce.Platform.Core.Common;
 using VirtoCommerce.Platform.Core.Security;
+using VirtoCommerce.Platform.Security.Exceptions;
 using VirtoCommerce.StoreModule.Core.Model;
 using VirtoCommerce.StoreModule.Core.Services;
 
@@ -21,7 +23,6 @@ public class MfaService(
     IEnumerable<IMfaProvider> providers,
     IMfaCodeAttemptLimiter codeAttemptLimiter,
     IMfaCodeDeliveryLimiter codeDeliveryLimiter,
-    IMfaUsedCodeStore usedCodeStore,
     IOptions<MfaOptions> options,
     TimeProvider timeProvider)
     : IMfaService
@@ -124,9 +125,9 @@ public class MfaService(
             return await FailCodeAsync(ticket, user, mfaProvider);
         }
 
-        if (!await usedCodeStore.TryUseAsync(user.Id, mfaProvider.Name, code))
+        if (!await AcceptCodeAsync(user, mfaProvider))
         {
-            return MfaResult.Fail(MfaOutcome.InvalidCode, user, mfaProvider.Name);
+            return MfaResult.Fail(MfaOutcome.AcceptedCodeNotRecorded, user, mfaProvider.Name);
         }
 
         if (!await ticketStore.TryRedeemAsync(ticket))
@@ -137,6 +138,21 @@ public class MfaService(
         await codeAttemptLimiter.ResetAsync(user.Id);
 
         return MfaResult.Succeed(user, mfaProvider.Name);
+    }
+
+    public virtual async Task<bool> AcceptCodeAsync(ApplicationUser user, IMfaProvider mfaProvider)
+    {
+        ArgumentNullException.ThrowIfNull(user);
+        ArgumentNullException.ThrowIfNull(mfaProvider);
+
+        if (!await UpdateCodeStampAsync(user))
+        {
+            return false;
+        }
+
+        await codeDeliveryLimiter.ReleaseAsync(GetCodeDeliveryKey(user, mfaProvider));
+
+        return true;
     }
 
     public virtual async Task<MfaResult> ValidateUserAsync(ApplicationUser user)
@@ -284,8 +300,28 @@ public class MfaService(
         return $"{user.Id}:{mfaProvider.Name}";
     }
 
+    protected virtual async Task<bool> UpdateCodeStampAsync(ApplicationUser user)
+    {
+        try
+        {
+            var result = await userManager.SetAuthenticationTokenAsync(user,
+                ModuleConstants.Security.CodeStampLoginProvider, ModuleConstants.Security.CodeStampName, Guid.NewGuid().ToString("N"));
+
+            return result.Succeeded;
+        }
+        catch (DuplicateEmailException)
+        {
+            return false;
+        }
+    }
+
     protected virtual async Task<bool> GenerateAndSendCodeAsync(Store store, ApplicationUser user, IMfaProvider mfaProvider)
     {
+        if (!await UpdateCodeStampAsync(user))
+        {
+            return false;
+        }
+
         var code = await userManager.GenerateTwoFactorTokenAsync(user, mfaProvider.Name);
 
         return await mfaProvider.SendCodeAsync(store, user, code);

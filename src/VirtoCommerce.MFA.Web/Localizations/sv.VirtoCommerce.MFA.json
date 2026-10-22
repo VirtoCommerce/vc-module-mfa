@@ -34,7 +34,7 @@
       }
     },
     "sign-in-log": {
-      "type-mfa": "Inloggningskod"
+      "type-mfa": "Multifaktorautentisering"
     }
   }
 }

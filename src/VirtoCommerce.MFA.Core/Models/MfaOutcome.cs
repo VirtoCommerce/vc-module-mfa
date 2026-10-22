@@ -14,4 +14,5 @@ public enum MfaOutcome
     ResendTooSoon,
     SignInNotAllowed,
     DuplicateEmail,
+    AcceptedCodeNotRecorded,
 }

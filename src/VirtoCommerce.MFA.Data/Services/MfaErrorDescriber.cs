@@ -96,6 +96,7 @@ public class MfaErrorDescriber(TimeProvider timeProvider)
             MfaOutcome.InvalidTwoFactorToken => ModuleConstants.Security.FailureReason.InvalidTwoFactorToken,
             MfaOutcome.CodeAttemptsExceeded => ModuleConstants.Security.FailureReason.CodeAttemptsExceeded,
             MfaOutcome.FailedAttemptNotRecorded => ModuleConstants.Security.FailureReason.FailedAttemptNotRecorded,
+            MfaOutcome.AcceptedCodeNotRecorded => ModuleConstants.Security.FailureReason.AcceptedCodeNotRecorded,
             MfaOutcome.InvalidCode => ModuleConstants.Security.FailureReason.InvalidCode,
             MfaOutcome.AccountLocked => SignInFailureReason.LockedOut,
             MfaOutcome.LockoutDisabled => ModuleConstants.Security.FailureReason.LockoutDisabled,

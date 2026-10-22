@@ -34,7 +34,7 @@
       }
     },
     "sign-in-log": {
-      "type-mfa": "Código de inicio de sesión"
+      "type-mfa": "Autenticación multifactor"
     }
   }
 }

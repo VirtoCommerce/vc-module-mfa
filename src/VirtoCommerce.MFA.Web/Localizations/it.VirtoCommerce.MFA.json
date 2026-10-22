@@ -34,7 +34,7 @@
       }
     },
     "sign-in-log": {
-      "type-mfa": "Codice di accesso"
+      "type-mfa": "Autenticazione a più fattori"
     }
   }
 }

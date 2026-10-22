@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
+using OpenIddict.Abstractions;
 using VirtoCommerce.MFA.Core;
 using VirtoCommerce.MFA.Core.Models;
 using VirtoCommerce.MFA.Core.Services;
@@ -18,13 +19,15 @@ public class MfaTwoFactorPolicy(IMfaRequirementService requirementService, IOpti
             return Task.FromResult(false);
         }
 
-        return requirementService.IsRequiredAsync(user, GetStoreId());
-    }
-
-    protected virtual string GetStoreId()
-    {
         var request = httpContextAccessor.HttpContext?.GetOpenIddictServerRequest();
 
-        return (string)request?.GetParameter(ModuleConstants.Security.Parameters.StoreId);
+        return request == null
+            ? requirementService.IsRequiredForBackofficeAsync(user)
+            : requirementService.IsRequiredAsync(user, GetStoreId(request));
+    }
+
+    protected virtual string GetStoreId(OpenIddictRequest request)
+    {
+        return (string)request.GetParameter(ModuleConstants.Security.Parameters.StoreId);
     }
 }

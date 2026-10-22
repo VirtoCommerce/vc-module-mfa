@@ -34,7 +34,7 @@
       }
     },
     "sign-in-log": {
-      "type-mfa": "登录验证码"
+      "type-mfa": "多因素身份验证"
     }
   }
 }

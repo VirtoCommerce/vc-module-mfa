@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 using Moq;
 using VirtoCommerce.MFA.Core;
 using VirtoCommerce.MFA.Core.Models;
@@ -24,7 +25,7 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
 
     public BackofficeMfaSignInServiceTests()
     {
-        _service = new BackofficeMfaSignInService(SignInManager.Object, MfaService, CodeAttemptLimiter, UsedCodeStore, _eventPublisher.Object, ErrorDescriber);
+        _service = new BackofficeMfaSignInService(SignInManager.Object, MfaService, CodeAttemptLimiter, _eventPublisher.Object, ErrorDescriber);
 
         UserManager
             .Setup(x => x.IsInRoleAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
@@ -134,20 +135,42 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
 
         // Assert
         Assert.Equal(MfaOutcome.InvalidCode, result.Outcome);
-        SignInManager.Verify(x => x.TwoFactorSignInAsync(EmailProvider, ValidCode, false, false), Times.Once);
+        SignInManager.Verify(x => x.TwoFactorSignInAsync(EmailProvider, ValidCode, false, false), Times.Exactly(2));
     }
 
     [Fact]
-    public async Task SignInAsync_Should_NotRememberTheCode_When_IdentityRejectsIt()
+    public async Task SendCodeAsync_Should_SendANewCodeAtOnce_When_TheUserSignsInAgainAfterTheCodeWasAccepted()
     {
         // Arrange
         TwoFactorAuthenticationUser = BackofficeUser;
+        await _service.SendCodeAsync();
+        await _service.SignInAsync(CurrentCode(BackofficeUser));
 
         // Act
-        await _service.SignInAsync(InvalidCode);
+        var sendResult = await _service.SendCodeAsync();
+        var result = await _service.SignInAsync(CurrentCode(BackofficeUser));
 
         // Assert
-        Assert.True(await UsedCodeStore.TryUseAsync(BackofficeUserId, EmailProvider, InvalidCode));
+        Assert.Equal(MfaOutcome.Success, sendResult.Outcome);
+        Assert.Equal(MfaOutcome.Success, result.Outcome);
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task SignInAsync_Should_SignOutAndRejectTheCode_When_TheCodeStampIsNotUpdated()
+    {
+        // Arrange
+        TwoFactorAuthenticationUser = BackofficeUser;
+        CodeStampUpdateResult = IdentityResult.Failed();
+
+        // Act
+        var result = await _service.SignInAsync(ValidCode);
+
+        // Assert
+        Assert.Equal(MfaOutcome.AcceptedCodeNotRecorded, result.Outcome);
+        SignInManager.Verify(x => x.SignOutAsync(), Times.Once);
+        _eventPublisher.Verify(x => x.Publish(It.IsAny<UserLoginEvent>()), Times.Never);
+        VerifySignInAttempt(succeeded: false, failureReason: ModuleConstants.Security.FailureReason.AcceptedCodeNotRecorded);
     }
 
     [Fact]

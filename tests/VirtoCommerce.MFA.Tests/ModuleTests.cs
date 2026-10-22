@@ -8,7 +8,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using VirtoCommerce.MFA.Core.Models;
 using VirtoCommerce.MFA.Core.Services;
+using VirtoCommerce.MFA.Data.Providers;
 using VirtoCommerce.MFA.Web;
+using VirtoCommerce.Platform.Core.Security;
 using Xunit;
 
 namespace VirtoCommerce.MFA.Tests;
@@ -43,12 +45,28 @@ public class ModuleTests
         Assert.False(cookieOptions.SlidingExpiration);
     }
 
+    [Fact]
+    public void Initialize_Should_ReplaceTheIdentityEmailProvider()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddIdentityCore<ApplicationUser>().AddDefaultTokenProviders();
+
+        // Act
+        Initialize(services: services);
+        using var serviceProvider = services.BuildServiceProvider();
+
+        // Assert
+        var providerType = serviceProvider.GetRequiredService<IOptions<IdentityOptions>>().Value.Tokens.ProviderMap[TokenOptions.DefaultEmailProvider].ProviderType;
+        Assert.Equal(typeof(MfaEmailTokenProvider), providerType);
+        Assert.IsType<MfaEmailTokenProvider>(serviceProvider.GetRequiredService(providerType));
+    }
+
     [Theory]
     [InlineData("MultiFactorAuthentication:TwoFactorTokenLifetime", "00:00:00")]
     [InlineData("MultiFactorAuthentication:CodeResendInterval", "00:00:00")]
     [InlineData("MultiFactorAuthentication:CodeResendInterval", "00:10:00")]
     [InlineData("MultiFactorAuthentication:MaxCodeAttempts", "0")]
-    [InlineData("MultiFactorAuthentication:UsedCodeLifetime", "00:00:00")]
     public void Initialize_Should_RejectInvalidOptions(string key, string value)
     {
         // Arrange
@@ -61,9 +79,9 @@ public class ModuleTests
         Assert.Throws<OptionsValidationException>(readOptions);
     }
 
-    private static ServiceCollection Initialize(Dictionary<string, string> configuration = null)
+    private static ServiceCollection Initialize(Dictionary<string, string> configuration = null, ServiceCollection services = null)
     {
-        var services = new ServiceCollection();
+        services ??= new ServiceCollection();
         var module = new Module
         {
             Configuration = new ConfigurationBuilder().AddInMemoryCollection(configuration ?? []).Build(),

@@ -23,13 +23,18 @@ public class MfaTwoFactorPolicyTests
     private readonly Mock<IMfaRequirementService> _requirementService = new();
     private readonly MfaOptions _options = new();
     private readonly DefaultHttpContext _httpContext = new();
+    private bool _isRequiredForBackoffice;
 
     public MfaTwoFactorPolicyTests()
     {
-        // The store named in the token request requires MFA, a sign-in without a store doesn't.
+        // The store named in the token request requires MFA, a token request without a store doesn't.
         _requirementService
             .Setup(x => x.IsRequiredAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
             .ReturnsAsync((ApplicationUser _, string storeId) => storeId == MfaStoreId);
+
+        _requirementService
+            .Setup(x => x.IsRequiredForBackofficeAsync(It.IsAny<ApplicationUser>()))
+            .ReturnsAsync(() => _isRequiredForBackoffice);
     }
 
     [Fact]
@@ -49,9 +54,10 @@ public class MfaTwoFactorPolicyTests
     }
 
     [Fact]
-    public async Task IsTwoFactorRequiredAsync_Should_UseNoStore_When_TheSignInIsNotATokenRequest()
+    public async Task IsTwoFactorRequiredAsync_Should_UseNoStore_When_TheTokenRequestNamesNone()
     {
         // Arrange
+        SetTokenRequest(new OpenIddictRequest { GrantType = "password" });
         var policy = CreatePolicy();
 
         // Act
@@ -63,17 +69,33 @@ public class MfaTwoFactorPolicyTests
     }
 
     [Fact]
-    public async Task IsTwoFactorRequiredAsync_Should_UseNoStore_When_ThereIsNoHttpContext()
+    public async Task IsTwoFactorRequiredAsync_Should_FollowTheBackofficeRule_When_TheSignInIsNotATokenRequest()
     {
         // Arrange
+        _isRequiredForBackoffice = true;
+        var policy = CreatePolicy();
+
+        // Act
+        var isRequired = await policy.IsTwoFactorRequiredAsync(_user);
+
+        // Assert
+        Assert.True(isRequired);
+        _requirementService.Verify(x => x.IsRequiredAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task IsTwoFactorRequiredAsync_Should_FollowTheBackofficeRule_When_ThereIsNoHttpContext()
+    {
+        // Arrange
+        _isRequiredForBackoffice = true;
         var policy = new MfaTwoFactorPolicy(_requirementService.Object, Options.Create(_options), new HttpContextAccessor());
 
         // Act
         var isRequired = await policy.IsTwoFactorRequiredAsync(_user);
 
         // Assert
-        Assert.False(isRequired);
-        _requirementService.Verify(x => x.IsRequiredAsync(_user, null), Times.Once);
+        Assert.True(isRequired);
+        _requirementService.Verify(x => x.IsRequiredAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()), Times.Never);
     }
 
     [Fact]
