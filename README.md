@@ -24,7 +24,7 @@ The Backoffice sign-in has no token request and follows only the global setting,
 | `MultiFactorAuthentication:MaxCodeAttempts` | How many wrong codes a user can enter within `TwoFactorTokenLifetime`, at the token endpoint and on the Backoffice code screen together. | `3` |
 | `MultiFactorAuthentication:DisableEnforcement` | Stops requiring the code whatever the settings say. A recovery switch for an administrator who can't pass the second factor; see below. | `false` |
 
-Codes are sent with the ASP.NET Core Identity `Email` two-factor provider, which requires a confirmed email. **Before enabling MFA, confirm the email of the users it applies to and enable lockout for them** (the account blade in the Backoffice has "Email confirmed" and "Lockout enabled" switches); a user without a confirmed email or with lockout disabled cannot complete the sign-in. The default `admin` account has lockout disabled.
+Codes are sent with the ASP.NET Core Identity `Email` two-factor provider, which requires a confirmed email. **Before enabling MFA, confirm the email of the users it applies to and enable lockout for them** (the account blade in the Backoffice has "Email confirmed" and "Lockout enabled" switches); a user without a confirmed email or with lockout disabled cannot complete the sign-in.
 
 If an administrator can no longer sign in because of MFA, set `MultiFactorAuthentication:DisableEnforcement` to `true` in the configuration (for example, the `MultiFactorAuthentication__DisableEnforcement` environment variable), restart the platform, fix the account or the settings, and remove the switch. While the switch is on, the platform logs a warning at startup.
 
