@@ -3,11 +3,11 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Uwierzytelnianie wieloskładnikowe",
-        "description": "Wymaga, oprócz hasła, jednorazowego kodu wysyłanego e-mailem przy każdym logowaniu hasłem bez sklepu: w Backoffice oraz w aplikacjach i klientach API logujących się hasłem. Sklepy stosują to ustawienie, chyba że je zastąpią. Użytkownicy bez potwierdzonego adresu e-mail lub z wyłączoną blokadą nie zalogują się, gdy to ustawienie jest włączone. Domyślne konto administratora ma wyłączoną blokadę: przed włączeniem potwierdź jego e-mail i włącz blokadę, inaczej nie zalogujesz się do Backoffice."
+        "description": "Wymaga, oprócz hasła, jednorazowego kodu wysyłanego e-mailem przy każdym logowaniu do Backoffice oraz przy każdym innym logowaniu hasłem (sklep, aplikacje, klienci API), które nie wskazuje sklepu albo wskazuje sklep stosujący to ustawienie. Użytkownicy bez potwierdzonego adresu e-mail lub z wyłączoną blokadą nie zalogują się, dopóki kod jest wymagany: przed włączeniem potwierdź ich e-mail i włącz blokadę."
       },
       "StoreMode": {
         "title": "Uwierzytelnianie wieloskładnikowe",
-        "description": "Czy klienci tego sklepu muszą oprócz hasła podać jednorazowy kod wysłany e-mailem. Use global setting: zgodnie z globalnym ustawieniem uwierzytelniania wieloskładnikowego. Enabled: zawsze wymagany. Disabled: niewymagany dla własnych kont klientów tego sklepu, które nie są administratorami; pozostali podlegają ustawieniu globalnemu."
+        "description": "Czy logowanie hasłem do tego sklepu wymaga, oprócz hasła, jednorazowego kodu wysłanego e-mailem, dla każdego użytkownika, który się do niego loguje. Use global setting: zgodnie z globalnym ustawieniem uwierzytelniania wieloskładnikowego. Enabled: zawsze wymagany. Disabled: niewymagany. Logowanie do Backoffice podlega tylko ustawieniu globalnemu."
       }
     }
   },

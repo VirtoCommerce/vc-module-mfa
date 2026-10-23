@@ -3,11 +3,11 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Autenticazione a più fattori",
-        "description": "Richiede, oltre alla password, un codice monouso inviato via e-mail per ogni accesso con password senza negozio: il Backoffice e le app e i client API che accedono con la password. I negozi seguono questa impostazione salvo override. Gli utenti senza e-mail confermata o con il blocco disattivato non potranno accedere finché questa opzione è attiva. L'account amministratore predefinito ha il blocco disattivato: conferma la sua e-mail e attiva il blocco prima di abilitare questa opzione, altrimenti non potrai accedere al Backoffice."
+        "description": "Richiede, oltre alla password, un codice monouso inviato via e-mail per ogni accesso al Backoffice e per ogni altro accesso con password (negozio, app, client API) che non indica alcun negozio o indica un negozio che segue questa impostazione. Gli utenti senza e-mail confermata o con il blocco disattivato non potranno accedere finché il codice è richiesto: conferma la loro e-mail e attiva il blocco prima di abilitare questa opzione."
       },
       "StoreMode": {
         "title": "Autenticazione a più fattori",
-        "description": "Indica se i clienti di questo negozio devono inserire, oltre alla password, un codice monouso inviato via e-mail. Use global setting: segue l'impostazione globale dell'autenticazione a più fattori. Enabled: sempre richiesto. Disabled: non richiesto per gli account cliente propri di questo negozio che non sono amministratori; tutti gli altri seguono l'impostazione globale."
+        "description": "Indica se un accesso con password a questo negozio richiede, oltre alla password, un codice monouso inviato via e-mail, per qualsiasi utente che vi accede. Use global setting: segue l'impostazione globale dell'autenticazione a più fattori. Enabled: sempre richiesto. Disabled: non richiesto. L'accesso al Backoffice segue solo l'impostazione globale."
       }
     }
   },

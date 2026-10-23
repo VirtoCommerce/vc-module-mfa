@@ -3,11 +3,11 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Autenticación multifactor",
-        "description": "Exige, además de la contraseña, un código de un solo uso enviado por correo electrónico en cada inicio de sesión con contraseña sin tienda: el Backoffice y las aplicaciones y clientes de API que inician sesión con contraseña. Las tiendas siguen esta configuración salvo que la anulen. Los usuarios sin correo confirmado o con el bloqueo desactivado no podrán iniciar sesión mientras esté activado. La cuenta de administrador predeterminada tiene el bloqueo desactivado: confirme su correo y active su bloqueo antes de activar esta opción, o no podrá iniciar sesión en el Backoffice."
+        "description": "Exige, además de la contraseña, un código de un solo uso enviado por correo electrónico en cada inicio de sesión en el Backoffice y en cada otro inicio de sesión con contraseña (tienda, aplicaciones, clientes de API) que no indica ninguna tienda o indica una tienda que sigue esta configuración. Los usuarios sin correo confirmado o con el bloqueo desactivado no podrán iniciar sesión mientras se exija el código: confirme su correo y active su bloqueo antes de activar esta opción."
       },
       "StoreMode": {
         "title": "Autenticación multifactor",
-        "description": "Indica si los clientes de esta tienda necesitan, además de la contraseña, un código de un solo uso enviado por correo. Use global setting: seguir la configuración global de autenticación multifactor. Enabled: siempre obligatorio. Disabled: no obligatorio para las cuentas de cliente propias de esta tienda que no son administradores; el resto sigue la configuración global."
+        "description": "Indica si un inicio de sesión con contraseña en esta tienda necesita, además de la contraseña, un código de un solo uso enviado por correo, para cualquier usuario que inicie sesión en ella. Use global setting: seguir la configuración global de autenticación multifactor. Enabled: siempre obligatorio. Disabled: no obligatorio. El inicio de sesión en el Backoffice sigue solo la configuración global."
       }
     }
   },

@@ -3,11 +3,11 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Multi-factor authentication",
-        "description": "Require a one-time code sent by email, in addition to the password, for every password sign-in without a store: the Backoffice, apps and API clients that sign in with a password. Stores follow this setting unless they override it. Users without a confirmed email or with lockout disabled can't sign in while this is on. The default administrator account has lockout disabled: confirm its email and enable its lockout before turning this on, or you will not be able to sign in to the Backoffice."
+        "description": "Require a one-time code sent by email, in addition to the password, for every Backoffice sign-in, and for every other password sign-in (storefront, apps, API clients) that names no store or a store that follows this setting. Users without a confirmed email or with lockout disabled can't sign in while the code is required: confirm their email and enable their lockout before turning this on."
       },
       "StoreMode": {
         "title": "Multi-factor authentication",
-        "description": "Whether customers of this store need a one-time code sent by email in addition to the password. Use global setting: follow the global multi-factor authentication setting. Enabled: always required. Disabled: not required for this store's own customer accounts that are not administrators; everyone else follows the global setting."
+        "description": "Whether a password sign-in to this store needs a one-time code sent by email in addition to the password, for every user who signs in to it. Use global setting: follow the global multi-factor authentication setting. Enabled: always required. Disabled: not required. The Backoffice sign-in follows only the global setting."
       }
     }
   },

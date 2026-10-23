@@ -3,11 +3,11 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Multifaktorautentisering",
-        "description": "Kräver, utöver lösenordet, en engångskod som skickas via e-post vid varje lösenordsinloggning utan butik: Backoffice samt appar och API-klienter som loggar in med lösenord. Butikerna följer den här inställningen om de inte åsidosätter den. Användare utan bekräftad e-post eller med inaktiverad låsning kan inte logga in medan detta är aktiverat. Standardadministratörskontot har låsning inaktiverad: bekräfta dess e-post och aktivera låsning innan du aktiverar detta, annars kan du inte logga in i Backoffice."
+        "description": "Kräver, utöver lösenordet, en engångskod som skickas via e-post vid varje inloggning i Backoffice och vid varje annan lösenordsinloggning (butik, appar, API-klienter) som inte anger någon butik eller anger en butik som följer den här inställningen. Användare utan bekräftad e-post eller med inaktiverad låsning kan inte logga in medan koden krävs: bekräfta deras e-post och aktivera låsning innan du aktiverar detta."
       },
       "StoreMode": {
         "title": "Multifaktorautentisering",
-        "description": "Om kunderna i den här butiken behöver en engångskod via e-post utöver lösenordet. Use global setting: följ den globala inställningen för multifaktorautentisering. Enabled: alltid obligatorisk. Disabled: inte obligatorisk för butikens egna kundkonton som inte är administratörer; alla andra följer den globala inställningen."
+        "description": "Om en lösenordsinloggning i den här butiken kräver en engångskod via e-post utöver lösenordet, för alla användare som loggar in i den. Use global setting: följ den globala inställningen för multifaktorautentisering. Enabled: alltid obligatorisk. Disabled: inte obligatorisk. Inloggning i Backoffice följer bara den globala inställningen."
       }
     }
   },

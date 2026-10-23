@@ -3,11 +3,11 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Authentification multifacteur",
-        "description": "Exige, en plus du mot de passe, un code à usage unique envoyé par e-mail pour chaque connexion par mot de passe sans boutique : le Backoffice ainsi que les applications et clients d'API qui se connectent avec un mot de passe. Les boutiques suivent ce paramètre sauf si elles le remplacent. Les utilisateurs sans e-mail confirmé ou dont le verrouillage est désactivé ne pourront pas se connecter tant que ce paramètre est actif. Le compte administrateur par défaut a le verrouillage désactivé : confirmez son e-mail et activez son verrouillage avant d'activer ce paramètre, sinon vous ne pourrez pas vous connecter au Backoffice."
+        "description": "Exige, en plus du mot de passe, un code à usage unique envoyé par e-mail pour chaque connexion au Backoffice et pour chaque autre connexion par mot de passe (boutique, applications, clients d'API) qui n'indique aucune boutique ou une boutique qui suit ce paramètre. Les utilisateurs sans e-mail confirmé ou dont le verrouillage est désactivé ne pourront pas se connecter tant que le code est exigé : confirmez leur e-mail et activez leur verrouillage avant d'activer ce paramètre."
       },
       "StoreMode": {
         "title": "Authentification multifacteur",
-        "description": "Indique si les clients de cette boutique ont besoin, en plus du mot de passe, d'un code à usage unique envoyé par e-mail. Use global setting : suivre le paramètre global d'authentification multifacteur. Enabled : toujours exigé. Disabled : non exigé pour les comptes clients propres à cette boutique qui ne sont pas administrateurs ; les autres suivent le paramètre global."
+        "description": "Indique si une connexion par mot de passe à cette boutique nécessite, en plus du mot de passe, un code à usage unique envoyé par e-mail, pour tout utilisateur qui s'y connecte. Use global setting : suivre le paramètre global d'authentification multifacteur. Enabled : toujours exigé. Disabled : non exigé. La connexion au Backoffice suit uniquement le paramètre global."
       }
     }
   },

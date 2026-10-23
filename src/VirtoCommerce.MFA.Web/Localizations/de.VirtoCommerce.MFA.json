@@ -3,11 +3,11 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Multi-Faktor-Authentifizierung",
-        "description": "Verlangt bei jeder Anmeldung mit Passwort ohne Shop zusätzlich einen per E-Mail gesendeten Einmalcode: im Backoffice sowie bei Apps und API-Clients, die sich mit Passwort anmelden. Shops folgen dieser Einstellung, sofern sie sie nicht überschreiben. Benutzer ohne bestätigte E-Mail-Adresse oder mit deaktivierter Sperre können sich dann nicht anmelden. Beim Standard-Administratorkonto ist die Sperre deaktiviert: Bestätigen Sie vor dem Aktivieren dessen E-Mail-Adresse und aktivieren Sie die Sperre, sonst können Sie sich nicht im Backoffice anmelden."
+        "description": "Verlangt zusätzlich zum Passwort einen per E-Mail gesendeten Einmalcode bei jeder Anmeldung im Backoffice sowie bei jeder anderen Anmeldung mit Passwort (Shop, Apps, API-Clients), die keinen Shop oder einen Shop angibt, der dieser Einstellung folgt. Benutzer ohne bestätigte E-Mail-Adresse oder mit deaktivierter Sperre können sich nicht anmelden, solange der Code erforderlich ist: Bestätigen Sie vor dem Aktivieren deren E-Mail-Adresse und aktivieren Sie die Sperre."
       },
       "StoreMode": {
         "title": "Multi-Faktor-Authentifizierung",
-        "description": "Ob Kunden dieses Shops zusätzlich zum Passwort einen per E-Mail gesendeten Einmalcode benötigen. Use global setting: der globalen Einstellung für die Multi-Faktor-Authentifizierung folgen. Enabled: immer erforderlich. Disabled: nicht erforderlich für die eigenen Kundenkonten dieses Shops, die keine Administratoren sind; alle anderen folgen der globalen Einstellung."
+        "description": "Ob bei der Anmeldung mit Passwort in diesem Shop zusätzlich ein per E-Mail gesendeter Einmalcode erforderlich ist, für jeden Benutzer, der sich hier anmeldet. Use global setting: der globalen Einstellung für die Multi-Faktor-Authentifizierung folgen. Enabled: immer erforderlich. Disabled: nicht erforderlich. Die Anmeldung im Backoffice folgt nur der globalen Einstellung."
       }
     }
   },

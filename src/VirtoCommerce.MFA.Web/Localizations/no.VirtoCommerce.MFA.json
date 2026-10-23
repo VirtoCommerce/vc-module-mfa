@@ -3,11 +3,11 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Flerfaktorautentisering",
-        "description": "Krever i tillegg til passordet en engangskode sendt på e-post ved hver passordpålogging uten butikk: Backoffice samt apper og API-klienter som logger på med passord. Butikkene følger denne innstillingen med mindre de overstyrer den. Brukere uten bekreftet e-post eller med deaktivert låsing kan ikke logge på mens dette er aktivert. Standard administratorkonto har låsing deaktivert: bekreft e-posten og aktiver låsing før du slår på dette, ellers kan du ikke logge på Backoffice."
+        "description": "Krever i tillegg til passordet en engangskode sendt på e-post ved hver pålogging i Backoffice og ved hver annen passordpålogging (butikk, apper, API-klienter) som ikke angir noen butikk eller angir en butikk som følger denne innstillingen. Brukere uten bekreftet e-post eller med deaktivert låsing kan ikke logge på mens koden kreves: bekreft e-posten deres og aktiver låsing før du slår på dette."
       },
       "StoreMode": {
         "title": "Flerfaktorautentisering",
-        "description": "Om kundene i denne butikken trenger en engangskode sendt på e-post i tillegg til passordet. Use global setting: følg den globale innstillingen for flerfaktorautentisering. Enabled: alltid påkrevd. Disabled: ikke påkrevd for butikkens egne kundekontoer som ikke er administratorer; alle andre følger den globale innstillingen."
+        "description": "Om en passordpålogging i denne butikken krever en engangskode sendt på e-post i tillegg til passordet, for alle brukere som logger på her. Use global setting: følg den globale innstillingen for flerfaktorautentisering. Enabled: alltid påkrevd. Disabled: ikke påkrevd. Pålogging i Backoffice følger bare den globale innstillingen."
       }
     }
   },
