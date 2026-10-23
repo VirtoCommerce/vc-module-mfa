@@ -90,7 +90,7 @@ The code is sent by the `MfaSignInEmailNotification` notification in the user's 
 | `missing_parameter` | `mfa` grant | Required parameters are missing. |
 | `invalid_two_factor_token` | `mfa` grant, resend, Backoffice code screen | The sign-in session is invalid, expired, already used or belongs to another sign-in. Sign in with the password again. |
 | `code_attempts_exceeded` | all | Too many wrong codes. Sign in again after `TwoFactorTokenLifetime`. |
-| `invalid_code` | `mfa` grant, Backoffice code screen | The code is wrong or expired. |
+| `invalid_code` | `mfa` grant, Backoffice code screen | The code is wrong, expired, already used or replaced by a newer code. |
 | `sign_in_not_allowed` | `mfa` grant, Backoffice code screen | The account can't sign in: to the Backoffice, or at all, for example when it is not active. |
 | `lockout_disabled` | all | The account has lockout disabled, so it can't pass the second factor. Enable lockout for the account. |
 | `mfa_provider_not_available` | all | No provider can deliver a code to the account, for example the email is not confirmed or the notification is not active. Confirm the email or activate the notification. |
