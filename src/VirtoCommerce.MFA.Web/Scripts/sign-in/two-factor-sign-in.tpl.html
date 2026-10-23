@@ -1,0 +1,45 @@
+<div class="auth" ng-style="{ 'background-image': 'url(' + uiCustomization.pattern.url + '), url(' + (uiCustomization.background.url || 'images/login.webp' ) +')' }">
+    <div class="auth__container">
+        <div class="auth__head">
+            <img class="auth__logo" ng-src="{{ uiCustomization.loginScreenLogo_custom.url || uiCustomization.loginScreenLogo_default.url }}" fallback-src="{{ uiCustomization.loginScreenLogo_default.url }}" alt="Login screen logo image">
+            <h1 class="auth__title">{{ 'mfa.sign-in.title' | translate }}</h1>
+        </div>
+        <div class="auth__content">
+            <form class="login-form" name="codeForm" ng-submit="signIn()" novalidate>
+                <p ng-if="destination && !isFinalError">{{ 'mfa.sign-in.subtitle' | translate: { destination: destination } }}</p>
+
+                <div class="login-form__inputs" ng-if="!isFinalError">
+                    <div class="vc-input">
+                        <label class="vc-input__label" for="mfa-code"> {{ 'mfa.sign-in.code' | translate }} <span class="vc-input__asterisk">*</span> </label>
+                        <div class="vc-input__container">
+                            <input id="mfa-code" class="vc-input__field" type="text" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"
+                                   placeholder="{{ 'mfa.sign-in.code-placeholder' | translate }}" ng-model="model.code" ng-disabled="inProgress" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="login-form__alerts" ng-if="authError || notice">
+                    <div class="vc-alert vc-alert--error" ng-if="authError" role="alert">
+                        <svg class="vc-alert__icon">
+                            <use href="/images/error.svg#icon"></use>
+                        </svg>
+                        <div class="vc-alert__text"> {{ authError }} </div>
+                    </div>
+                    <div class="vc-alert" ng-if="notice" aria-live="polite">
+                        <div class="vc-alert__text"> {{ notice }} </div>
+                    </div>
+                </div>
+
+                <div class="login-form__buttons">
+                    <button type="submit" class="vc-button login-form__button" ng-if="!isFinalError" ng-disabled="!isCodeComplete() || inProgress">{{ 'mfa.sign-in.submit' | translate }}</button>
+                </div>
+
+                <div class="login-form__flex">
+                    <a href="" class="vc-link" ng-if="!isFinalError && !resendSecondsLeft" ng-click="sendCode(true)">{{ 'mfa.sign-in.resend' | translate }}</a>
+                    <span class="vc-link mfa-sign-in__resend-countdown" ng-if="!isFinalError && resendSecondsLeft">{{ 'mfa.sign-in.resend-countdown' | translate: { seconds: resendSecondsLeft } }}</span>
+                    <a href="" class="vc-link" ng-click="backToSignIn()">{{ 'mfa.sign-in.back' | translate }}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

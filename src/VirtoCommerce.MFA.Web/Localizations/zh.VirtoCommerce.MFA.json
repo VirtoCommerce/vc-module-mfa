@@ -1,0 +1,40 @@
+{
+  "settings": {
+    "MultiFactorAuthentication": {
+      "Enabled": {
+        "title": "多重身份验证",
+        "description": "在每次登录 Backoffice 时，以及在其他未指定店铺或所指定店铺遵循此设置的密码登录（店铺、应用、API 客户端）时，除密码外还要求输入通过电子邮件发送的一次性验证码。需要验证码期间，未确认电子邮件或已禁用锁定的用户将无法登录：启用此设置前，请先确认其电子邮件并启用锁定。"
+      },
+      "StoreMode": {
+        "title": "多重身份验证",
+        "description": "使用密码登录此店铺时，是否要求所有登录此店铺的用户在密码之外输入通过电子邮件发送的一次性验证码。Use global setting：遵循全局多重身份验证设置。Enabled：始终需要。Disabled：不需要。Backoffice 登录仅遵循全局设置。"
+      }
+    }
+  },
+  "mfa": {
+    "sign-in": {
+      "title": "输入登录验证码",
+      "subtitle": "我们已将验证码发送至 {{destination}}。",
+      "code": "验证码",
+      "code-placeholder": "输入 6 位验证码",
+      "submit": "登录",
+      "resend": "重新发送验证码",
+      "resend-countdown": "{{seconds}} 秒后可重新发送验证码",
+      "back": "返回登录",
+      "code-resent": "已重新发送验证码。",
+      "errors": {
+        "invalid_code": "验证码无效，请检查后重试。",
+        "invalid_two_factor_token": "登录会话已过期，请重新登录。",
+        "code_attempts_exceeded": "错误的验证码过多，请等待几分钟后重新登录。",
+        "user_is_locked_out": "您的账户已被锁定，请联系管理员。",
+        "user_is_temporary_locked_out": "您的账户已被暂时锁定，请稍后再试。",
+        "sign_in_not_allowed": "此账户无法登录 Backoffice。",
+        "lockout_disabled": "此账户无法使用验证码登录，请联系管理员。",
+        "mfa_provider_not_available": "无法向此账户发送登录验证码。请确认电子邮件或联系管理员。"
+      }
+    },
+    "sign-in-log": {
+      "type-mfa": "多因素身份验证"
+    }
+  }
+}

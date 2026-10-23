@@ -1,0 +1,40 @@
+{
+  "settings": {
+    "MultiFactorAuthentication": {
+      "Enabled": {
+        "title": "Autenticazione a più fattori",
+        "description": "Richiede, oltre alla password, un codice monouso inviato via e-mail per ogni accesso al Backoffice e per ogni altro accesso con password (negozio, app, client API) che non indica alcun negozio o indica un negozio che segue questa impostazione. Gli utenti senza e-mail confermata o con il blocco disattivato non potranno accedere finché il codice è richiesto: conferma la loro e-mail e attiva il blocco prima di abilitare questa opzione."
+      },
+      "StoreMode": {
+        "title": "Autenticazione a più fattori",
+        "description": "Indica se un accesso con password a questo negozio richiede, oltre alla password, un codice monouso inviato via e-mail, per qualsiasi utente che vi accede. Use global setting: segue l'impostazione globale dell'autenticazione a più fattori. Enabled: sempre richiesto. Disabled: non richiesto. L'accesso al Backoffice segue solo l'impostazione globale."
+      }
+    }
+  },
+  "mfa": {
+    "sign-in": {
+      "title": "Inserisci il codice di accesso",
+      "subtitle": "Abbiamo inviato un codice a {{destination}}.",
+      "code": "Codice",
+      "code-placeholder": "Inserisci il codice a 6 cifre",
+      "submit": "Accedi",
+      "resend": "Invia di nuovo il codice",
+      "resend-countdown": "Invia di nuovo il codice tra {{seconds}} s",
+      "back": "Torna all'accesso",
+      "code-resent": "Codice inviato di nuovo.",
+      "errors": {
+        "invalid_code": "Il codice non è valido. Controllalo e riprova.",
+        "invalid_two_factor_token": "La sessione di accesso è scaduta. Accedi di nuovo.",
+        "code_attempts_exceeded": "Troppi codici errati. Attendi qualche minuto e accedi di nuovo.",
+        "user_is_locked_out": "Il tuo account è stato bloccato. Contatta l'amministratore.",
+        "user_is_temporary_locked_out": "Il tuo account è stato bloccato temporaneamente. Riprova più tardi.",
+        "sign_in_not_allowed": "Non puoi accedere al Backoffice con questo account.",
+        "lockout_disabled": "Questo account non può accedere con un codice. Contatta l'amministratore.",
+        "mfa_provider_not_available": "Impossibile inviare un codice di accesso a questo account. Conferma l'e-mail o contatta l'amministratore."
+      }
+    },
+    "sign-in-log": {
+      "type-mfa": "Autenticazione a più fattori"
+    }
+  }
+}

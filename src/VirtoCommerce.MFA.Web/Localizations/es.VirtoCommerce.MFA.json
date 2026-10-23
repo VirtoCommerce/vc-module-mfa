@@ -1,0 +1,40 @@
+{
+  "settings": {
+    "MultiFactorAuthentication": {
+      "Enabled": {
+        "title": "Autenticación multifactor",
+        "description": "Exige, además de la contraseña, un código de un solo uso enviado por correo electrónico en cada inicio de sesión en el Backoffice y en cada otro inicio de sesión con contraseña (tienda, aplicaciones, clientes de API) que no indica ninguna tienda o indica una tienda que sigue esta configuración. Los usuarios sin correo confirmado o con el bloqueo desactivado no podrán iniciar sesión mientras se exija el código: confirme su correo y active su bloqueo antes de activar esta opción."
+      },
+      "StoreMode": {
+        "title": "Autenticación multifactor",
+        "description": "Indica si un inicio de sesión con contraseña en esta tienda necesita, además de la contraseña, un código de un solo uso enviado por correo, para cualquier usuario que inicie sesión en ella. Use global setting: seguir la configuración global de autenticación multifactor. Enabled: siempre obligatorio. Disabled: no obligatorio. El inicio de sesión en el Backoffice sigue solo la configuración global."
+      }
+    }
+  },
+  "mfa": {
+    "sign-in": {
+      "title": "Introduzca el código de inicio de sesión",
+      "subtitle": "Hemos enviado un código a {{destination}}.",
+      "code": "Código",
+      "code-placeholder": "Introduzca el código de 6 dígitos",
+      "submit": "Iniciar sesión",
+      "resend": "Reenviar código",
+      "resend-countdown": "Reenviar código en {{seconds}} s",
+      "back": "Volver al inicio de sesión",
+      "code-resent": "Código enviado de nuevo.",
+      "errors": {
+        "invalid_code": "El código no es válido. Compruébelo e inténtelo de nuevo.",
+        "invalid_two_factor_token": "Su sesión de inicio de sesión ha caducado. Inicie sesión de nuevo.",
+        "code_attempts_exceeded": "Demasiados códigos incorrectos. Espere unos minutos y vuelva a iniciar sesión.",
+        "user_is_locked_out": "Su cuenta ha sido bloqueada. Póngase en contacto con su administrador.",
+        "user_is_temporary_locked_out": "Su cuenta ha sido bloqueada temporalmente. Inténtelo de nuevo más tarde.",
+        "sign_in_not_allowed": "No puede iniciar sesión en el Backoffice con esta cuenta.",
+        "lockout_disabled": "Esta cuenta no puede iniciar sesión con un código. Póngase en contacto con su administrador.",
+        "mfa_provider_not_available": "No podemos enviar un código a esta cuenta. Confirme su correo o póngase en contacto con su administrador."
+      }
+    },
+    "sign-in-log": {
+      "type-mfa": "Autenticación multifactor"
+    }
+  }
+}

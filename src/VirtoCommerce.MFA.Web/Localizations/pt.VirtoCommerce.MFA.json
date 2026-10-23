@@ -1,0 +1,40 @@
+{
+  "settings": {
+    "MultiFactorAuthentication": {
+      "Enabled": {
+        "title": "Autenticação multifator",
+        "description": "Exige, além da senha, um código de uso único enviado por e-mail em cada login no Backoffice e em cada outro login com senha (loja, aplicativos, clientes de API) que não informa nenhuma loja ou informa uma loja que segue esta configuração. Usuários sem e-mail confirmado ou com o bloqueio desativado não conseguirão fazer login enquanto o código for exigido: confirme o e-mail deles e ative o bloqueio antes de ativar esta opção."
+      },
+      "StoreMode": {
+        "title": "Autenticação multifator",
+        "description": "Indica se um login com senha nesta loja precisa, além da senha, de um código de uso único enviado por e-mail, para qualquer usuário que faça login nela. Use global setting: seguir a configuração global de autenticação multifator. Enabled: sempre obrigatório. Disabled: não obrigatório. O login no Backoffice segue apenas a configuração global."
+      }
+    }
+  },
+  "mfa": {
+    "sign-in": {
+      "title": "Digite o código de acesso",
+      "subtitle": "Enviamos um código para {{destination}}.",
+      "code": "Código",
+      "code-placeholder": "Digite o código de 6 dígitos",
+      "submit": "Entrar",
+      "resend": "Reenviar código",
+      "resend-countdown": "Reenviar código em {{seconds}} s",
+      "back": "Voltar ao login",
+      "code-resent": "Código reenviado.",
+      "errors": {
+        "invalid_code": "O código é inválido. Verifique-o e tente novamente.",
+        "invalid_two_factor_token": "Sua sessão de login expirou. Faça login novamente.",
+        "code_attempts_exceeded": "Muitos códigos incorretos. Aguarde alguns minutos e faça login novamente.",
+        "user_is_locked_out": "Sua conta foi bloqueada. Entre em contato com o administrador.",
+        "user_is_temporary_locked_out": "Sua conta foi bloqueada temporariamente. Tente novamente mais tarde.",
+        "sign_in_not_allowed": "Você não pode fazer login no Backoffice com esta conta.",
+        "lockout_disabled": "Esta conta não pode fazer login com um código. Entre em contato com o administrador.",
+        "mfa_provider_not_available": "Não é possível enviar um código de acesso para esta conta. Confirme o e-mail ou entre em contato com o administrador."
+      }
+    },
+    "sign-in-log": {
+      "type-mfa": "Autenticação multifator"
+    }
+  }
+}
