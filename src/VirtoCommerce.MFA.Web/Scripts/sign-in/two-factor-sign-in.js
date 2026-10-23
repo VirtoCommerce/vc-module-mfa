@@ -1,7 +1,7 @@
 angular.module('virtoCommerce.mfa')
     .controller('virtoCommerce.mfa.twoFactorSignInController', [
-        '$scope', '$state', '$stateParams', '$translate', '$interval', 'platformWebApp.authService', 'virtoCommerce.mfa.mfaApi',
-        function ($scope, $state, $stateParams, $translate, $interval, authService, mfaApi) {
+        '$scope', '$state', '$stateParams', '$translate', '$interval', '$timeout', 'platformWebApp.authService', 'virtoCommerce.mfa.mfaApi',
+        function ($scope, $state, $stateParams, $translate, $interval, $timeout, authService, mfaApi) {
             var CODE_PATTERN = /^\d{6}$/;
             var RESEND_TOO_SOON = 'resend_too_soon';
             var INVALID_CODE = 'invalid_code';
@@ -50,6 +50,8 @@ angular.module('virtoCommerce.mfa')
                         $scope.model.code = '';
                         $scope.notice = $translate.instant('mfa.sign-in.code-resent');
                     }
+
+                    focusCode();
                 }, onTechnicalError);
             };
 
@@ -73,6 +75,7 @@ angular.module('virtoCommerce.mfa')
                     $scope.inProgress = false;
                     $scope.model.code = '';
                     showError(result.error);
+                    focusCode();
                 }, onTechnicalError);
             };
 
@@ -91,6 +94,15 @@ angular.module('virtoCommerce.mfa')
                 $scope.authError = message && message !== key
                     ? message
                     : $translate.instant('platform.blades.login.errors.login-failed');
+            }
+
+            function focusCode() {
+                $timeout(function () {
+                    var input = document.getElementById('mfa-code');
+                    if (input) {
+                        input.focus();
+                    }
+                });
             }
 
             function startResendCountdown(seconds) {

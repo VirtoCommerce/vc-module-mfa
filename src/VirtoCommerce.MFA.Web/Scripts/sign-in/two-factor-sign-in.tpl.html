@@ -13,13 +13,13 @@
                         <label class="vc-input__label" for="mfa-code"> {{ 'mfa.sign-in.code' | translate }} <span class="vc-input__asterisk">*</span> </label>
                         <div class="vc-input__container">
                             <input id="mfa-code" class="vc-input__field" type="text" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"
-                                   placeholder="{{ 'mfa.sign-in.code-placeholder' | translate }}" ng-model="model.code" ng-disabled="inProgress" required autofocus>
+                                   placeholder="{{ 'mfa.sign-in.code-placeholder' | translate }}" ng-model="model.code" ng-disabled="inProgress" required>
                         </div>
                     </div>
                 </div>
 
                 <div class="login-form__alerts" ng-if="authError || notice">
-                    <div class="vc-alert vc-alert--error" ng-if="authError">
+                    <div class="vc-alert vc-alert--error" ng-if="authError" role="alert">
                         <svg class="vc-alert__icon">
                             <use href="/images/error.svg#icon"></use>
                         </svg>
