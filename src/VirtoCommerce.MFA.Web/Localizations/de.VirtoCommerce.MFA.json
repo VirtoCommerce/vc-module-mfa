@@ -1,0 +1,40 @@
+{
+  "settings": {
+    "MultiFactorAuthentication": {
+      "Enabled": {
+        "title": "Multi-Faktor-Authentifizierung",
+        "description": "Verlangt zusätzlich zum Passwort einen per E-Mail gesendeten Einmalcode bei jeder Anmeldung im Backoffice sowie bei jeder anderen Anmeldung mit Passwort (Shop, Apps, API-Clients), die keinen Shop oder einen Shop angibt, der dieser Einstellung folgt. Benutzer ohne bestätigte E-Mail-Adresse oder mit deaktivierter Sperre können sich nicht anmelden, solange der Code erforderlich ist: Bestätigen Sie vor dem Aktivieren deren E-Mail-Adresse und aktivieren Sie die Sperre."
+      },
+      "StoreMode": {
+        "title": "Multi-Faktor-Authentifizierung",
+        "description": "Ob bei der Anmeldung mit Passwort in diesem Shop zusätzlich ein per E-Mail gesendeter Einmalcode erforderlich ist, für jeden Benutzer, der sich hier anmeldet. Use global setting: der globalen Einstellung für die Multi-Faktor-Authentifizierung folgen. Enabled: immer erforderlich. Disabled: nicht erforderlich. Die Anmeldung im Backoffice folgt nur der globalen Einstellung."
+      }
+    }
+  },
+  "mfa": {
+    "sign-in": {
+      "title": "Anmeldecode eingeben",
+      "subtitle": "Wir haben einen Code an {{destination}} gesendet.",
+      "code": "Code",
+      "code-placeholder": "6-stelligen Code eingeben",
+      "submit": "Anmelden",
+      "resend": "Code erneut senden",
+      "resend-countdown": "Code erneut senden in {{seconds}} s",
+      "back": "Zurück zur Anmeldung",
+      "code-resent": "Code erneut gesendet.",
+      "errors": {
+        "invalid_code": "Der Code ist ungültig. Prüfen Sie ihn und versuchen Sie es erneut.",
+        "invalid_two_factor_token": "Ihre Anmeldesitzung ist abgelaufen. Melden Sie sich erneut an.",
+        "code_attempts_exceeded": "Zu viele falsche Codes. Warten Sie einige Minuten und melden Sie sich erneut an.",
+        "user_is_locked_out": "Ihr Konto wurde gesperrt. Wenden Sie sich an Ihren Administrator.",
+        "user_is_temporary_locked_out": "Ihr Konto wurde vorübergehend gesperrt. Bitte versuchen Sie es später erneut.",
+        "sign_in_not_allowed": "Mit diesem Konto können Sie sich nicht im Backoffice anmelden.",
+        "lockout_disabled": "Dieses Konto kann sich nicht mit einem Code anmelden. Wenden Sie sich an Ihren Administrator.",
+        "mfa_provider_not_available": "An dieses Konto kann kein Anmeldecode gesendet werden. Bestätigen Sie die E-Mail-Adresse oder wenden Sie sich an Ihren Administrator."
+      }
+    },
+    "sign-in-log": {
+      "type-mfa": "Multi-Faktor-Authentifizierung"
+    }
+  }
+}

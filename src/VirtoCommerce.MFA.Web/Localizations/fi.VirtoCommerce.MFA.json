@@ -1,0 +1,40 @@
+{
+  "settings": {
+    "MultiFactorAuthentication": {
+      "Enabled": {
+        "title": "Monivaiheinen tunnistautuminen",
+        "description": "Vaatii salasanan lisäksi sähköpostitse lähetetyn kertakoodin jokaisessa Backoffice-kirjautumisessa sekä jokaisessa muussa salasanakirjautumisessa (kauppa, sovellukset, API-asiakkaat), jossa ei ole kauppaa tai jonka kauppa noudattaa tätä asetusta. Käyttäjät, joiden sähköpostia ei ole vahvistettu tai joiden lukitus on poistettu käytöstä, eivät voi kirjautua, kun koodi vaaditaan: vahvista heidän sähköpostinsa ja ota lukitus käyttöön ennen tämän asetuksen käyttöönottoa."
+      },
+      "StoreMode": {
+        "title": "Monivaiheinen tunnistautuminen",
+        "description": "Tarvitaanko salasanan lisäksi sähköpostitse lähetetty kertakoodi, kun tähän kauppaan kirjaudutaan salasanalla, kenen tahansa käyttäjän kohdalla. Use global setting: noudata monivaiheisen tunnistautumisen yleistä asetusta. Enabled: aina pakollinen. Disabled: ei pakollinen. Backoffice-kirjautuminen noudattaa vain yleistä asetusta."
+      }
+    }
+  },
+  "mfa": {
+    "sign-in": {
+      "title": "Syötä kirjautumiskoodi",
+      "subtitle": "Lähetimme koodin osoitteeseen {{destination}}.",
+      "code": "Koodi",
+      "code-placeholder": "Syötä 6-numeroinen koodi",
+      "submit": "Kirjaudu sisään",
+      "resend": "Lähetä koodi uudelleen",
+      "resend-countdown": "Lähetä koodi uudelleen {{seconds}} s kuluttua",
+      "back": "Takaisin kirjautumiseen",
+      "code-resent": "Koodi lähetetty uudelleen.",
+      "errors": {
+        "invalid_code": "Koodi ei kelpaa. Tarkista se ja yritä uudelleen.",
+        "invalid_two_factor_token": "Kirjautumisistuntosi on vanhentunut. Kirjaudu uudelleen.",
+        "code_attempts_exceeded": "Liian monta virheellistä koodia. Odota muutama minuutti ja kirjaudu uudelleen.",
+        "user_is_locked_out": "Tilisi on lukittu. Ota yhteyttä järjestelmänvalvojaan.",
+        "user_is_temporary_locked_out": "Tilisi on lukittu tilapäisesti. Yritä myöhemmin uudelleen.",
+        "sign_in_not_allowed": "Tällä tilillä ei voi kirjautua Backofficeen.",
+        "lockout_disabled": "Tällä tilillä ei voi kirjautua koodilla. Ota yhteyttä järjestelmänvalvojaan.",
+        "mfa_provider_not_available": "Tälle tilille ei voi lähettää kirjautumiskoodia. Vahvista sähköposti tai ota yhteyttä järjestelmänvalvojaan."
+      }
+    },
+    "sign-in-log": {
+      "type-mfa": "Monivaiheinen tunnistautuminen"
+    }
+  }
+}

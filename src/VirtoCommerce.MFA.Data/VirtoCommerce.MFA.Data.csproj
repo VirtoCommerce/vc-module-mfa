@@ -4,8 +4,9 @@
     <SonarQubeTestProject>false</SonarQubeTestProject>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="VirtoCommerce.Xapi.Core" Version="3.1003.0" />
-    <PackageReference Include="VirtoCommerce.Platform.Data" Version="3.1076.0" />
+    <PackageReference Include="VirtoCommerce.CustomerModule.Core" Version="3.1030.0" />
+    <PackageReference Include="VirtoCommerce.Platform.Security" Version="3.1090.0" />
+    <PackageReference Include="OpenIddict.Server.AspNetCore" Version="7.7.2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VirtoCommerce.MFA.Core\VirtoCommerce.MFA.Core.csproj" />
