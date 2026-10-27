@@ -1,4 +1,4 @@
-# Virto Commerce Multi-Factor Authentication Module
+# Multi-Factor Authentication Module
 
 ## Overview
 
