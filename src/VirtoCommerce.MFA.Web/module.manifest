@@ -22,7 +22,7 @@
   </owners>
 
   <projectUrl>https://github.com/VirtoCommerce/vc-module-mfa</projectUrl>
-  <iconUrl>Modules/$(VirtoCommerce.MFA)/Content/logo.png</iconUrl>
+  <iconUrl>Modules/$(VirtoCommerce.MFA)/Content/logo.svg</iconUrl>
   <requireLicenseAcceptance>false</requireLicenseAcceptance>
 
   <assemblyFile>VirtoCommerce.MFA.Web.dll</assemblyFile>
