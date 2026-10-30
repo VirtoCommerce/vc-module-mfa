@@ -95,6 +95,10 @@
             "MembersAdminManaged": "Wymagane tylko od członków z trybem Required.",
             "MembersCustomerChoice": "Każdy członek decyduje sam w witrynie sklepu."
           }
+        },
+        "commands": {
+          "save": "Zapisz",
+          "reset": "Resetuj"
         }
       }
     },

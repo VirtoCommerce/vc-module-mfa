@@ -95,6 +95,10 @@
             "MembersAdminManaged": "Exigido apenas de membros definidos como Required.",
             "MembersCustomerChoice": "Cada membro decide na vitrine."
           }
+        },
+        "commands": {
+          "save": "Salvar",
+          "reset": "Redefinir"
         }
       }
     },

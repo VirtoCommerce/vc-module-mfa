@@ -95,6 +95,10 @@
             "MembersAdminManaged": "Only members set to Required need it.",
             "MembersCustomerChoice": "Each member decides in the storefront."
           }
+        },
+        "commands": {
+          "save": "Save",
+          "reset": "Reset"
         }
       }
     },

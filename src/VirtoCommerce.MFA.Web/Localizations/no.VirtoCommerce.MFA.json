@@ -95,6 +95,10 @@
             "MembersAdminManaged": "Påkrevd bare for medlemmer satt til Required.",
             "MembersCustomerChoice": "Hvert medlem bestemmer selv i nettbutikken."
           }
+        },
+        "commands": {
+          "save": "Lagre",
+          "reset": "Tilbakestill"
         }
       }
     },

@@ -95,6 +95,10 @@
             "MembersAdminManaged": "Serve solo ai membri impostati su Required.",
             "MembersCustomerChoice": "Ogni membro decide nella vetrina."
           }
+        },
+        "commands": {
+          "save": "Salva",
+          "reset": "Ripristina"
         }
       }
     },

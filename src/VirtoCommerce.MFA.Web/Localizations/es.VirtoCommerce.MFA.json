@@ -95,6 +95,10 @@
             "MembersAdminManaged": "Solo lo necesitan los miembros configurados como Required.",
             "MembersCustomerChoice": "Cada miembro decide en la tienda en línea."
           }
+        },
+        "commands": {
+          "save": "Guardar",
+          "reset": "Restablecer"
         }
       }
     },

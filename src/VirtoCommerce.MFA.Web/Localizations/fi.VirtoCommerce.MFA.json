@@ -95,6 +95,10 @@
             "MembersAdminManaged": "Vain jäsenet, joilla on tila Required, tarvitsevat sitä.",
             "MembersCustomerChoice": "Jokainen jäsen päättää itse verkkokaupassa."
           }
+        },
+        "commands": {
+          "save": "Tallenna",
+          "reset": "Palauta"
         }
       }
     },

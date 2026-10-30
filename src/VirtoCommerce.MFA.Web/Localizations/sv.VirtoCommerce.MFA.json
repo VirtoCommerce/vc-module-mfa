@@ -95,6 +95,10 @@
             "MembersAdminManaged": "Krävs bara för medlemmar som är satta till Required.",
             "MembersCustomerChoice": "Varje medlem bestämmer själv i webbutiken."
           }
+        },
+        "commands": {
+          "save": "Spara",
+          "reset": "Återställ"
         }
       }
     },

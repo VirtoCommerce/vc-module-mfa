@@ -95,6 +95,10 @@
             "MembersAdminManaged": "Нужен только участникам с режимом Required.",
             "MembersCustomerChoice": "Каждый участник решает сам на витрине."
           }
+        },
+        "commands": {
+          "save": "Сохранить",
+          "reset": "Сбросить"
         }
       }
     },

@@ -46,6 +46,8 @@ A user needs the code when their own mode or the mode of any of their contact's 
 
 In the Backoffice, the "Multi-factor authentication" widget of the user account and of the organization opens the mode blade. The blade lists every store with its MFA setting, whether the sign-in needs the code there and why; for a Backoffice user it also shows the Backoffice sign-in. The list follows the selected mode before it is saved.
 
+The Admin Shell (the new Vue admin at `/apps/admin-shell/`) gets the same widget and blade from the module's plugin in `src/VirtoCommerce.MFA.Web/vue`: on the user blade of the Admin Shell and on the organization blade of the Customer module's Admin Shell plugin. The plugin uses the module's translations, so both admins show the same texts in every language. `vc-build Compress` builds it into `plugins/admin-shell/`; `SkipAdminShellPlugin=true` leaves it out.
+
 ### Permissions
 
 | Permission | Allows |

@@ -95,6 +95,10 @@
             "MembersAdminManaged": "Required に設定されたメンバーのみが対象です。",
             "MembersCustomerChoice": "各メンバーがストアフロントで決めます。"
           }
+        },
+        "commands": {
+          "save": "保存",
+          "reset": "リセット"
         }
       }
     },

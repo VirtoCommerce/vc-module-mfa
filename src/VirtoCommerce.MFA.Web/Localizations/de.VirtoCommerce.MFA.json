@@ -95,6 +95,10 @@
             "MembersAdminManaged": "Nur Mitglieder mit Required benötigen sie.",
             "MembersCustomerChoice": "Jedes Mitglied entscheidet selbst im Storefront."
           }
+        },
+        "commands": {
+          "save": "Speichern",
+          "reset": "Zurücksetzen"
         }
       }
     },
