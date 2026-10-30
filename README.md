@@ -56,7 +56,7 @@ In the Backoffice, the "Multi-factor authentication" widget of the user account 
 
 ### Dependencies
 
-The xAPI module (`VirtoCommerce.Xapi`) is an optional dependency. Without it the module protects every password sign-in as described here and the Backoffice manages the user and organization modes, but the storefront can't show or change them: the GraphQL schema below is registered only when xAPI is installed. The package includes `VirtoCommerce.Xapi.Core.dll` (listed in `module.keep`), so the module loads without xAPI.
+The xAPI module (`VirtoCommerce.Xapi`) is an optional dependency. Without it the module protects every password sign-in as described here and the Backoffice manages the user and organization modes, but the storefront can't show or change them: the GraphQL schema below is registered only when xAPI is installed. The package includes `VirtoCommerce.Xapi.Core.dll` and the assemblies it depends on (listed in `module.keep`), so the module loads without xAPI.
 
 ## How it works
 
