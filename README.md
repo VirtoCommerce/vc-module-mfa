@@ -87,7 +87,7 @@ The code is sent by the `MfaSignInEmailNotification` notification in the user's 
 | Code | Endpoint | Meaning |
 | --- | --- | --- |
 | `two_factor_required` | password grant | The password is correct, the code is required. |
-| `missing_parameter` | `mfa` grant | Required parameters are missing. |
+| `missing_parameters` | `mfa` grant | Required parameters are missing. |
 | `invalid_two_factor_token` | `mfa` grant, resend, Backoffice code screen | The sign-in session is invalid, expired, already used or belongs to another sign-in. Sign in with the password again. |
 | `code_attempts_exceeded` | all | Too many wrong codes. Sign in again after `TwoFactorTokenLifetime`. |
 | `invalid_code` | `mfa` grant, Backoffice code screen | The code is wrong, expired, already used or replaced by a newer code. |

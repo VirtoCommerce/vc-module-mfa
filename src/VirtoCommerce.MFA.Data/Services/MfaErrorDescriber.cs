@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Identity;
 using VirtoCommerce.MFA.Core;
 using VirtoCommerce.MFA.Core.Models;
@@ -17,12 +16,6 @@ public class MfaErrorDescriber(TimeProvider timeProvider)
     {
         Code = "two_factor_required",
         Description = "Enter the sign-in code to complete the sign-in.",
-    };
-
-    public virtual IdentityError MissingParameters(IEnumerable<string> parameters) => new()
-    {
-        Code = "missing_parameter",
-        Description = $"Missing required parameters: {string.Join(", ", parameters)}.",
     };
 
     public virtual IdentityError InvalidTwoFactorToken() => new()

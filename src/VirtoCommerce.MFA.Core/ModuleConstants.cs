@@ -25,7 +25,6 @@ public static class ModuleConstants
 
         public static class FailureReason
         {
-            public const string MissingParameter = "MissingParameter";
             public const string InvalidTwoFactorToken = "InvalidTwoFactorToken";
             public const string LockoutDisabled = "LockoutDisabled";
             public const string ProviderNotAvailable = "ProviderNotAvailable";
