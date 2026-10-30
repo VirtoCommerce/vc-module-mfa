@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "Multi-factor authentication",
-        "description": "Whether a password sign-in to this store needs a one-time code sent by email in addition to the password, for every user who signs in to it. Use global setting: follow the global multi-factor authentication setting. Enabled: always required. Disabled: not required. The Backoffice sign-in follows only the global setting."
+        "description": "Whether a password sign-in to this store needs a one-time code sent by email in addition to the password. Use global setting: follow the global multi-factor authentication setting. Enabled: required for every user. Disabled: not required. Admin managed: required only for the users and organizations an administrator set to Required in the Backoffice; customers can't change it. Customer choice: customers turn it on or off for themselves, and organization maintainers with the \"xapi:my_organization:mfa:manage\" permission for the whole organization; off by default; a Required set by an administrator can't be turned off. The Backoffice sign-in follows only the global setting."
       }
     }
   },
@@ -35,6 +35,80 @@
     },
     "sign-in-log": {
       "type-mfa": "Multi-factor authentication"
+    },
+    "modes": {
+      "Off": "Off",
+      "Enabled": "Enabled",
+      "Required": "Required"
+    },
+    "widgets": {
+      "mode": {
+        "title": "Multi-factor authentication"
+      }
+    },
+    "blades": {
+      "mode": {
+        "user-title": "Multi-factor authentication of {{name}}",
+        "organization-title": "Multi-factor authentication of {{name}}",
+        "subtitle": "Who requires the code at sign-in",
+        "labels": {
+          "mode": "Mode"
+        },
+        "description": {
+          "Off": "Not turned on. In stores with Customer choice it can be turned on in the storefront.",
+          "Enabled": "Turned on in the storefront. Counts in stores with Customer choice, where it can also be turned off.",
+          "Required": "Set by the administrator. Counts in stores with Admin managed or Customer choice and can't be turned off in the storefront."
+        },
+        "placeholders": {
+          "mode": "Select a mode"
+        },
+        "status": {
+          "title": "Effective status",
+          "preview": "Preview of the selected mode. Save to apply it.",
+          "global": "Global setting: {{value}}. It decides for the Backoffice sign-in and for stores set to Use global setting.",
+          "global-on": "On",
+          "global-off": "Off",
+          "backoffice": "Backoffice",
+          "global-setting": "Global setting",
+          "no-stores": "No stores.",
+          "columns": {
+            "store": "Store",
+            "store-mode": "Store setting",
+            "result": "Code at sign-in"
+          },
+          "results": {
+            "required": "Required",
+            "not-required": "Not required",
+            "per-member": "Per member"
+          },
+          "reasons": {
+            "Store": "The store requires it from everyone.",
+            "Global": "The global setting is on.",
+            "GlobalOff": "The global setting is off.",
+            "Disabled": "The store turned it off for everyone.",
+            "Organization": "The user's organization requires it.",
+            "OrganizationSelf": "This organization requires it from all its members.",
+            "UserRequired": "Required by the administrator.",
+            "UserEnabled": "The user turned it on.",
+            "AdminManaged": "Only users and organizations set to Required need it.",
+            "CustomerChoice": "The user hasn't turned it on.",
+            "MembersAdminManaged": "Only members set to Required need it.",
+            "MembersCustomerChoice": "Each member decides in the storefront."
+          }
+        }
+      }
+    },
+    "store-modes": {
+      "UseGlobalSetting": "Use global setting",
+      "Enabled": "Enabled",
+      "Disabled": "Disabled",
+      "AdminManaged": "Admin managed",
+      "CustomerChoice": "Customer choice"
     }
+  },
+  "permissions": {
+    "mfa:read": "View the MFA mode of users and organizations",
+    "mfa:manage": "Manage the MFA mode of users and organizations",
+    "xapi:my_organization:mfa:manage": "Storefront: manage MFA of my organization"
   }
 }

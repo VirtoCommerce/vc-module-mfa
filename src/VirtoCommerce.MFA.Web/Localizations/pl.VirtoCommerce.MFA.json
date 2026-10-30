@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "Uwierzytelnianie wieloskładnikowe",
-        "description": "Czy logowanie hasłem do tego sklepu wymaga, oprócz hasła, jednorazowego kodu wysłanego e-mailem, dla każdego użytkownika, który się do niego loguje. Use global setting: zgodnie z globalnym ustawieniem uwierzytelniania wieloskładnikowego. Enabled: zawsze wymagany. Disabled: niewymagany. Logowanie do Backoffice podlega tylko ustawieniu globalnemu."
+        "description": "Czy logowanie hasłem do tego sklepu wymaga, oprócz hasła, jednorazowego kodu wysłanego e-mailem. Use global setting: zgodnie z globalnym ustawieniem uwierzytelniania wieloskładnikowego. Enabled: wymagany dla każdego użytkownika. Disabled: niewymagany. Admin managed: wymagany tylko dla użytkowników i organizacji, którym administrator ustawił Required w Backoffice; klienci nie mogą tego zmienić. Customer choice: klienci sami włączają je lub wyłączają dla siebie, a opiekunowie organizacji z uprawnieniem \"xapi:my_organization:mfa:manage\" — dla całej organizacji; domyślnie wyłączone; Required ustawionego przez administratora nie można wyłączyć. Logowanie do Backoffice podlega tylko ustawieniu globalnemu."
       }
     }
   },
@@ -35,6 +35,80 @@
     },
     "sign-in-log": {
       "type-mfa": "Uwierzytelnianie wieloskładnikowe"
+    },
+    "modes": {
+      "Off": "Wyłączone",
+      "Enabled": "Włączone",
+      "Required": "Wymagane"
+    },
+    "widgets": {
+      "mode": {
+        "title": "Uwierzytelnianie wieloskładnikowe"
+      }
+    },
+    "blades": {
+      "mode": {
+        "user-title": "Uwierzytelnianie wieloskładnikowe: {{name}}",
+        "organization-title": "Uwierzytelnianie wieloskładnikowe: {{name}}",
+        "subtitle": "Kto wymaga kodu przy logowaniu",
+        "labels": {
+          "mode": "Tryb"
+        },
+        "description": {
+          "Off": "Nie jest włączone. W sklepach z Customer choice można je włączyć w witrynie sklepu.",
+          "Enabled": "Włączone w witrynie sklepu. Uwzględniane w sklepach z Customer choice, gdzie można je też wyłączyć.",
+          "Required": "Ustawione przez administratora. Uwzględniane w sklepach z Admin managed lub Customer choice; nie można go wyłączyć w witrynie sklepu."
+        },
+        "placeholders": {
+          "mode": "Wybierz tryb"
+        },
+        "status": {
+          "title": "Rzeczywisty stan",
+          "preview": "Podgląd dla wybranego trybu. Zapisz, aby go zastosować.",
+          "global": "Ustawienie globalne: {{value}}. Decyduje o logowaniu do Backoffice i o sklepach z Use global setting.",
+          "global-on": "włączone",
+          "global-off": "wyłączone",
+          "backoffice": "Backoffice",
+          "global-setting": "Ustawienie globalne",
+          "no-stores": "Brak sklepów.",
+          "columns": {
+            "store": "Sklep",
+            "store-mode": "Ustawienie sklepu",
+            "result": "Kod przy logowaniu"
+          },
+          "results": {
+            "required": "Wymagany",
+            "not-required": "Niewymagany",
+            "per-member": "Zależy od członka"
+          },
+          "reasons": {
+            "Store": "Sklep wymaga go od wszystkich.",
+            "Global": "Ustawienie globalne jest włączone.",
+            "GlobalOff": "Ustawienie globalne jest wyłączone.",
+            "Disabled": "Sklep wyłączył je dla wszystkich.",
+            "Organization": "Wymaga go organizacja użytkownika.",
+            "OrganizationSelf": "Ta organizacja wymaga go od wszystkich swoich członków.",
+            "UserRequired": "Wymagane przez administratora.",
+            "UserEnabled": "Użytkownik je włączył.",
+            "AdminManaged": "Wymagane tylko od użytkowników i organizacji z trybem Required.",
+            "CustomerChoice": "Użytkownik go nie włączył.",
+            "MembersAdminManaged": "Wymagane tylko od członków z trybem Required.",
+            "MembersCustomerChoice": "Każdy członek decyduje sam w witrynie sklepu."
+          }
+        }
+      }
+    },
+    "store-modes": {
+      "UseGlobalSetting": "Use global setting",
+      "Enabled": "Enabled",
+      "Disabled": "Disabled",
+      "AdminManaged": "Admin managed",
+      "CustomerChoice": "Customer choice"
     }
+  },
+  "permissions": {
+    "mfa:read": "Wyświetlanie trybu MFA użytkowników i organizacji",
+    "mfa:manage": "Zarządzanie trybem MFA użytkowników i organizacji",
+    "xapi:my_organization:mfa:manage": "Witryna sklepu: zarządzanie MFA mojej organizacji"
   }
 }

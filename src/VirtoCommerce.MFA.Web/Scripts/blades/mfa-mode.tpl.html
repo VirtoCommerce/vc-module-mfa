@@ -1,0 +1,57 @@
+<div class="blade-content __medium-wide">
+    <div class="blade-inner">
+        <div class="inner-block">
+            <form class="form">
+                <div class="form-group">
+                    <label class="form-label">{{ 'mfa.blades.mode.labels.mode' | translate }}</label>
+                    <div class="form-input">
+                        <ui-select ng-model="blade.mode" ng-disabled="!blade.canManage" search-enabled="false">
+                            <ui-select-match placeholder="{{ 'mfa.blades.mode.placeholders.mode' | translate }}">{{ ('mfa.modes.' + $select.selected) | translate }}</ui-select-match>
+                            <ui-select-choices repeat="x in modes">
+                                <span>{{ ('mfa.modes.' + x) | translate }}</span>
+                            </ui-select-choices>
+                        </ui-select>
+                    </div>
+                </div>
+                <p class="note" ng-if="blade.mode">{{ ('mfa.blades.mode.description.' + blade.mode) | translate }}</p>
+            </form>
+
+            <fieldset class="mfa-status" ng-if="blade.status">
+                <legend>{{ 'mfa.blades.mode.status.title' | translate }}</legend>
+                <p class="note" ng-if="isDirty()"><i class="fa fa-eye"></i> {{ 'mfa.blades.mode.status.preview' | translate }}</p>
+                <p class="note">{{ 'mfa.blades.mode.status.global' | translate: { value: ((blade.status.isGloballyEnabled ? 'mfa.blades.mode.status.global-on' : 'mfa.blades.mode.status.global-off') | translate) } }}</p>
+                <div class="table-wrapper">
+                    <table class="table __normal">
+                        <thead>
+                            <tr>
+                                <th class="table-col">{{ 'mfa.blades.mode.status.columns.store' | translate }}</th>
+                                <th class="table-col">{{ 'mfa.blades.mode.status.columns.store-mode' | translate }}</th>
+                                <th class="table-col">{{ 'mfa.blades.mode.status.columns.result' | translate }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="table-item" ng-if="blade.status.isRequiredForBackoffice !== null && blade.status.isRequiredForBackoffice !== undefined">
+                                <td class="table-col">{{ 'mfa.blades.mode.status.backoffice' | translate }}</td>
+                                <td class="table-col">{{ 'mfa.blades.mode.status.global-setting' | translate }}</td>
+                                <td class="table-col">
+                                    <span class="mfa-status__result" ng-class="blade.status.isRequiredForBackoffice ? '__required' : '__off'">{{ (blade.status.isRequiredForBackoffice ? 'mfa.blades.mode.status.results.required' : 'mfa.blades.mode.status.results.not-required') | translate }}</span>
+                                    <div class="table-descr">{{ (blade.status.isRequiredForBackoffice ? 'mfa.blades.mode.status.reasons.Global' : 'mfa.blades.mode.status.reasons.GlobalOff') | translate }}</div>
+                                </td>
+                            </tr>
+                            <tr class="table-item" ng-repeat="store in blade.status.stores">
+                                <td class="table-col">{{ store.storeName || store.storeId }}</td>
+                                <td class="table-col">{{ getStoreModeKey(store.storeMode) | translate }}</td>
+                                <td class="table-col">
+                                    <span class="mfa-status__result __per-member" ng-if="isPerMember(store)">{{ 'mfa.blades.mode.status.results.per-member' | translate }}</span>
+                                    <span class="mfa-status__result" ng-if="!isPerMember(store)" ng-class="store.isRequired ? '__required' : '__off'">{{ (store.isRequired ? 'mfa.blades.mode.status.results.required' : 'mfa.blades.mode.status.results.not-required') | translate }}</span>
+                                    <div class="table-descr">{{ getReasonKey(store) | translate }}</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="note" ng-if="!blade.status.stores.length">{{ 'mfa.blades.mode.status.no-stores' | translate }}</p>
+            </fieldset>
+        </div>
+    </div>
+</div>

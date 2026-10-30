@@ -24,5 +24,6 @@
   <ItemGroup>
     <ProjectReference Include="..\VirtoCommerce.MFA.Core\VirtoCommerce.MFA.Core.csproj" />
     <ProjectReference Include="..\VirtoCommerce.MFA.Data\VirtoCommerce.MFA.Data.csproj" />
+    <ProjectReference Include="..\VirtoCommerce.MFA.Xapi\VirtoCommerce.MFA.Xapi.csproj" />
   </ItemGroup>
 </Project>

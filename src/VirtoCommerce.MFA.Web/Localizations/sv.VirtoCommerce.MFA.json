@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "Multifaktorautentisering",
-        "description": "Om en lösenordsinloggning i den här butiken kräver en engångskod via e-post utöver lösenordet, för alla användare som loggar in i den. Use global setting: följ den globala inställningen för multifaktorautentisering. Enabled: alltid obligatorisk. Disabled: inte obligatorisk. Inloggning i Backoffice följer bara den globala inställningen."
+        "description": "Om en lösenordsinloggning i den här butiken kräver en engångskod via e-post utöver lösenordet. Use global setting: följ den globala inställningen för multifaktorautentisering. Enabled: obligatorisk för alla användare. Disabled: inte obligatorisk. Admin managed: obligatorisk bara för de användare och organisationer som en administratör har satt till Required i Backoffice; kunderna kan inte ändra det. Customer choice: kunderna aktiverar eller inaktiverar den för sig själva, och organisationsansvariga med behörigheten \"xapi:my_organization:mfa:manage\" för hela organisationen; inaktiverad som standard; en Required som en administratör har satt kan inte inaktiveras. Inloggning i Backoffice följer bara den globala inställningen."
       }
     }
   },
@@ -35,6 +35,80 @@
     },
     "sign-in-log": {
       "type-mfa": "Multifaktorautentisering"
+    },
+    "modes": {
+      "Off": "Inaktiverad",
+      "Enabled": "Aktiverad",
+      "Required": "Obligatorisk"
+    },
+    "widgets": {
+      "mode": {
+        "title": "Multifaktorautentisering"
+      }
+    },
+    "blades": {
+      "mode": {
+        "user-title": "Multifaktorautentisering: {{name}}",
+        "organization-title": "Multifaktorautentisering: {{name}}",
+        "subtitle": "Vem som kräver koden vid inloggning",
+        "labels": {
+          "mode": "Läge"
+        },
+        "description": {
+          "Off": "Inte aktiverad. I butiker med Customer choice kan den aktiveras i webbutiken.",
+          "Enabled": "Aktiverad i webbutiken. Gäller i butiker med Customer choice, där den också kan inaktiveras.",
+          "Required": "Satt av administratören. Gäller i butiker med Admin managed eller Customer choice och kan inte inaktiveras i webbutiken."
+        },
+        "placeholders": {
+          "mode": "Välj ett läge"
+        },
+        "status": {
+          "title": "Faktisk status",
+          "preview": "Förhandsvisning av det valda läget. Spara för att tillämpa det.",
+          "global": "Global inställning: {{value}}. Den avgör för inloggning i Backoffice och för butiker med Use global setting.",
+          "global-on": "på",
+          "global-off": "av",
+          "backoffice": "Backoffice",
+          "global-setting": "Global inställning",
+          "no-stores": "Inga butiker.",
+          "columns": {
+            "store": "Butik",
+            "store-mode": "Butiksinställning",
+            "result": "Kod vid inloggning"
+          },
+          "results": {
+            "required": "Krävs",
+            "not-required": "Krävs inte",
+            "per-member": "Per medlem"
+          },
+          "reasons": {
+            "Store": "Butiken kräver den av alla.",
+            "Global": "Den globala inställningen är på.",
+            "GlobalOff": "Den globala inställningen är av.",
+            "Disabled": "Butiken har inaktiverat den för alla.",
+            "Organization": "Användarens organisation kräver den.",
+            "OrganizationSelf": "Den här organisationen kräver den av alla sina medlemmar.",
+            "UserRequired": "Krävs av administratören.",
+            "UserEnabled": "Användaren har aktiverat den.",
+            "AdminManaged": "Krävs bara för användare och organisationer som är satta till Required.",
+            "CustomerChoice": "Användaren har inte aktiverat den.",
+            "MembersAdminManaged": "Krävs bara för medlemmar som är satta till Required.",
+            "MembersCustomerChoice": "Varje medlem bestämmer själv i webbutiken."
+          }
+        }
+      }
+    },
+    "store-modes": {
+      "UseGlobalSetting": "Use global setting",
+      "Enabled": "Enabled",
+      "Disabled": "Disabled",
+      "AdminManaged": "Admin managed",
+      "CustomerChoice": "Customer choice"
     }
+  },
+  "permissions": {
+    "mfa:read": "Visa MFA-läget för användare och organisationer",
+    "mfa:manage": "Hantera MFA-läget för användare och organisationer",
+    "xapi:my_organization:mfa:manage": "Webbutik: hantera MFA för min organisation"
   }
 }

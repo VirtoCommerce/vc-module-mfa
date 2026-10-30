@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "Autenticação multifator",
-        "description": "Indica se um login com senha nesta loja precisa, além da senha, de um código de uso único enviado por e-mail, para qualquer usuário que faça login nela. Use global setting: seguir a configuração global de autenticação multifator. Enabled: sempre obrigatório. Disabled: não obrigatório. O login no Backoffice segue apenas a configuração global."
+        "description": "Indica se um login com senha nesta loja precisa, além da senha, de um código de uso único enviado por e-mail. Use global setting: segue a configuração global de autenticação multifator. Enabled: obrigatório para todos os usuários. Disabled: não obrigatório. Admin managed: obrigatório apenas para os usuários e organizações que um administrador definiu como Required no Backoffice; os clientes não podem alterá-lo. Customer choice: os clientes ativam ou desativam para si mesmos, e os mantenedores da organização com a permissão \"xapi:my_organization:mfa:manage\" para toda a organização; desativado por padrão; um Required definido por um administrador não pode ser desativado. O login no Backoffice segue apenas a configuração global."
       }
     }
   },
@@ -35,6 +35,80 @@
     },
     "sign-in-log": {
       "type-mfa": "Autenticação multifator"
+    },
+    "modes": {
+      "Off": "Desativada",
+      "Enabled": "Ativada",
+      "Required": "Obrigatória"
+    },
+    "widgets": {
+      "mode": {
+        "title": "Autenticação multifator"
+      }
+    },
+    "blades": {
+      "mode": {
+        "user-title": "Autenticação multifator: {{name}}",
+        "organization-title": "Autenticação multifator: {{name}}",
+        "subtitle": "Quem exige o código no login",
+        "labels": {
+          "mode": "Modo"
+        },
+        "description": {
+          "Off": "Não ativada. Em lojas com Customer choice, pode ser ativada na vitrine.",
+          "Enabled": "Ativada na vitrine. Vale em lojas com Customer choice, onde também pode ser desativada.",
+          "Required": "Definida pelo administrador. Vale em lojas com Admin managed ou Customer choice e não pode ser desativada na vitrine."
+        },
+        "placeholders": {
+          "mode": "Selecione um modo"
+        },
+        "status": {
+          "title": "Status efetivo",
+          "preview": "Prévia do modo selecionado. Salve para aplicá-lo.",
+          "global": "Configuração global: {{value}}. Ela decide para o login no Backoffice e para as lojas com Use global setting.",
+          "global-on": "ativada",
+          "global-off": "desativada",
+          "backoffice": "Backoffice",
+          "global-setting": "Configuração global",
+          "no-stores": "Nenhuma loja.",
+          "columns": {
+            "store": "Loja",
+            "store-mode": "Configuração da loja",
+            "result": "Código no login"
+          },
+          "results": {
+            "required": "Obrigatório",
+            "not-required": "Não obrigatório",
+            "per-member": "Por membro"
+          },
+          "reasons": {
+            "Store": "A loja exige de todos.",
+            "Global": "A configuração global está ativada.",
+            "GlobalOff": "A configuração global está desativada.",
+            "Disabled": "A loja desativou para todos.",
+            "Organization": "A organização do usuário exige.",
+            "OrganizationSelf": "Esta organização exige de todos os seus membros.",
+            "UserRequired": "Exigido pelo administrador.",
+            "UserEnabled": "O usuário ativou.",
+            "AdminManaged": "Exigido apenas de usuários e organizações definidos como Required.",
+            "CustomerChoice": "O usuário não ativou.",
+            "MembersAdminManaged": "Exigido apenas de membros definidos como Required.",
+            "MembersCustomerChoice": "Cada membro decide na vitrine."
+          }
+        }
+      }
+    },
+    "store-modes": {
+      "UseGlobalSetting": "Use global setting",
+      "Enabled": "Enabled",
+      "Disabled": "Disabled",
+      "AdminManaged": "Admin managed",
+      "CustomerChoice": "Customer choice"
     }
+  },
+  "permissions": {
+    "mfa:read": "Ver o modo de MFA de usuários e organizações",
+    "mfa:manage": "Gerenciar o modo de MFA de usuários e organizações",
+    "xapi:my_organization:mfa:manage": "Vitrine: gerenciar a MFA da minha organização"
   }
 }

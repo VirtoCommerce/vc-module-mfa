@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "多重身份验证",
-        "description": "使用密码登录此店铺时，是否要求所有登录此店铺的用户在密码之外输入通过电子邮件发送的一次性验证码。Use global setting：遵循全局多重身份验证设置。Enabled：始终需要。Disabled：不需要。Backoffice 登录仅遵循全局设置。"
+        "description": "使用密码登录此店铺时，是否在密码之外还要求输入通过电子邮件发送的一次性验证码。Use global setting：遵循全局多重身份验证设置。Enabled：所有用户都需要。Disabled：不需要。Admin managed：仅管理员在 Backoffice 中设为 Required 的用户和组织需要；客户无法更改。Customer choice：客户自行开启或关闭，拥有 \"xapi:my_organization:mfa:manage\" 权限的组织维护者可为整个组织开启或关闭；默认关闭；管理员设置的 Required 无法关闭。Backoffice 登录仅遵循全局设置。"
       }
     }
   },
@@ -35,6 +35,80 @@
     },
     "sign-in-log": {
       "type-mfa": "多因素身份验证"
+    },
+    "modes": {
+      "Off": "关闭",
+      "Enabled": "启用",
+      "Required": "必需"
+    },
+    "widgets": {
+      "mode": {
+        "title": "多重身份验证"
+      }
+    },
+    "blades": {
+      "mode": {
+        "user-title": "多重身份验证：{{name}}",
+        "organization-title": "多重身份验证：{{name}}",
+        "subtitle": "登录时由谁要求验证码",
+        "labels": {
+          "mode": "模式"
+        },
+        "description": {
+          "Off": "未开启。在 Customer choice 店铺中可在店面开启。",
+          "Enabled": "已在店面开启。在 Customer choice 店铺中生效，也可在那里关闭。",
+          "Required": "由管理员设置。在 Admin managed 或 Customer choice 店铺中生效，无法在店面关闭。"
+        },
+        "placeholders": {
+          "mode": "选择模式"
+        },
+        "status": {
+          "title": "实际状态",
+          "preview": "所选模式的预览。保存后生效。",
+          "global": "全局设置：{{value}}。它决定 Backoffice 登录以及设为 Use global setting 的店铺。",
+          "global-on": "开启",
+          "global-off": "关闭",
+          "backoffice": "Backoffice",
+          "global-setting": "全局设置",
+          "no-stores": "没有店铺。",
+          "columns": {
+            "store": "店铺",
+            "store-mode": "店铺设置",
+            "result": "登录验证码"
+          },
+          "results": {
+            "required": "需要",
+            "not-required": "不需要",
+            "per-member": "由成员决定"
+          },
+          "reasons": {
+            "Store": "店铺要求所有人使用。",
+            "Global": "全局设置已开启。",
+            "GlobalOff": "全局设置已关闭。",
+            "Disabled": "店铺已为所有人关闭。",
+            "Organization": "用户所在组织要求使用。",
+            "OrganizationSelf": "此组织要求其所有成员使用。",
+            "UserRequired": "管理员要求使用。",
+            "UserEnabled": "用户已自行开启。",
+            "AdminManaged": "仅设为 Required 的用户和组织需要。",
+            "CustomerChoice": "用户未开启。",
+            "MembersAdminManaged": "仅设为 Required 的成员需要。",
+            "MembersCustomerChoice": "每位成员在店面自行决定。"
+          }
+        }
+      }
+    },
+    "store-modes": {
+      "UseGlobalSetting": "Use global setting",
+      "Enabled": "Enabled",
+      "Disabled": "Disabled",
+      "AdminManaged": "Admin managed",
+      "CustomerChoice": "Customer choice"
     }
+  },
+  "permissions": {
+    "mfa:read": "查看用户和组织的 MFA 模式",
+    "mfa:manage": "管理用户和组织的 MFA 模式",
+    "xapi:my_organization:mfa:manage": "店面：管理我所在组织的 MFA"
   }
 }

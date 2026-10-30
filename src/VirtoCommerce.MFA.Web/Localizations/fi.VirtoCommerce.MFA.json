@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "Monivaiheinen tunnistautuminen",
-        "description": "Tarvitaanko salasanan lisäksi sähköpostitse lähetetty kertakoodi, kun tähän kauppaan kirjaudutaan salasanalla, kenen tahansa käyttäjän kohdalla. Use global setting: noudata monivaiheisen tunnistautumisen yleistä asetusta. Enabled: aina pakollinen. Disabled: ei pakollinen. Backoffice-kirjautuminen noudattaa vain yleistä asetusta."
+        "description": "Tarvitaanko salasanan lisäksi sähköpostitse lähetetty kertakoodi, kun tähän kauppaan kirjaudutaan salasanalla. Use global setting: noudata monivaiheisen tunnistautumisen yleistä asetusta. Enabled: pakollinen kaikille käyttäjille. Disabled: ei pakollinen. Admin managed: pakollinen vain käyttäjille ja organisaatioille, joille järjestelmänvalvoja on asettanut Backofficessa tilan Required; asiakkaat eivät voi muuttaa sitä. Customer choice: asiakkaat ottavat sen käyttöön tai poistavat sen käytöstä itseltään, ja organisaation ylläpitäjät, joilla on oikeus \"xapi:my_organization:mfa:manage\", koko organisaatiolta; oletuksena pois käytöstä; järjestelmänvalvojan asettamaa Required-tilaa ei voi poistaa käytöstä. Backoffice-kirjautuminen noudattaa vain yleistä asetusta."
       }
     }
   },
@@ -35,6 +35,80 @@
     },
     "sign-in-log": {
       "type-mfa": "Monivaiheinen tunnistautuminen"
+    },
+    "modes": {
+      "Off": "Pois käytöstä",
+      "Enabled": "Käytössä",
+      "Required": "Pakollinen"
+    },
+    "widgets": {
+      "mode": {
+        "title": "Monivaiheinen tunnistautuminen"
+      }
+    },
+    "blades": {
+      "mode": {
+        "user-title": "Monivaiheinen tunnistautuminen: {{name}}",
+        "organization-title": "Monivaiheinen tunnistautuminen: {{name}}",
+        "subtitle": "Kuka vaatii koodin kirjautuessa",
+        "labels": {
+          "mode": "Tila"
+        },
+        "description": {
+          "Off": "Ei käytössä. Kaupoissa, joissa on Customer choice, sen voi ottaa käyttöön verkkokaupassa.",
+          "Enabled": "Otettu käyttöön verkkokaupassa. Vaikuttaa kaupoissa, joissa on Customer choice, ja siellä sen voi myös poistaa käytöstä.",
+          "Required": "Järjestelmänvalvojan asettama. Vaikuttaa kaupoissa, joissa on Admin managed tai Customer choice, eikä sitä voi poistaa käytöstä verkkokaupassa."
+        },
+        "placeholders": {
+          "mode": "Valitse tila"
+        },
+        "status": {
+          "title": "Todellinen tila",
+          "preview": "Valitun tilan esikatselu. Ota se käyttöön tallentamalla.",
+          "global": "Yleinen asetus: {{value}}. Se ratkaisee Backoffice-kirjautumisen ja kaupat, joissa on Use global setting.",
+          "global-on": "käytössä",
+          "global-off": "pois käytöstä",
+          "backoffice": "Backoffice",
+          "global-setting": "Yleinen asetus",
+          "no-stores": "Ei kauppoja.",
+          "columns": {
+            "store": "Kauppa",
+            "store-mode": "Kaupan asetus",
+            "result": "Koodi kirjautuessa"
+          },
+          "results": {
+            "required": "Pakollinen",
+            "not-required": "Ei pakollinen",
+            "per-member": "Jäsen päättää"
+          },
+          "reasons": {
+            "Store": "Kauppa vaatii sitä kaikilta.",
+            "Global": "Yleinen asetus on käytössä.",
+            "GlobalOff": "Yleinen asetus on pois käytöstä.",
+            "Disabled": "Kauppa on poistanut sen käytöstä kaikilta.",
+            "Organization": "Käyttäjän organisaatio vaatii sitä.",
+            "OrganizationSelf": "Tämä organisaatio vaatii sitä kaikilta jäseniltään.",
+            "UserRequired": "Järjestelmänvalvojan vaatima.",
+            "UserEnabled": "Käyttäjä on ottanut sen käyttöön.",
+            "AdminManaged": "Vain käyttäjät ja organisaatiot, joilla on tila Required, tarvitsevat sitä.",
+            "CustomerChoice": "Käyttäjä ei ole ottanut sitä käyttöön.",
+            "MembersAdminManaged": "Vain jäsenet, joilla on tila Required, tarvitsevat sitä.",
+            "MembersCustomerChoice": "Jokainen jäsen päättää itse verkkokaupassa."
+          }
+        }
+      }
+    },
+    "store-modes": {
+      "UseGlobalSetting": "Use global setting",
+      "Enabled": "Enabled",
+      "Disabled": "Disabled",
+      "AdminManaged": "Admin managed",
+      "CustomerChoice": "Customer choice"
     }
+  },
+  "permissions": {
+    "mfa:read": "Käyttäjien ja organisaatioiden MFA-tilan tarkastelu",
+    "mfa:manage": "Käyttäjien ja organisaatioiden MFA-tilan hallinta",
+    "xapi:my_organization:mfa:manage": "Verkkokauppa: oman organisaation MFA:n hallinta"
   }
 }

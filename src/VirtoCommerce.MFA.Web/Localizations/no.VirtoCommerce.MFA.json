@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "Flerfaktorautentisering",
-        "description": "Om en passordpålogging i denne butikken krever en engangskode sendt på e-post i tillegg til passordet, for alle brukere som logger på her. Use global setting: følg den globale innstillingen for flerfaktorautentisering. Enabled: alltid påkrevd. Disabled: ikke påkrevd. Pålogging i Backoffice følger bare den globale innstillingen."
+        "description": "Om en passordpålogging i denne butikken krever en engangskode sendt på e-post i tillegg til passordet. Use global setting: følg den globale innstillingen for flerfaktorautentisering. Enabled: påkrevd for alle brukere. Disabled: ikke påkrevd. Admin managed: påkrevd bare for brukere og organisasjoner som en administrator har satt til Required i Backoffice; kundene kan ikke endre det. Customer choice: kundene slår den på eller av for seg selv, og organisasjonsansvarlige med tillatelsen \"xapi:my_organization:mfa:manage\" for hele organisasjonen; av som standard; en Required satt av en administrator kan ikke slås av. Pålogging i Backoffice følger bare den globale innstillingen."
       }
     }
   },
@@ -35,6 +35,80 @@
     },
     "sign-in-log": {
       "type-mfa": "Flerfaktorautentisering"
+    },
+    "modes": {
+      "Off": "Avslått",
+      "Enabled": "Slått på",
+      "Required": "Påkrevd"
+    },
+    "widgets": {
+      "mode": {
+        "title": "Flerfaktorautentisering"
+      }
+    },
+    "blades": {
+      "mode": {
+        "user-title": "Flerfaktorautentisering: {{name}}",
+        "organization-title": "Flerfaktorautentisering: {{name}}",
+        "subtitle": "Hvem som krever koden ved pålogging",
+        "labels": {
+          "mode": "Modus"
+        },
+        "description": {
+          "Off": "Ikke slått på. I butikker med Customer choice kan den slås på i nettbutikken.",
+          "Enabled": "Slått på i nettbutikken. Gjelder i butikker med Customer choice, der den også kan slås av.",
+          "Required": "Satt av administratoren. Gjelder i butikker med Admin managed eller Customer choice og kan ikke slås av i nettbutikken."
+        },
+        "placeholders": {
+          "mode": "Velg en modus"
+        },
+        "status": {
+          "title": "Faktisk status",
+          "preview": "Forhåndsvisning av valgt modus. Lagre for å ta den i bruk.",
+          "global": "Global innstilling: {{value}}. Den avgjør for pålogging i Backoffice og for butikker med Use global setting.",
+          "global-on": "på",
+          "global-off": "av",
+          "backoffice": "Backoffice",
+          "global-setting": "Global innstilling",
+          "no-stores": "Ingen butikker.",
+          "columns": {
+            "store": "Butikk",
+            "store-mode": "Butikkinnstilling",
+            "result": "Kode ved pålogging"
+          },
+          "results": {
+            "required": "Påkrevd",
+            "not-required": "Ikke påkrevd",
+            "per-member": "Per medlem"
+          },
+          "reasons": {
+            "Store": "Butikken krever den av alle.",
+            "Global": "Den globale innstillingen er på.",
+            "GlobalOff": "Den globale innstillingen er av.",
+            "Disabled": "Butikken har slått den av for alle.",
+            "Organization": "Brukerens organisasjon krever den.",
+            "OrganizationSelf": "Denne organisasjonen krever den av alle sine medlemmer.",
+            "UserRequired": "Påkrevd av administratoren.",
+            "UserEnabled": "Brukeren har slått den på.",
+            "AdminManaged": "Påkrevd bare for brukere og organisasjoner satt til Required.",
+            "CustomerChoice": "Brukeren har ikke slått den på.",
+            "MembersAdminManaged": "Påkrevd bare for medlemmer satt til Required.",
+            "MembersCustomerChoice": "Hvert medlem bestemmer selv i nettbutikken."
+          }
+        }
+      }
+    },
+    "store-modes": {
+      "UseGlobalSetting": "Use global setting",
+      "Enabled": "Enabled",
+      "Disabled": "Disabled",
+      "AdminManaged": "Admin managed",
+      "CustomerChoice": "Customer choice"
     }
+  },
+  "permissions": {
+    "mfa:read": "Vise MFA-modus for brukere og organisasjoner",
+    "mfa:manage": "Administrere MFA-modus for brukere og organisasjoner",
+    "xapi:my_organization:mfa:manage": "Nettbutikk: administrere MFA for min organisasjon"
   }
 }

@@ -4,6 +4,8 @@
 
 The module adds multi-factor authentication (MFA) to password sign-ins: after the password, the user enters a one-time code sent by email. It covers the Backoffice and any other password sign-in without a store, and the storefront password sign-in of each store.
 
+A store can require the code from everyone, from no one, or leave it to the users and organizations: an administrator sets their mode in the Backoffice, and in a store with `CustomerChoice` customers and organization maintainers turn it on and off themselves in the storefront.
+
 The module is built on the ASP.NET Core Identity two-factor mechanism. It tells Identity which sign-ins require a second factor through the platform `ITwoFactorPolicy`, which the platform `SignInManager.IsTwoFactorEnabledAsync` consults for every password sign-in. The policy takes the `storeId` of the token request, if there is one, and requires the second factor according to the platform and store settings. Identity then answers `RequiresTwoFactor` to password sign-ins and keeps the failed access count until the second factor is passed.
 
 ## Configuration
@@ -11,7 +13,7 @@ The module is built on the ASP.NET Core Identity two-factor mechanism. It tells 
 | Setting | Level and place in the Backoffice | Description | Default |
 | --- | --- | --- | --- |
 | `MultiFactorAuthentication.Enabled` | Global: Settings > Platform > Security | Requires the code for every Backoffice sign-in, and for every password sign-in to the token endpoint that names no store, an unknown store or a store that follows the global setting. | `false` |
-| `MultiFactorAuthentication.StoreMode` | Store: Stores > store > Settings > Store > Security | Applies to the password sign-ins to the token endpoint that name this store, for every user. `Use global setting`: follow `MultiFactorAuthentication.Enabled`. `Enabled`: the code is required. `Disabled`: the code is not required. | `Use global setting` |
+| `MultiFactorAuthentication.StoreMode` | Store: Stores > store > Settings > Store > Security | Applies to the password sign-ins to the token endpoint that name this store. `Use global setting`: follow `MultiFactorAuthentication.Enabled`. `Enabled`: the code is required from everyone. `Disabled`: the code is not required. `AdminManaged`: required from the users and organizations an administrator set to `Required`. `CustomerChoice`: required from the users and organizations with the mode `Enabled` or `Required`; customers change their own mode, and organization maintainers the mode of their organization, in the storefront. | `Use global setting` |
 
 The store setting is taken from the `storeId` of the token request. A token request without a store, such as from vc-shell apps and API clients, follows the global setting, whatever the user's own store says. Tokens are not limited to the store the request names: a user of a store that requires MFA who signs in without a store, or names a store that doesn't require it, gets tokens without the code.
 
@@ -29,6 +31,32 @@ Codes are sent with the ASP.NET Core Identity `Email` two-factor provider, which
 If an administrator can no longer sign in because of MFA, set `MultiFactorAuthentication:DisableEnforcement` to `true` in the configuration (for example, the `MultiFactorAuthentication__DisableEnforcement` environment variable), restart the platform, fix the account or the settings, and remove the switch. While the switch is on, the platform logs a warning at startup.
 
 The storefront calls `POST /api/mfa/resend` on its own host. **When the storefront host forwards only some paths to the platform** (for example, an ingress with a list of routes), add `/api/mfa` next to `/api/otp`, `/connect/token` and `/graphql`; otherwise "Resend code" fails with `405`.
+
+### User and organization modes
+
+Every user and every organization has an MFA mode, kept in the platform object settings `MultiFactorAuthentication.UserMode` and `MultiFactorAuthentication.OrganizationMode`. Only the stores with `AdminManaged` or `CustomerChoice` read them; the other store modes, the global setting and the Backoffice sign-in ignore them.
+
+| Mode | Set by | `AdminManaged` store | `CustomerChoice` store |
+| --- | --- | --- | --- |
+| `Off` (default) | Administrator, or the customer / organization maintainer in the storefront | Not required | Not required |
+| `Enabled` | Administrator, or the customer / organization maintainer in the storefront | Not required | Required; the storefront can turn it off |
+| `Required` | Administrator only | Required | Required; the storefront can't turn it off |
+
+A user needs the code when their own mode or the mode of any of their contact's organizations requires it. The organization comes first: while the organization requires the code, the user's own mode changes nothing, and the storefront shows no switch for it.
+
+In the Backoffice, the "Multi-factor authentication" widget of the user account and of the organization opens the mode blade. The blade lists every store with its MFA setting, whether the sign-in needs the code there and why; for a Backoffice user it also shows the Backoffice sign-in. The list follows the selected mode before it is saved.
+
+### Permissions
+
+| Permission | Allows |
+| --- | --- |
+| `mfa:read` | See the MFA mode and the status of users and organizations: the Backoffice widget and blade, and the `GET` endpoints below. |
+| `mfa:manage` | Change the MFA mode of users and organizations, including `Required`. Give it together with `mfa:read`. |
+| `xapi:my_organization:mfa:manage` | Storefront permission: change the MFA mode of the user's own organization in a `CustomerChoice` store. Add it to an organization role, for example "Organization maintainer". |
+
+### Dependencies
+
+The xAPI module (`VirtoCommerce.Xapi`) is an optional dependency. Without it the module protects every password sign-in as described here and the Backoffice manages the user and organization modes, but the storefront can't show or change them: the GraphQL schema below is registered only when xAPI is installed. The package includes `VirtoCommerce.Xapi.Core.dll` (listed in `module.keep`), so the module loads without xAPI.
 
 ## How it works
 
@@ -56,11 +84,29 @@ The storefront calls `POST /api/mfa/resend` on its own host. **When the storefro
 2. The client exchanges the code for tokens: `POST /connect/token` (`grant_type=mfa`, `two_factor_token`, `code`, and `storeId` when the first step named a store).
 3. To send the code again, the client calls `POST /api/mfa/resend` (`twoFactorToken`, optional `provider`). The response has a new `twoFactorToken` to use from then on, which expires at the same time as the first one, and the `provider` the code was sent with. Within the time step of the Identity provider, the same code is sent again.
 
-The two-factor token of a store sign-in can only be redeemed with the same `storeId`.
+The two-factor token of a store sign-in can only be redeemed with the same `storeId`, and a token issued to confirm a mode change (see below) can't be redeemed for a sign-in.
 
 `resendSecondsRemaining` tells the client how many seconds remain before it can request a new code. It comes with every response that sends a code and with the `resend_too_soon` error.
 
-The two-factor token proves that the password was verified. It is an encrypted ticket with its id, the user, the store, the user's security stamp and the provider the current code was sent with, valid for `MultiFactorAuthentication:TwoFactorTokenLifetime` (10 minutes by default) from the password step. `provider` names the provider the code was sent with, and `providers` lists every provider available to the user with its masked destination. The tokens issued by the `mfa` grant, and the tokens refreshed from them, have the `amr` claim `mfa`. Codes are generated and verified by the Identity two-factor provider (`GenerateTwoFactorTokenAsync`, `VerifyTwoFactorTokenAsync`), which also defines their length and lifetime. The Backoffice code screen takes the six digits of the `Email` provider. The module keeps no data in the database; the wrong code limit, the redeemed two-factor tokens and the resend limit are kept in the memory of the platform instance.
+The two-factor token proves that the password was verified. It is an encrypted ticket with its id, the user, the store, the user's security stamp and the provider the current code was sent with, valid for `MultiFactorAuthentication:TwoFactorTokenLifetime` (10 minutes by default) from the password step. `provider` names the provider the code was sent with, and `providers` lists every provider available to the user with its masked destination. The tokens issued by the `mfa` grant, and the tokens refreshed from them, have the `amr` claim `mfa`. Codes are generated and verified by the Identity two-factor provider (`GenerateTwoFactorTokenAsync`, `VerifyTwoFactorTokenAsync`), which also defines their length and lifetime. The Backoffice code screen takes the six digits of the `Email` provider. The module adds no tables: the user and organization modes are platform object settings, and the wrong code limit, the redeemed two-factor tokens and the resend limit are kept in the memory of the platform instance.
+
+### Storefront (xAPI)
+
+With the xAPI module installed, the storefront reads and changes the modes over GraphQL. Every change is confirmed with a code, so a stolen session can't turn MFA off:
+
+* `mfaSettings(storeId, organizationId)` returns the store mode, whether the current user's sign-in needs the code and what requires it (`requiredBy`: `None`, `Global`, `Store`, `Organization` or `User`), the user's and the organization's modes, whether the user may change them, and the masked destination of the code.
+* `requestMfaChangeCode(command: { storeId })` sends a code and returns a two-factor token for the change.
+* `updateMfaUserMode(command: { storeId, enabled, twoFactorToken, code })` and `updateMfaOrganizationMode(command: { storeId, organizationId, enabled, twoFactorToken, code })` set the mode to `Enabled` or `Off` and return the new settings.
+
+A change is refused with `mfa_self_service_not_allowed` outside a `CustomerChoice` store, `mfa_locked_by_administrator` when the mode is `Required`, and `mfa_organization_not_allowed` when the user lacks `xapi:my_organization:mfa:manage` or the organization isn't theirs. A refused code returns the same error codes as the sign-in.
+
+### Backoffice and REST API
+
+| Endpoint | Permission | Description |
+| --- | --- | --- |
+| `GET /api/mfa/modes/users/{userId}`, `GET /api/mfa/modes/organizations/{organizationId}` | `mfa:read` | The mode, for example `{ "mode": "Off" }`. |
+| `PUT /api/mfa/modes/users/{userId}`, `PUT /api/mfa/modes/organizations/{organizationId}` | `mfa:manage` | Sets the mode, body `{ "mode": "Required" }`. An unknown mode returns `400`. |
+| `GET /api/mfa/modes/users/{userId}/status`, `GET /api/mfa/modes/organizations/{organizationId}/status` | `mfa:read` | Whether the sign-in needs the code in every store and what requires it, the global setting and, for a Backoffice user, the Backoffice sign-in. The optional `mode` query parameter evaluates that mode instead of the saved one. |
 
 The code is sent by the `MfaSignInEmailNotification` notification in the user's default language, or the store's default language. A sign-in to a store uses the store's template and is sent from the store's email (`AdminEmail`, then `Email`); a sign-in without a store uses the global template and the default sender. If the notification is not active, no code is sent: the sign-in reports `mfa_provider_not_available` and a warning is logged. Like any notification, the email with the code is saved to the notification journal, so access to the journal should be limited to the people who may see sign-in codes.
 
@@ -104,7 +150,7 @@ A new way to deliver the code, for example SMS, is added by registering an `IMfa
 
 The wrong code limit (`IMfaCodeAttemptLimiter`), the redeemed two-factor tokens (`ITwoFactorTicketStore`) and the resend limit (`IMfaCodeDeliveryLimiter`) are kept in the memory of each platform instance. Their interfaces are asynchronous, so they can be replaced with an implementation shared across instances, for example on Redis.
 
-Who requires MFA is decided by `IMfaRequirementService`; override it, or `MfaTwoFactorPolicy`, to change the rules. The errors and the sign-in log reasons of every outcome come from `MfaErrorDescriber`; register a derived class with `AddSingleton<MfaErrorDescriber, ...>()` to change them.
+Who requires MFA is decided by `IMfaRequirementService`; override it, or `MfaTwoFactorPolicy`, to change the rules. The Backoffice status (`IMfaStatusService`) and the storefront (`IMfaSelfService`) use the same service, so they follow the changed rules. The modes are read and saved by `IMfaModeService`. The errors and the sign-in log reasons of every outcome come from `MfaErrorDescriber`; register a derived class with `AddSingleton<MfaErrorDescriber, ...>()` to change them.
 
 ## References
 

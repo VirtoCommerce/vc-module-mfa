@@ -42,7 +42,7 @@ public class MfaService(
         return await DeliverCodeAsync(store: null, user, provider);
     }
 
-    public virtual async Task<MfaResult> ChallengeAsync(ApplicationUser user, string storeId, string provider = null)
+    public virtual async Task<MfaResult> ChallengeAsync(ApplicationUser user, string storeId, string provider = null, string purpose = null)
     {
         ArgumentNullException.ThrowIfNull(user);
 
@@ -59,6 +59,7 @@ public class MfaService(
         ticket.IssuedAt = timeProvider.GetUtcNow();
         ticket.LastLoginDate = user.LastLoginDate;
         ticket.SecurityStamp = await userManager.GetSecurityStampAsync(user);
+        ticket.Purpose = purpose.EmptyToNull();
 
         var store = await GetStoreAsync(ticket.StoreId);
         var deliveryResult = await DeliverCodeAsync(store, user, provider);
@@ -89,7 +90,7 @@ public class MfaService(
         return IssueTwoFactorToken(ticket, deliveryResult);
     }
 
-    public virtual async Task<MfaResult> VerifyCodeAsync(string twoFactorToken, string code, string storeId)
+    public virtual async Task<MfaResult> VerifyCodeAsync(string twoFactorToken, string code, string storeId, string purpose = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(twoFactorToken);
         ArgumentException.ThrowIfNullOrEmpty(code);
@@ -104,7 +105,8 @@ public class MfaService(
 
         var user = result.User;
 
-        if (!ticket.StoreId.EqualsIgnoreCase(storeId.EmptyToNull()))
+        if (!ticket.StoreId.EqualsIgnoreCase(storeId.EmptyToNull()) ||
+            !ticket.Purpose.EqualsIgnoreCase(purpose.EmptyToNull()))
         {
             return MfaResult.Fail(MfaOutcome.InvalidTwoFactorToken, user, ticket.Provider);
         }

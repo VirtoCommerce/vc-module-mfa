@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "Multi-Faktor-Authentifizierung",
-        "description": "Ob bei der Anmeldung mit Passwort in diesem Shop zusätzlich ein per E-Mail gesendeter Einmalcode erforderlich ist, für jeden Benutzer, der sich hier anmeldet. Use global setting: der globalen Einstellung für die Multi-Faktor-Authentifizierung folgen. Enabled: immer erforderlich. Disabled: nicht erforderlich. Die Anmeldung im Backoffice folgt nur der globalen Einstellung."
+        "description": "Ob bei der Anmeldung mit Passwort in diesem Shop zusätzlich ein per E-Mail gesendeter Einmalcode erforderlich ist. Use global setting: der globalen Einstellung für die Multi-Faktor-Authentifizierung folgen. Enabled: für jeden Benutzer erforderlich. Disabled: nicht erforderlich. Admin managed: nur für Benutzer und Organisationen erforderlich, die ein Administrator im Backoffice auf Required gesetzt hat; Kunden können dies nicht ändern. Customer choice: Kunden aktivieren oder deaktivieren sie für sich selbst, Organisationsverwalter mit der Berechtigung \"xapi:my_organization:mfa:manage\" für die gesamte Organisation; standardmäßig deaktiviert; ein vom Administrator gesetztes Required kann nicht deaktiviert werden. Die Anmeldung im Backoffice folgt nur der globalen Einstellung."
       }
     }
   },
@@ -35,6 +35,80 @@
     },
     "sign-in-log": {
       "type-mfa": "Multi-Faktor-Authentifizierung"
+    },
+    "modes": {
+      "Off": "Deaktiviert",
+      "Enabled": "Aktiviert",
+      "Required": "Erforderlich"
+    },
+    "widgets": {
+      "mode": {
+        "title": "Multi-Faktor-Authentifizierung"
+      }
+    },
+    "blades": {
+      "mode": {
+        "user-title": "Multi-Faktor-Authentifizierung: {{name}}",
+        "organization-title": "Multi-Faktor-Authentifizierung: {{name}}",
+        "subtitle": "Wer bei der Anmeldung den Code verlangt",
+        "labels": {
+          "mode": "Modus"
+        },
+        "description": {
+          "Off": "Nicht aktiviert. In Shops mit Customer choice kann sie im Storefront aktiviert werden.",
+          "Enabled": "Im Storefront aktiviert. Gilt in Shops mit Customer choice, wo sie auch deaktiviert werden kann.",
+          "Required": "Vom Administrator festgelegt. Gilt in Shops mit Admin managed oder Customer choice und kann im Storefront nicht deaktiviert werden."
+        },
+        "placeholders": {
+          "mode": "Modus auswählen"
+        },
+        "status": {
+          "title": "Tatsächlicher Status",
+          "preview": "Vorschau des ausgewählten Modus. Speichern Sie, um ihn anzuwenden.",
+          "global": "Globale Einstellung: {{value}}. Sie gilt für die Anmeldung im Backoffice und für Shops mit Use global setting.",
+          "global-on": "aktiviert",
+          "global-off": "deaktiviert",
+          "backoffice": "Backoffice",
+          "global-setting": "Globale Einstellung",
+          "no-stores": "Keine Shops.",
+          "columns": {
+            "store": "Shop",
+            "store-mode": "Shop-Einstellung",
+            "result": "Code bei der Anmeldung"
+          },
+          "results": {
+            "required": "Erforderlich",
+            "not-required": "Nicht erforderlich",
+            "per-member": "Je nach Mitglied"
+          },
+          "reasons": {
+            "Store": "Der Shop verlangt sie von allen.",
+            "Global": "Die globale Einstellung ist aktiviert.",
+            "GlobalOff": "Die globale Einstellung ist deaktiviert.",
+            "Disabled": "Der Shop hat sie für alle deaktiviert.",
+            "Organization": "Die Organisation des Benutzers verlangt sie.",
+            "OrganizationSelf": "Diese Organisation verlangt sie von allen Mitgliedern.",
+            "UserRequired": "Vom Administrator verlangt.",
+            "UserEnabled": "Der Benutzer hat sie aktiviert.",
+            "AdminManaged": "Nur Benutzer und Organisationen mit Required benötigen sie.",
+            "CustomerChoice": "Der Benutzer hat sie nicht aktiviert.",
+            "MembersAdminManaged": "Nur Mitglieder mit Required benötigen sie.",
+            "MembersCustomerChoice": "Jedes Mitglied entscheidet selbst im Storefront."
+          }
+        }
+      }
+    },
+    "store-modes": {
+      "UseGlobalSetting": "Use global setting",
+      "Enabled": "Enabled",
+      "Disabled": "Disabled",
+      "AdminManaged": "Admin managed",
+      "CustomerChoice": "Customer choice"
     }
+  },
+  "permissions": {
+    "mfa:read": "MFA-Modus von Benutzern und Organisationen anzeigen",
+    "mfa:manage": "MFA-Modus von Benutzern und Organisationen verwalten",
+    "xapi:my_organization:mfa:manage": "Storefront: MFA der eigenen Organisation verwalten"
   }
 }

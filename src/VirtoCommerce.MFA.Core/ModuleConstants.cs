@@ -11,6 +11,7 @@ public static class ModuleConstants
         public const string GrantType = "mfa";
         public const string AuthenticationMethod = "mfa";
         public const string TwoFactorTokenPurpose = "VirtoCommerce.MFA.TwoFactorToken";
+        public const string ChangeTicketPurpose = "Change";
         public const string IdentityTwoFactorPurpose = "TwoFactor";
         public const string CodeStampLoginProvider = "VirtoCommerce.MFA";
         public const string CodeStampName = "CodeStamp";
@@ -21,6 +22,21 @@ public static class ModuleConstants
             public const string TwoFactorToken = "two_factor_token";
             public const string Provider = "provider";
             public const string Code = "code";
+        }
+
+        public static class Permissions
+        {
+            public const string Read = "mfa:read";
+            public const string Manage = "mfa:manage";
+
+            public static string[] AllPermissions { get; } = [Read, Manage];
+        }
+
+        public static class FrontendPermissions
+        {
+            public const string ManageOrganizationMfa = "xapi:my_organization:mfa:manage";
+
+            public static string[] AllPermissions { get; } = [ManageOrganizationMfa];
         }
 
         public static class FailureReason
@@ -43,6 +59,34 @@ public static class ModuleConstants
         public const string Enabled = "Enabled";
 
         public const string Disabled = "Disabled";
+
+        public const string AdminManaged = "AdminManaged";
+
+        public const string CustomerChoice = "CustomerChoice";
+    }
+
+    public static class Modes
+    {
+        public const string Off = "Off";
+
+        public const string Enabled = "Enabled";
+
+        public const string Required = "Required";
+
+        public static string[] AllModes { get; } = [Off, Enabled, Required];
+    }
+
+    public static class RequirementSources
+    {
+        public const string None = "None";
+
+        public const string Global = "Global";
+
+        public const string Store = "Store";
+
+        public const string Organization = "Organization";
+
+        public const string User = "User";
     }
 
     public static class Settings
@@ -63,7 +107,27 @@ public static class ModuleConstants
                 GroupName = "Store|Security",
                 ValueType = SettingValueType.ShortText,
                 DefaultValue = StoreModes.UseGlobalSetting,
-                AllowedValues = [StoreModes.UseGlobalSetting, StoreModes.Enabled, StoreModes.Disabled],
+                AllowedValues = [StoreModes.UseGlobalSetting, StoreModes.Enabled, StoreModes.Disabled, StoreModes.AdminManaged, StoreModes.CustomerChoice],
+            };
+
+            public static readonly SettingDescriptor UserMode = new()
+            {
+                Name = "MultiFactorAuthentication.UserMode",
+                GroupName = "Platform|Security",
+                ValueType = SettingValueType.ShortText,
+                DefaultValue = Modes.Off,
+                AllowedValues = [Modes.Off, Modes.Enabled, Modes.Required],
+                IsHidden = true,
+            };
+
+            public static readonly SettingDescriptor OrganizationMode = new()
+            {
+                Name = "MultiFactorAuthentication.OrganizationMode",
+                GroupName = "Platform|Security",
+                ValueType = SettingValueType.ShortText,
+                DefaultValue = Modes.Off,
+                AllowedValues = [Modes.Off, Modes.Enabled, Modes.Required],
+                IsHidden = true,
             };
         }
 
@@ -81,6 +145,8 @@ public static class ModuleConstants
             {
                 yield return General.MfaEnabled;
                 yield return General.StoreMode;
+                yield return General.UserMode;
+                yield return General.OrganizationMode;
             }
         }
     }

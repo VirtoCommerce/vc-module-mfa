@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "Autenticazione a più fattori",
-        "description": "Indica se un accesso con password a questo negozio richiede, oltre alla password, un codice monouso inviato via e-mail, per qualsiasi utente che vi accede. Use global setting: segue l'impostazione globale dell'autenticazione a più fattori. Enabled: sempre richiesto. Disabled: non richiesto. L'accesso al Backoffice segue solo l'impostazione globale."
+        "description": "Indica se un accesso con password a questo negozio richiede, oltre alla password, un codice monouso inviato via e-mail. Use global setting: segue l'impostazione globale dell'autenticazione a più fattori. Enabled: richiesto per ogni utente. Disabled: non richiesto. Admin managed: richiesto solo per gli utenti e le organizzazioni che un amministratore ha impostato su Required nel Backoffice; i clienti non possono modificarlo. Customer choice: i clienti la attivano o disattivano per sé stessi, e i responsabili dell'organizzazione con l'autorizzazione \"xapi:my_organization:mfa:manage\" per l'intera organizzazione; disattivata per impostazione predefinita; un Required impostato da un amministratore non può essere disattivato. L'accesso al Backoffice segue solo l'impostazione globale."
       }
     }
   },
@@ -35,6 +35,80 @@
     },
     "sign-in-log": {
       "type-mfa": "Autenticazione a più fattori"
+    },
+    "modes": {
+      "Off": "Disattivata",
+      "Enabled": "Attivata",
+      "Required": "Obbligatoria"
+    },
+    "widgets": {
+      "mode": {
+        "title": "Autenticazione a più fattori"
+      }
+    },
+    "blades": {
+      "mode": {
+        "user-title": "Autenticazione a più fattori: {{name}}",
+        "organization-title": "Autenticazione a più fattori: {{name}}",
+        "subtitle": "Chi richiede il codice all'accesso",
+        "labels": {
+          "mode": "Modalità"
+        },
+        "description": {
+          "Off": "Non attivata. Nei negozi con Customer choice può essere attivata nella vetrina.",
+          "Enabled": "Attivata nella vetrina. Vale nei negozi con Customer choice, dove può anche essere disattivata.",
+          "Required": "Impostata dall'amministratore. Vale nei negozi con Admin managed o Customer choice e non può essere disattivata nella vetrina."
+        },
+        "placeholders": {
+          "mode": "Seleziona una modalità"
+        },
+        "status": {
+          "title": "Stato effettivo",
+          "preview": "Anteprima della modalità selezionata. Salva per applicarla.",
+          "global": "Impostazione globale: {{value}}. Decide per l'accesso al Backoffice e per i negozi con Use global setting.",
+          "global-on": "attivata",
+          "global-off": "disattivata",
+          "backoffice": "Backoffice",
+          "global-setting": "Impostazione globale",
+          "no-stores": "Nessun negozio.",
+          "columns": {
+            "store": "Negozio",
+            "store-mode": "Impostazione del negozio",
+            "result": "Codice all'accesso"
+          },
+          "results": {
+            "required": "Richiesto",
+            "not-required": "Non richiesto",
+            "per-member": "Per membro"
+          },
+          "reasons": {
+            "Store": "Il negozio lo richiede a tutti.",
+            "Global": "L'impostazione globale è attivata.",
+            "GlobalOff": "L'impostazione globale è disattivata.",
+            "Disabled": "Il negozio l'ha disattivata per tutti.",
+            "Organization": "L'organizzazione dell'utente lo richiede.",
+            "OrganizationSelf": "Questa organizzazione lo richiede a tutti i suoi membri.",
+            "UserRequired": "Richiesto dall'amministratore.",
+            "UserEnabled": "L'utente l'ha attivata.",
+            "AdminManaged": "Serve solo a utenti e organizzazioni impostati su Required.",
+            "CustomerChoice": "L'utente non l'ha attivata.",
+            "MembersAdminManaged": "Serve solo ai membri impostati su Required.",
+            "MembersCustomerChoice": "Ogni membro decide nella vetrina."
+          }
+        }
+      }
+    },
+    "store-modes": {
+      "UseGlobalSetting": "Use global setting",
+      "Enabled": "Enabled",
+      "Disabled": "Disabled",
+      "AdminManaged": "Admin managed",
+      "CustomerChoice": "Customer choice"
     }
+  },
+  "permissions": {
+    "mfa:read": "Visualizza la modalità MFA di utenti e organizzazioni",
+    "mfa:manage": "Gestisci la modalità MFA di utenti e organizzazioni",
+    "xapi:my_organization:mfa:manage": "Vetrina: gestisci l'MFA della mia organizzazione"
   }
 }
