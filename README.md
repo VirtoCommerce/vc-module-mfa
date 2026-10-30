@@ -150,7 +150,7 @@ A new way to deliver the code, for example SMS, is added by registering an `IMfa
 
 The wrong code limit (`IMfaCodeAttemptLimiter`), the redeemed two-factor tokens (`ITwoFactorTicketStore`) and the resend limit (`IMfaCodeDeliveryLimiter`) are kept in the memory of each platform instance. Their interfaces are asynchronous, so they can be replaced with an implementation shared across instances, for example on Redis.
 
-Who requires MFA is decided by `IMfaRequirementService`; override it, or `MfaTwoFactorPolicy`, to change the rules. The Backoffice status (`IMfaStatusService`) and the storefront (`IMfaSelfService`) use the same service, so they follow the changed rules. The modes are read and saved by `IMfaModeService`. The errors and the sign-in log reasons of every outcome come from `MfaErrorDescriber`; register a derived class with `AddSingleton<MfaErrorDescriber, ...>()` to change them.
+Who requires MFA is decided by `IMfaRequirementService.GetRequirementAsync`; override it to change the rules. The sign-in (`IsRequiredAsync`, `MfaTwoFactorPolicy`), the Backoffice status (`IMfaStatusService`) and the storefront (`IMfaSelfService`) all go through it, so they follow the changed rules. Overriding only `IsRequiredAsync` or `MfaTwoFactorPolicy` changes the sign-in but not what the Backoffice and the storefront show. The modes are read and saved by `IMfaModeService`. The errors and the sign-in log reasons of every outcome come from `MfaErrorDescriber`; register a derived class with `AddSingleton<MfaErrorDescriber, ...>()` to change them.
 
 ## References
 

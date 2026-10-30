@@ -61,7 +61,16 @@ public class MfaUserResolver(
         // The principal of the request carries the permissions of the current organization (OrganizationIdClaimProvider)
         var authorizationResult = await authorizationService.AuthorizeAsync(context.GetCurrentPrincipal(), resource: null,
             new PermissionAuthorizationRequirement(ModuleConstants.Security.FrontendPermissions.ManageOrganizationMfa));
-        if (!authorizationResult.Succeeded)
+
+        return authorizationResult.Succeeded && await IsOrganizationMemberAsync(context, user, organizationId);
+    }
+
+    /// <summary>
+    /// The current organization of the request, or one of the organizations of the user's contact.
+    /// </summary>
+    public virtual async Task<bool> IsOrganizationMemberAsync(IResolveFieldContext context, ApplicationUser user, string organizationId)
+    {
+        if (string.IsNullOrEmpty(organizationId))
         {
             return false;
         }

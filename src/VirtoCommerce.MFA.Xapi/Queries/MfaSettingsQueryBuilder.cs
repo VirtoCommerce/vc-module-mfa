@@ -18,6 +18,13 @@ public class MfaSettingsQueryBuilder(IAuthorizationService authorizationService,
         await base.BeforeMediatorSend(context, request);
 
         request.User = await userResolver.GetCurrentUserAsync(context, isChange: false);
+
+        // Only a member may see the mode of the organization
+        if (!await userResolver.IsOrganizationMemberAsync(context, request.User, request.OrganizationId))
+        {
+            request.OrganizationId = null;
+        }
+
         request.CanManageOrganization = await userResolver.CanManageOrganizationAsync(context, request.User, request.OrganizationId);
     }
 }

@@ -34,7 +34,7 @@ public class MfaModesController(IMfaModeService modeService, IMfaStatusService s
             return BadRequest($"Unknown MFA mode '{request?.Mode}'.");
         }
 
-        await modeService.SetUserModeAsync(userId, request.Mode);
+        await modeService.SetUserModeAsync(userId, NormalizeMode(request.Mode));
 
         return Ok(new MfaModeInfo { Mode = await modeService.GetUserModeAsync(userId) });
     }
@@ -75,7 +75,7 @@ public class MfaModesController(IMfaModeService modeService, IMfaStatusService s
             return BadRequest($"Unknown MFA mode '{request?.Mode}'.");
         }
 
-        await modeService.SetOrganizationModeAsync(organizationId, request.Mode);
+        await modeService.SetOrganizationModeAsync(organizationId, NormalizeMode(request.Mode));
 
         return Ok(new MfaModeInfo { Mode = await modeService.GetOrganizationModeAsync(organizationId) });
     }
