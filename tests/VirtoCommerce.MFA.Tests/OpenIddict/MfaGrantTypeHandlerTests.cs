@@ -54,9 +54,9 @@ public class MfaGrantTypeHandlerTests : MfaTestsBase
         // Assert
         var error = Assert.IsType<TokenResponse>(Assert.IsType<BadRequestObjectResult>(actionResult).Value);
         Assert.Equal(OpenIddictConstants.Errors.InvalidRequest, error.Error);
-        Assert.Equal("missing_parameter", error.Code);
+        Assert.Equal("missing_parameters", error.Code);
         Assert.Equal("Missing required parameters: two_factor_token, code.", error.ErrorDescription);
-        Assert.Equal(ModuleConstants.Security.FailureReason.MissingParameter, requestContext.FailureReason);
+        Assert.Equal(SignInFailureReason.MissingParameter, requestContext.FailureReason);
     }
 
     [Theory]
