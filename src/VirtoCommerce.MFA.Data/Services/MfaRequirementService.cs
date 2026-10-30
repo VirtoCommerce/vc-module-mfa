@@ -39,20 +39,11 @@ public class MfaRequirementService(
         return settingsManager.GetValueAsync<bool>(MfaModuleSettings.MfaEnabled);
     }
 
-    public virtual async Task<MfaRequirement> GetRequirementAsync(ApplicationUser user, string storeId)
+    public virtual Task<MfaRequirement> GetRequirementAsync(ApplicationUser user, string storeId)
     {
         ArgumentNullException.ThrowIfNull(user);
 
-        var storeMode = await GetStoreModeAsync(storeId);
-        if (!IsChosenMode(storeMode))
-        {
-            return await GetRequirementAsync(storeMode, [], userMode: null);
-        }
-
-        var organizationModes = await modeService.GetOrganizationModesAsync(await GetOrganizationIdsAsync(user));
-        var userMode = await modeService.GetUserModeAsync(user.Id);
-
-        return await GetRequirementAsync(storeMode, organizationModes.Values, userMode);
+        return GetUserRequirementAsync(user, storeId);
     }
 
     public virtual async Task<MfaRequirement> GetRequirementAsync(string storeMode, IEnumerable<string> organizationModes, string userMode)
@@ -110,5 +101,19 @@ public class MfaRequirementService(
         var member = await memberService.GetByIdAsync(user.MemberId, nameof(MemberResponseGroup.Default));
 
         return (member as Contact)?.Organizations ?? [];
+    }
+
+    private async Task<MfaRequirement> GetUserRequirementAsync(ApplicationUser user, string storeId)
+    {
+        var storeMode = await GetStoreModeAsync(storeId);
+        if (!IsChosenMode(storeMode))
+        {
+            return await GetRequirementAsync(storeMode, [], userMode: null);
+        }
+
+        var organizationModes = await modeService.GetOrganizationModesAsync(await GetOrganizationIdsAsync(user));
+        var userMode = await modeService.GetUserModeAsync(user.Id);
+
+        return await GetRequirementAsync(storeMode, organizationModes.Values, userMode);
     }
 }

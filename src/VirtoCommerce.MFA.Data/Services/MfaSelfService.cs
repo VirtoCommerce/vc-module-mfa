@@ -16,36 +16,11 @@ public class MfaSelfService(
     IMfaModeService modeService)
     : IMfaSelfService
 {
-    public virtual async Task<MfaSettings> GetSettingsAsync(ApplicationUser user, string storeId, string organizationId, bool canManageOrganization)
+    public virtual Task<MfaSettings> GetSettingsAsync(ApplicationUser user, string storeId, string organizationId, bool canManageOrganization)
     {
         ArgumentNullException.ThrowIfNull(user);
 
-        var storeMode = await requirementService.GetStoreModeAsync(storeId);
-        var requirement = await requirementService.GetRequirementAsync(user, storeId);
-        var isCustomerChoice = storeMode == ModuleConstants.StoreModes.CustomerChoice;
-
-        var settings = AbstractTypeFactory<MfaSettings>.TryCreateInstance();
-        settings.StoreId = storeId;
-        settings.StoreMode = storeMode;
-        settings.IsRequired = requirement.IsRequired;
-        settings.RequiredBy = requirement.Source;
-
-        settings.UserMode = await modeService.GetUserModeAsync(user.Id);
-        settings.CanChangeUserMode = isCustomerChoice && settings.UserMode != Modes.Required;
-
-        if (!string.IsNullOrEmpty(organizationId))
-        {
-            settings.OrganizationId = organizationId;
-            settings.OrganizationMode = await modeService.GetOrganizationModeAsync(organizationId);
-            settings.CanChangeOrganizationMode = isCustomerChoice && canManageOrganization && settings.OrganizationMode != Modes.Required;
-        }
-
-        var provider = await mfaService.GetProviderAsync(user);
-        settings.IsProviderAvailable = provider != null;
-        settings.Provider = provider?.Name;
-        settings.Destination = provider?.GetDestination(user);
-
-        return settings;
+        return GetSettingsCoreAsync(user, storeId, organizationId, canManageOrganization);
     }
 
     public virtual Task<MfaResult> SendChangeCodeAsync(ApplicationUser user, string storeId)
@@ -55,52 +30,19 @@ public class MfaSelfService(
         return mfaService.ChallengeAsync(user, storeId, purpose: ModuleConstants.Security.ChangeTicketPurpose);
     }
 
-    public virtual async Task<MfaChangeResult> ChangeUserModeAsync(ApplicationUser user, string storeId, bool enabled, string twoFactorToken, string code)
+    public virtual Task<MfaChangeResult> ChangeUserModeAsync(ApplicationUser user, string storeId, bool enabled, string twoFactorToken, string code)
     {
         ArgumentNullException.ThrowIfNull(user);
 
-        var settings = await GetSettingsAsync(user, storeId, organizationId: null, canManageOrganization: false);
-        if (!settings.CanChangeUserMode)
-        {
-            return Fail(settings.UserMode == Modes.Required ? MfaChangeOutcome.LockedByAdministrator : MfaChangeOutcome.SelfServiceNotAllowed);
-        }
-
-        var codeResult = await VerifyCodeAsync(user, storeId, twoFactorToken, code);
-        if (codeResult.Outcome != MfaOutcome.Success)
-        {
-            return Fail(MfaChangeOutcome.CodeRefused, codeResult);
-        }
-
-        await modeService.SetUserModeAsync(user.Id, enabled ? Modes.Enabled : Modes.Off);
-
-        return await SucceedAsync(user, storeId, organizationId: null, canManageOrganization: false);
+        return ChangeUserModeCoreAsync(user, storeId, enabled, twoFactorToken, code);
     }
 
-    public virtual async Task<MfaChangeResult> ChangeOrganizationModeAsync(ApplicationUser user, string storeId, string organizationId, bool canManageOrganization,
+    public virtual Task<MfaChangeResult> ChangeOrganizationModeAsync(ApplicationUser user, string storeId, string organizationId, bool canManageOrganization,
         bool enabled, string twoFactorToken, string code)
     {
         ArgumentNullException.ThrowIfNull(user);
 
-        if (string.IsNullOrEmpty(organizationId) || !canManageOrganization)
-        {
-            return Fail(MfaChangeOutcome.OrganizationNotAllowed);
-        }
-
-        var settings = await GetSettingsAsync(user, storeId, organizationId, canManageOrganization);
-        if (!settings.CanChangeOrganizationMode)
-        {
-            return Fail(settings.OrganizationMode == Modes.Required ? MfaChangeOutcome.LockedByAdministrator : MfaChangeOutcome.SelfServiceNotAllowed);
-        }
-
-        var codeResult = await VerifyCodeAsync(user, storeId, twoFactorToken, code);
-        if (codeResult.Outcome != MfaOutcome.Success)
-        {
-            return Fail(MfaChangeOutcome.CodeRefused, codeResult);
-        }
-
-        await modeService.SetOrganizationModeAsync(organizationId, enabled ? Modes.Enabled : Modes.Off);
-
-        return await SucceedAsync(user, storeId, organizationId, canManageOrganization);
+        return ChangeOrganizationModeCoreAsync(user, storeId, organizationId, canManageOrganization, enabled, twoFactorToken, code);
     }
 
     /// <summary>
@@ -138,5 +80,79 @@ public class MfaSelfService(
         result.CodeResult = codeResult;
 
         return result;
+    }
+
+    private async Task<MfaSettings> GetSettingsCoreAsync(ApplicationUser user, string storeId, string organizationId, bool canManageOrganization)
+    {
+        var storeMode = await requirementService.GetStoreModeAsync(storeId);
+        var requirement = await requirementService.GetRequirementAsync(user, storeId);
+        var isCustomerChoice = storeMode == ModuleConstants.StoreModes.CustomerChoice;
+
+        var settings = AbstractTypeFactory<MfaSettings>.TryCreateInstance();
+        settings.StoreId = storeId;
+        settings.StoreMode = storeMode;
+        settings.IsRequired = requirement.IsRequired;
+        settings.RequiredBy = requirement.Source;
+
+        settings.UserMode = await modeService.GetUserModeAsync(user.Id);
+        settings.CanChangeUserMode = isCustomerChoice && settings.UserMode != Modes.Required;
+
+        if (!string.IsNullOrEmpty(organizationId))
+        {
+            settings.OrganizationId = organizationId;
+            settings.OrganizationMode = await modeService.GetOrganizationModeAsync(organizationId);
+            settings.CanChangeOrganizationMode = isCustomerChoice && canManageOrganization && settings.OrganizationMode != Modes.Required;
+        }
+
+        var provider = await mfaService.GetProviderAsync(user);
+        settings.IsProviderAvailable = provider != null;
+        settings.Provider = provider?.Name;
+        settings.Destination = provider?.GetDestination(user);
+
+        return settings;
+    }
+
+    private async Task<MfaChangeResult> ChangeUserModeCoreAsync(ApplicationUser user, string storeId, bool enabled, string twoFactorToken, string code)
+    {
+        var settings = await GetSettingsAsync(user, storeId, organizationId: null, canManageOrganization: false);
+        if (!settings.CanChangeUserMode)
+        {
+            return Fail(settings.UserMode == Modes.Required ? MfaChangeOutcome.LockedByAdministrator : MfaChangeOutcome.SelfServiceNotAllowed);
+        }
+
+        var codeResult = await VerifyCodeAsync(user, storeId, twoFactorToken, code);
+        if (codeResult.Outcome != MfaOutcome.Success)
+        {
+            return Fail(MfaChangeOutcome.CodeRefused, codeResult);
+        }
+
+        await modeService.SetUserModeAsync(user.Id, enabled ? Modes.Enabled : Modes.Off);
+
+        return await SucceedAsync(user, storeId, organizationId: null, canManageOrganization: false);
+    }
+
+    private async Task<MfaChangeResult> ChangeOrganizationModeCoreAsync(ApplicationUser user, string storeId, string organizationId, bool canManageOrganization,
+        bool enabled, string twoFactorToken, string code)
+    {
+        if (string.IsNullOrEmpty(organizationId) || !canManageOrganization)
+        {
+            return Fail(MfaChangeOutcome.OrganizationNotAllowed);
+        }
+
+        var settings = await GetSettingsAsync(user, storeId, organizationId, canManageOrganization);
+        if (!settings.CanChangeOrganizationMode)
+        {
+            return Fail(settings.OrganizationMode == Modes.Required ? MfaChangeOutcome.LockedByAdministrator : MfaChangeOutcome.SelfServiceNotAllowed);
+        }
+
+        var codeResult = await VerifyCodeAsync(user, storeId, twoFactorToken, code);
+        if (codeResult.Outcome != MfaOutcome.Success)
+        {
+            return Fail(MfaChangeOutcome.CodeRefused, codeResult);
+        }
+
+        await modeService.SetOrganizationModeAsync(organizationId, enabled ? Modes.Enabled : Modes.Off);
+
+        return await SucceedAsync(user, storeId, organizationId, canManageOrganization);
     }
 }

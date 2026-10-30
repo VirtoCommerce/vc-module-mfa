@@ -2,7 +2,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Moq;
 using VirtoCommerce.MFA.Core;
-using VirtoCommerce.MFA.Core.Services;
 using VirtoCommerce.MFA.Data.Services;
 using VirtoCommerce.StoreModule.Core.Model.Search;
 using VirtoCommerce.StoreModule.Core.Services;
@@ -15,7 +14,7 @@ namespace VirtoCommerce.MFA.Tests.Services;
 [Trait("Category", "Unit")]
 public class MfaStatusServiceTests : MfaTestsBase
 {
-    private readonly IMfaStatusService _statusService;
+    private readonly MfaStatusService _statusService;
 
     public MfaStatusServiceTests()
     {

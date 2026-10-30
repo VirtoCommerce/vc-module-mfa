@@ -29,7 +29,7 @@ public class MfaModesController(IMfaModeService modeService, IMfaStatusService s
     [Authorize(ModuleConstants.Security.Permissions.Manage)]
     public async Task<ActionResult<MfaModeInfo>> SetUserMode([FromRoute] string userId, [FromBody] MfaModeInfo request)
     {
-        if (!IsKnownMode(request?.Mode))
+        if (request == null || !IsKnownMode(request.Mode))
         {
             return BadRequest($"Unknown MFA mode '{request?.Mode}'.");
         }
@@ -70,7 +70,7 @@ public class MfaModesController(IMfaModeService modeService, IMfaStatusService s
     [Authorize(ModuleConstants.Security.Permissions.Manage)]
     public async Task<ActionResult<MfaModeInfo>> SetOrganizationMode([FromRoute] string organizationId, [FromBody] MfaModeInfo request)
     {
-        if (!IsKnownMode(request?.Mode))
+        if (request == null || !IsKnownMode(request.Mode))
         {
             return BadRequest($"Unknown MFA mode '{request?.Mode}'.");
         }
