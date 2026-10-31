@@ -2,7 +2,7 @@
   <!-- the mode is text, not a count, so the icon shows whether MFA is on and the title names the mode -->
   <VcWidget
     :icon="mode && mode !== 'Off' ? 'lucide-shield-check' : 'lucide-shield'"
-    :title="mode ? `${$t('mfa.widgets.mode.title')}: ${$t(`mfa.modes.${mode}`)}` : $t('mfa.widgets.mode.title')"
+    :title="mode ? `${$t('mfa.widgets.mode.short-name')}: ${$t(`mfa.modes.${mode}`)}` : $t('mfa.widgets.mode.title')"
     :disabled="!subject?.id"
     @click="open"
   />

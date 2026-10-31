@@ -43,7 +43,8 @@
     },
     "widgets": {
       "mode": {
-        "title": "多重身份验证"
+        "title": "多重身份验证",
+        "short-name": "MFA"
       }
     },
     "blades": {

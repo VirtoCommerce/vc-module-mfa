@@ -43,7 +43,8 @@
     },
     "widgets": {
       "mode": {
-        "title": "Authentification multifacteur"
+        "title": "Authentification multifacteur",
+        "short-name": "MFA"
       }
     },
     "blades": {

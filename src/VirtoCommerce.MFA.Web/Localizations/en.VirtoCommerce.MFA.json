@@ -43,7 +43,8 @@
     },
     "widgets": {
       "mode": {
-        "title": "Multi-factor authentication"
+        "title": "Multi-factor authentication",
+        "short-name": "MFA"
       }
     },
     "blades": {

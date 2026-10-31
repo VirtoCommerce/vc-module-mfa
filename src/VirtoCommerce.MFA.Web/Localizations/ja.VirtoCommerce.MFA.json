@@ -43,7 +43,8 @@
     },
     "widgets": {
       "mode": {
-        "title": "多要素認証"
+        "title": "多要素認証",
+        "short-name": "MFA"
       }
     },
     "blades": {

@@ -43,7 +43,8 @@
     },
     "widgets": {
       "mode": {
-        "title": "Monivaiheinen tunnistautuminen"
+        "title": "Monivaiheinen tunnistautuminen",
+        "short-name": "MFA"
       }
     },
     "blades": {
