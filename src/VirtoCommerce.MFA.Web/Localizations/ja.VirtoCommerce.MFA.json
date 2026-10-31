@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "多要素認証",
-        "description": "このストアへのパスワードでのサインインで、サインインするすべてのユーザーに、パスワードに加えてメールで送信されるワンタイムコードを要求するかどうか。Use global setting: グローバルな多要素認証の設定に従います。Enabled: 常に必要です。Disabled: 不要です。Backoffice へのサインインはグローバル設定のみに従います。"
+        "description": "このストアへのパスワードでのサインインで、パスワードに加えてメールで送信されるワンタイムコードを要求するかどうか。Use global setting: グローバルな多要素認証の設定に従います。Enabled: すべてのユーザーに必要です。Disabled: 不要です。Admin managed: 管理者が Backoffice で Required に設定したユーザーと組織にのみ必要です。顧客は変更できません。Customer choice: 顧客が自分でオン・オフを切り替え、\"xapi:my_organization:mfa:manage\" 権限を持つ組織管理者が組織全体に対して切り替えます。既定ではオフです。管理者が設定した Required はオフにできません。Backoffice へのサインインはグローバル設定のみに従います。"
       }
     }
   },
@@ -35,6 +35,85 @@
     },
     "sign-in-log": {
       "type-mfa": "多要素認証"
+    },
+    "modes": {
+      "Off": "オフ",
+      "Enabled": "有効",
+      "Required": "必須"
+    },
+    "widgets": {
+      "mode": {
+        "title": "多要素認証",
+        "short-name": "MFA"
+      }
+    },
+    "blades": {
+      "mode": {
+        "user-title": "多要素認証: {{name}}",
+        "organization-title": "多要素認証: {{name}}",
+        "subtitle": "サインイン時にコードを要求する主体",
+        "labels": {
+          "mode": "モード"
+        },
+        "description": {
+          "Off": "オンになっていません。Customer choice のストアでは、ストアフロントでオンにできます。",
+          "Enabled": "ストアフロントでオンにされています。Customer choice のストアで適用され、そこでオフにすることもできます。",
+          "Required": "管理者が設定しています。Admin managed または Customer choice のストアで適用され、ストアフロントではオフにできません。"
+        },
+        "placeholders": {
+          "mode": "モードを選択"
+        },
+        "status": {
+          "title": "実際のステータス",
+          "preview": "選択したモードのプレビューです。適用するには保存してください。",
+          "global": "グローバル設定: {{value}}。Backoffice へのサインインと、Use global setting のストアはこの設定で決まります。",
+          "global-on": "オン",
+          "global-off": "オフ",
+          "backoffice": "Backoffice",
+          "global-setting": "グローバル設定",
+          "no-stores": "ストアがありません。",
+          "columns": {
+            "store": "ストア",
+            "store-mode": "ストアの設定",
+            "result": "サインイン時のコード"
+          },
+          "results": {
+            "required": "必須",
+            "not-required": "不要",
+            "per-member": "メンバーごと"
+          },
+          "reasons": {
+            "Store": "ストアがすべてのユーザーに要求しています。",
+            "Global": "グローバル設定がオンです。",
+            "GlobalOff": "グローバル設定がオフです。",
+            "Disabled": "ストアがすべてのユーザーに対してオフにしています。",
+            "Organization": "ユーザーの組織が要求しています。",
+            "OrganizationSelf": "この組織がすべてのメンバーに要求しています。",
+            "UserRequired": "管理者が必須にしています。",
+            "UserEnabled": "ユーザーがオンにしました。",
+            "AdminManaged": "Required に設定されたユーザーと組織のみが対象です。",
+            "CustomerChoice": "ユーザーがオンにしていません。",
+            "MembersAdminManaged": "Required に設定されたメンバーのみが対象です。",
+            "MembersCustomerChoice": "各メンバーがストアフロントで決めます。"
+          }
+        },
+        "commands": {
+          "save": "保存",
+          "reset": "リセット"
+        }
+      }
+    },
+    "store-modes": {
+      "UseGlobalSetting": "Use global setting",
+      "Enabled": "Enabled",
+      "Disabled": "Disabled",
+      "AdminManaged": "Admin managed",
+      "CustomerChoice": "Customer choice"
     }
+  },
+  "permissions": {
+    "mfa:read": "ユーザーと組織の MFA モードを表示",
+    "mfa:manage": "ユーザーと組織の MFA モードを管理",
+    "xapi:my_organization:mfa:manage": "ストアフロント: 自分の組織の MFA を管理"
   }
 }

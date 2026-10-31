@@ -10,6 +10,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VirtoCommerce.MFA.Data", "s
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VirtoCommerce.MFA.Core", "src\VirtoCommerce.MFA.Core\VirtoCommerce.MFA.Core.csproj", "{21B1BD53-BF1D-45AE-ACE7-A9531CC70279}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VirtoCommerce.MFA.Xapi", "src\VirtoCommerce.MFA.Xapi\VirtoCommerce.MFA.Xapi.csproj", "{97DAD92E-ECCF-416E-AD73-18F59A2C7C2D}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{7DB9111A-F8F4-40A0-B020-462D09C4511E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VirtoCommerce.MFA.Tests", "tests\VirtoCommerce.MFA.Tests\VirtoCommerce.MFA.Tests.csproj", "{0DEA05E7-6526-4DF5-864B-5E1E6C47CE5B}"
@@ -21,6 +23,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Directory.Build.props = Directory.Build.props
 		LICENSE = LICENSE
 		module.ignore = module.ignore
+		module.keep = module.keep
 		README.md = README.md
 		VirtoCommerce.MFA.sln.DotSettings = VirtoCommerce.MFA.sln.DotSettings
 	EndProjectSection
@@ -47,6 +50,10 @@ Global
 		{0DEA05E7-6526-4DF5-864B-5E1E6C47CE5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0DEA05E7-6526-4DF5-864B-5E1E6C47CE5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0DEA05E7-6526-4DF5-864B-5E1E6C47CE5B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{97DAD92E-ECCF-416E-AD73-18F59A2C7C2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97DAD92E-ECCF-416E-AD73-18F59A2C7C2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97DAD92E-ECCF-416E-AD73-18F59A2C7C2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97DAD92E-ECCF-416E-AD73-18F59A2C7C2D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -55,6 +62,7 @@ Global
 		{834F1C1E-7146-47FC-B88D-61E1CC567243} = {E38AAE26-C23D-4304-B466-8776827E6D5D}
 		{7CFBA676-FC74-49AA-BC3F-181E1EC965F4} = {E38AAE26-C23D-4304-B466-8776827E6D5D}
 		{21B1BD53-BF1D-45AE-ACE7-A9531CC70279} = {E38AAE26-C23D-4304-B466-8776827E6D5D}
+		{97DAD92E-ECCF-416E-AD73-18F59A2C7C2D} = {E38AAE26-C23D-4304-B466-8776827E6D5D}
 		{0DEA05E7-6526-4DF5-864B-5E1E6C47CE5B} = {7DB9111A-F8F4-40A0-B020-462D09C4511E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution

@@ -19,6 +19,22 @@ angular.module(moduleName, [])
             }
         });
     }])
-    .run(['platformWebApp.signInLogTypes', function (signInLogTypes) {
-        signInLogTypes.register({ label: 'mfa.sign-in-log.type-mfa', value: 'MFA' });
-    }]);
+    .run(['platformWebApp.signInLogTypes', 'platformWebApp.widgetService', 'platformWebApp.authService',
+        function (signInLogTypes, widgetService, authService) {
+            signInLogTypes.register({ label: 'mfa.sign-in-log.type-mfa', value: 'MFA' });
+
+            function createModeWidget(subjectType) {
+                return {
+                    controller: 'virtoCommerce.mfa.mfaModeWidgetController',
+                    template: 'Modules/$(VirtoCommerce.MFA)/Scripts/widgets/mfa-mode-widget.tpl.html',
+                    subjectType: subjectType,
+                    // The container checks this once, before the blade loads its entity, so it can't depend on currentEntity
+                    isVisible: function (blade) {
+                        return !blade.isNew && authService.checkPermission('mfa:read');
+                    }
+                };
+            }
+
+            widgetService.registerWidget(createModeWidget('user'), 'accountDetail');
+            widgetService.registerWidget(createModeWidget('organization'), 'organizationDetail2');
+        }]);
