@@ -5,10 +5,10 @@
                 <div class="form-group">
                     <label class="form-label">{{ 'mfa.blades.mode.labels.mode' | translate }}</label>
                     <div class="form-input">
-                        <ui-select ng-model="blade.mode" ng-disabled="!blade.canManage" search-enabled="false">
+                        <ui-select ng-model="blade.mode" ng-disabled="!blade.canManage">
                             <ui-select-match placeholder="{{ 'mfa.blades.mode.placeholders.mode' | translate }}">{{ ('mfa.modes.' + $select.selected) | translate }}</ui-select-match>
-                            <ui-select-choices repeat="x in modes">
-                                <span>{{ ('mfa.modes.' + x) | translate }}</span>
+                            <ui-select-choices repeat="x in modes | filter: $select.search">
+                                <span ng-bind-html="('mfa.modes.' + x | translate) | highlight: $select.search"></span>
                             </ui-select-choices>
                         </ui-select>
                     </div>
