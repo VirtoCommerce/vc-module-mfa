@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "Autenticación multifactor",
-        "description": "Indica si un inicio de sesión con contraseña en esta tienda necesita, además de la contraseña, un código de un solo uso enviado por correo, para cualquier usuario que inicie sesión en ella. Use global setting: seguir la configuración global de autenticación multifactor. Enabled: siempre obligatorio. Disabled: no obligatorio. El inicio de sesión en el Backoffice sigue solo la configuración global."
+        "description": "Indica si un inicio de sesión con contraseña en esta tienda necesita, además de la contraseña, un código de un solo uso enviado por correo. Use global setting: seguir la configuración global de autenticación multifactor. Enabled: obligatorio para todos los usuarios. Disabled: no obligatorio. Admin managed: obligatorio solo para los usuarios y organizaciones que un administrador configuró como Required en el Backoffice; los clientes no pueden cambiarlo. Customer choice: los clientes la activan o desactivan para sí mismos, y los responsables de organización con el permiso \"xapi:my_organization:mfa:manage\" para toda la organización; desactivada de forma predeterminada; un Required configurado por un administrador no se puede desactivar. El inicio de sesión en el Backoffice sigue solo la configuración global."
       }
     }
   },
@@ -35,6 +35,85 @@
     },
     "sign-in-log": {
       "type-mfa": "Autenticación multifactor"
+    },
+    "modes": {
+      "Off": "Desactivada",
+      "Enabled": "Activada",
+      "Required": "Obligatoria"
+    },
+    "widgets": {
+      "mode": {
+        "title": "Autenticación multifactor",
+        "short-name": "MFA"
+      }
+    },
+    "blades": {
+      "mode": {
+        "user-title": "Autenticación multifactor: {{name}}",
+        "organization-title": "Autenticación multifactor: {{name}}",
+        "subtitle": "Quién exige el código al iniciar sesión",
+        "labels": {
+          "mode": "Modo"
+        },
+        "description": {
+          "Off": "No activada. En las tiendas con Customer choice se puede activar en la tienda en línea.",
+          "Enabled": "Activada en la tienda en línea. Se aplica en las tiendas con Customer choice, donde también se puede desactivar.",
+          "Required": "Configurada por el administrador. Se aplica en las tiendas con Admin managed o Customer choice y no se puede desactivar en la tienda en línea."
+        },
+        "placeholders": {
+          "mode": "Seleccione un modo"
+        },
+        "status": {
+          "title": "Estado efectivo",
+          "preview": "Vista previa del modo seleccionado. Guarde para aplicarlo.",
+          "global": "Configuración global: {{value}}. Decide para el inicio de sesión en el Backoffice y para las tiendas con Use global setting.",
+          "global-on": "activada",
+          "global-off": "desactivada",
+          "backoffice": "Backoffice",
+          "global-setting": "Configuración global",
+          "no-stores": "No hay tiendas.",
+          "columns": {
+            "store": "Tienda",
+            "store-mode": "Configuración de la tienda",
+            "result": "Código al iniciar sesión"
+          },
+          "results": {
+            "required": "Obligatorio",
+            "not-required": "No obligatorio",
+            "per-member": "Según el miembro"
+          },
+          "reasons": {
+            "Store": "La tienda lo exige a todos.",
+            "Global": "La configuración global está activada.",
+            "GlobalOff": "La configuración global está desactivada.",
+            "Disabled": "La tienda la desactivó para todos.",
+            "Organization": "La organización del usuario lo exige.",
+            "OrganizationSelf": "Esta organización lo exige a todos sus miembros.",
+            "UserRequired": "Exigido por el administrador.",
+            "UserEnabled": "El usuario la activó.",
+            "AdminManaged": "Solo lo necesitan los usuarios y organizaciones configurados como Required.",
+            "CustomerChoice": "El usuario no la ha activado.",
+            "MembersAdminManaged": "Solo lo necesitan los miembros configurados como Required.",
+            "MembersCustomerChoice": "Cada miembro decide en la tienda en línea."
+          }
+        },
+        "commands": {
+          "save": "Guardar",
+          "reset": "Restablecer"
+        }
+      }
+    },
+    "store-modes": {
+      "UseGlobalSetting": "Use global setting",
+      "Enabled": "Enabled",
+      "Disabled": "Disabled",
+      "AdminManaged": "Admin managed",
+      "CustomerChoice": "Customer choice"
     }
+  },
+  "permissions": {
+    "mfa:read": "Ver el modo MFA de usuarios y organizaciones",
+    "mfa:manage": "Gestionar el modo MFA de usuarios y organizaciones",
+    "xapi:my_organization:mfa:manage": "Tienda en línea: gestionar la MFA de mi organización"
   }
 }

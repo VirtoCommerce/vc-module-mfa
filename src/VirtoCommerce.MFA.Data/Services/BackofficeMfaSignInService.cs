@@ -115,6 +115,9 @@ public class BackofficeMfaSignInService(
             return await FailAsync(MfaResult.Fail(MfaOutcome.DuplicateEmail, user, mfaProvider.Name));
         }
 
+        // Two-factor sign-in only follows a password sign-in: every other sign-in bypasses it
+        await signInManager.SignInAsync(user, rememberMe, SignInType.Password);
+
         await eventPublisher.Publish(new UserLoginEvent(user));
 
         var result = MfaResult.Succeed(user, mfaProvider.Name);

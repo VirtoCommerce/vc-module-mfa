@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "Authentification multifacteur",
-        "description": "Indique si une connexion par mot de passe à cette boutique nécessite, en plus du mot de passe, un code à usage unique envoyé par e-mail, pour tout utilisateur qui s'y connecte. Use global setting : suivre le paramètre global d'authentification multifacteur. Enabled : toujours exigé. Disabled : non exigé. La connexion au Backoffice suit uniquement le paramètre global."
+        "description": "Indique si une connexion par mot de passe à cette boutique nécessite, en plus du mot de passe, un code à usage unique envoyé par e-mail. Use global setting : suivre le paramètre global d'authentification multifacteur. Enabled : exigé pour chaque utilisateur. Disabled : non exigé. Admin managed : exigé uniquement pour les utilisateurs et organisations qu'un administrateur a définis sur Required dans le Backoffice ; les clients ne peuvent pas le modifier. Customer choice : les clients l'activent ou la désactivent pour eux-mêmes, et les responsables d'organisation disposant de l'autorisation \"xapi:my_organization:mfa:manage\" pour toute l'organisation ; désactivée par défaut ; un Required défini par un administrateur ne peut pas être désactivé. La connexion au Backoffice suit uniquement le paramètre global."
       }
     }
   },
@@ -35,6 +35,85 @@
     },
     "sign-in-log": {
       "type-mfa": "Authentification multifacteur"
+    },
+    "modes": {
+      "Off": "Désactivée",
+      "Enabled": "Activée",
+      "Required": "Obligatoire"
+    },
+    "widgets": {
+      "mode": {
+        "title": "Authentification multifacteur",
+        "short-name": "MFA"
+      }
+    },
+    "blades": {
+      "mode": {
+        "user-title": "Authentification multifacteur : {{name}}",
+        "organization-title": "Authentification multifacteur : {{name}}",
+        "subtitle": "Qui exige le code à la connexion",
+        "labels": {
+          "mode": "Mode"
+        },
+        "description": {
+          "Off": "Non activée. Dans les boutiques en Customer choice, elle peut être activée sur la vitrine.",
+          "Enabled": "Activée sur la vitrine. S'applique dans les boutiques en Customer choice, où elle peut aussi être désactivée.",
+          "Required": "Définie par l'administrateur. S'applique dans les boutiques en Admin managed ou Customer choice et ne peut pas être désactivée sur la vitrine."
+        },
+        "placeholders": {
+          "mode": "Sélectionnez un mode"
+        },
+        "status": {
+          "title": "Statut effectif",
+          "preview": "Aperçu du mode sélectionné. Enregistrez pour l'appliquer.",
+          "global": "Paramètre global : {{value}}. Il s'applique à la connexion au Backoffice et aux boutiques en Use global setting.",
+          "global-on": "activé",
+          "global-off": "désactivé",
+          "backoffice": "Backoffice",
+          "global-setting": "Paramètre global",
+          "no-stores": "Aucune boutique.",
+          "columns": {
+            "store": "Boutique",
+            "store-mode": "Paramètre de la boutique",
+            "result": "Code à la connexion"
+          },
+          "results": {
+            "required": "Exigé",
+            "not-required": "Non exigé",
+            "per-member": "Selon le membre"
+          },
+          "reasons": {
+            "Store": "La boutique l'exige de tous.",
+            "Global": "Le paramètre global est activé.",
+            "GlobalOff": "Le paramètre global est désactivé.",
+            "Disabled": "La boutique l'a désactivée pour tous.",
+            "Organization": "L'organisation de l'utilisateur l'exige.",
+            "OrganizationSelf": "Cette organisation l'exige de tous ses membres.",
+            "UserRequired": "Exigée par l'administrateur.",
+            "UserEnabled": "L'utilisateur l'a activée.",
+            "AdminManaged": "Seuls les utilisateurs et organisations définis sur Required en ont besoin.",
+            "CustomerChoice": "L'utilisateur ne l'a pas activée.",
+            "MembersAdminManaged": "Seuls les membres définis sur Required en ont besoin.",
+            "MembersCustomerChoice": "Chaque membre décide sur la vitrine."
+          }
+        },
+        "commands": {
+          "save": "Enregistrer",
+          "reset": "Réinitialiser"
+        }
+      }
+    },
+    "store-modes": {
+      "UseGlobalSetting": "Use global setting",
+      "Enabled": "Enabled",
+      "Disabled": "Disabled",
+      "AdminManaged": "Admin managed",
+      "CustomerChoice": "Customer choice"
     }
+  },
+  "permissions": {
+    "mfa:read": "Afficher le mode MFA des utilisateurs et des organisations",
+    "mfa:manage": "Gérer le mode MFA des utilisateurs et des organisations",
+    "xapi:my_organization:mfa:manage": "Vitrine : gérer la MFA de mon organisation"
   }
 }

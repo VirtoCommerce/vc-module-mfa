@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using VirtoCommerce.MFA.Core;
 using Xunit;
 
 namespace VirtoCommerce.MFA.Tests.Services;
@@ -53,5 +54,41 @@ public class MfaRequirementServiceTests : MfaTestsBase
 
         // Assert
         Assert.Equal(expected, isRequired);
+    }
+
+    [Theory]
+    [InlineData(AdminManagedStoreId, null, null, false, ModuleConstants.RequirementSources.None)]
+    [InlineData(AdminManagedStoreId, ModuleConstants.Modes.Enabled, ModuleConstants.Modes.Enabled, false, ModuleConstants.RequirementSources.None)]
+    [InlineData(AdminManagedStoreId, ModuleConstants.Modes.Required, null, true, ModuleConstants.RequirementSources.User)]
+    [InlineData(AdminManagedStoreId, null, ModuleConstants.Modes.Required, true, ModuleConstants.RequirementSources.Organization)]
+    [InlineData(CustomerChoiceStoreId, null, null, false, ModuleConstants.RequirementSources.None)]
+    [InlineData(CustomerChoiceStoreId, ModuleConstants.Modes.Enabled, null, true, ModuleConstants.RequirementSources.User)]
+    [InlineData(CustomerChoiceStoreId, ModuleConstants.Modes.Required, null, true, ModuleConstants.RequirementSources.User)]
+    [InlineData(CustomerChoiceStoreId, null, ModuleConstants.Modes.Enabled, true, ModuleConstants.RequirementSources.Organization)]
+    [InlineData(CustomerChoiceStoreId, ModuleConstants.Modes.Enabled, ModuleConstants.Modes.Required, true, ModuleConstants.RequirementSources.Organization)]
+    [InlineData(MfaDisabledStoreId, ModuleConstants.Modes.Required, ModuleConstants.Modes.Required, false, ModuleConstants.RequirementSources.None)]
+    [InlineData(MfaEnabledStoreId, null, null, true, ModuleConstants.RequirementSources.Store)]
+    [InlineData(StoreId, ModuleConstants.Modes.Required, ModuleConstants.Modes.Required, false, ModuleConstants.RequirementSources.None)]
+    public async Task GetRequirementAsync_Should_ApplyTheUserAndOrganizationModesByTheStoreMode(
+        string storeId, string userMode, string organizationMode, bool expectedRequired, string expectedSource)
+    {
+        // Arrange
+        if (userMode != null)
+        {
+            await ModeService.SetUserModeAsync(ActiveUserId, userMode);
+        }
+
+        if (organizationMode != null)
+        {
+            await ModeService.SetOrganizationModeAsync(OrganizationId, organizationMode);
+        }
+
+        // Act
+        var requirement = await RequirementService.GetRequirementAsync(ActiveUser, storeId);
+
+        // Assert
+        Assert.Equal(expectedRequired, requirement.IsRequired);
+        Assert.Equal(expectedSource, requirement.Source);
+        Assert.Equal(expectedRequired, await RequirementService.IsRequiredAsync(ActiveUser, storeId));
     }
 }

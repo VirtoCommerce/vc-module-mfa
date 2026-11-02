@@ -39,6 +39,9 @@ public abstract class MfaTestsBase
     public const string StoreId = "test-store";
     public const string MfaEnabledStoreId = "mfa-enabled-store";
     public const string MfaDisabledStoreId = "mfa-disabled-store";
+    public const string AdminManagedStoreId = "admin-managed-store";
+    public const string CustomerChoiceStoreId = "customer-choice-store";
+    public const string OrganizationId = "organization-1";
     public const string UnknownStoreId = "unknown-store";
     public const string ContactId = "contact-1";
     public const string EmployeeId = "employee-1";
@@ -72,6 +75,8 @@ public abstract class MfaTestsBase
 
     public IMfaRequirementService RequirementService { get; }
 
+    public InMemoryMfaModeService ModeService { get; } = new();
+
     public MfaErrorDescriber ErrorDescriber { get; }
 
     public ITwoFactorTicketStore TicketStore { get; }
@@ -91,6 +96,10 @@ public abstract class MfaTestsBase
     public ApplicationUser TwoFactorAuthenticationUser { get; set; }
 
     public Mock<IStoreService> StoreService { get; }
+
+    public Store[] Stores { get; }
+
+    public Mock<ISettingsManager> SettingsManager { get; }
 
     public Mock<INotificationSender> NotificationSender { get; }
 
@@ -116,28 +125,30 @@ public abstract class MfaTestsBase
 
     protected MfaTestsBase()
     {
-        var stores = new[]
-        {
+        Stores =
+        [
             CreateStore(StoreId, ModuleConstants.StoreModes.UseGlobalSetting),
             CreateStore(MfaEnabledStoreId, ModuleConstants.StoreModes.Enabled),
             CreateStore(MfaDisabledStoreId, ModuleConstants.StoreModes.Disabled),
-        };
+            CreateStore(AdminManagedStoreId, ModuleConstants.StoreModes.AdminManaged),
+            CreateStore(CustomerChoiceStoreId, ModuleConstants.StoreModes.CustomerChoice),
+        ];
 
         StoreService = new Mock<IStoreService>();
 
         StoreService
             .Setup(x => x.GetAsync(It.IsAny<IList<string>>(), null, false))
-            .ReturnsAsync((IList<string> ids, string _, bool _) => stores.Where(x => ids.Contains(x.Id)).ToList());
+            .ReturnsAsync((IList<string> ids, string _, bool _) => Stores.Where(x => ids.Contains(x.Id)).ToList());
 
-        var settingsManager = new Mock<ISettingsManager>();
+        SettingsManager = new Mock<ISettingsManager>();
 
-        settingsManager
+        SettingsManager
             .Setup(x => x.GetObjectSettingAsync(MfaModuleSettings.MfaEnabled.Name, null, null))
             .ReturnsAsync(() => new ObjectSettingEntry { Name = MfaModuleSettings.MfaEnabled.Name, Value = IsGloballyEnabled });
 
         var members = new Member[]
         {
-            new Contact { Id = ContactId, DefaultLanguage = ContactLanguage },
+            new Contact { Id = ContactId, DefaultLanguage = ContactLanguage, Organizations = [OrganizationId] },
             new Employee { Id = EmployeeId, DefaultLanguage = EmployeeLanguage },
         };
 
@@ -262,7 +273,7 @@ public abstract class MfaTestsBase
         TicketStore = new TwoFactorTicketStore(memoryCache, Options.Create(MfaOptions));
         CodeAttemptLimiter = new MfaCodeAttemptLimiter(memoryCache, Options.Create(MfaOptions), TimeProvider);
         ErrorDescriber = new MfaErrorDescriber(TimeProvider);
-        RequirementService = new MfaRequirementService(StoreService.Object, settingsManager.Object);
+        RequirementService = new MfaRequirementService(StoreService.Object, SettingsManager.Object, ModeService, memberService.Object);
 
         MfaService = new MfaService(UserManager.Object, StoreService.Object, TwoFactorTokenService, TicketStore, [emailProvider],
             CodeAttemptLimiter, CodeDeliveryLimiter, Options.Create(MfaOptions), TimeProvider);
@@ -309,6 +320,7 @@ public abstract class MfaTestsBase
         return new Store
         {
             Id = id,
+            Name = id,
             DefaultLanguage = StoreLanguage,
             AdminEmail = StoreSender,
             Settings = [new() { Name = MfaModuleSettings.StoreMode.Name, Value = mfaMode }],
