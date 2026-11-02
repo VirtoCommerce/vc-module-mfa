@@ -14,9 +14,11 @@ public interface IMfaSelfService
     Task<MfaSettings> GetSettingsAsync(ApplicationUser user, string storeId, string organizationId, bool canManageOrganization);
 
     /// <summary>
-    /// Sends a code that confirms a change; the result carries the two-factor token to pass with the change.
+    /// Sends a code that confirms a change; <see cref="MfaChangeResult.CodeResult"/> carries the two-factor token to pass with the change.
+    /// Outside a store with <see cref="ModuleConstants.StoreModes.CustomerChoice"/> nothing is sent and the result is
+    /// <see cref="MfaChangeOutcome.SelfServiceNotAllowed"/>, as for the change itself.
     /// </summary>
-    Task<MfaResult> SendChangeCodeAsync(ApplicationUser user, string storeId);
+    Task<MfaChangeResult> SendChangeCodeAsync(ApplicationUser user, string storeId);
 
     Task<MfaChangeResult> ChangeUserModeAsync(ApplicationUser user, string storeId, bool enabled, string twoFactorToken, string code);
 

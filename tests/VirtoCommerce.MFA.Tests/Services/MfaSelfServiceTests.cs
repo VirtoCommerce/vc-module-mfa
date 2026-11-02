@@ -1,7 +1,9 @@
 using System.Threading.Tasks;
+using Moq;
 using VirtoCommerce.MFA.Core;
 using VirtoCommerce.MFA.Core.Models;
 using VirtoCommerce.MFA.Data.Services;
+using VirtoCommerce.NotificationsModule.Core.Model;
 using Xunit;
 
 namespace VirtoCommerce.MFA.Tests.Services;
@@ -23,7 +25,7 @@ public class MfaSelfServiceTests : MfaTestsBase
         var challenge = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId);
 
         // Act
-        var result = await _selfService.ChangeUserModeAsync(ActiveUser, CustomerChoiceStoreId, enabled: true, challenge.TwoFactorToken, CurrentCode(ActiveUser));
+        var result = await _selfService.ChangeUserModeAsync(ActiveUser, CustomerChoiceStoreId, enabled: true, challenge.CodeResult.TwoFactorToken, CurrentCode(ActiveUser));
 
         // Assert
         Assert.Equal(MfaChangeOutcome.Success, result.Outcome);
@@ -42,7 +44,7 @@ public class MfaSelfServiceTests : MfaTestsBase
         var challenge = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId);
 
         // Act
-        var result = await _selfService.ChangeUserModeAsync(ActiveUser, CustomerChoiceStoreId, enabled: false, challenge.TwoFactorToken, CurrentCode(ActiveUser));
+        var result = await _selfService.ChangeUserModeAsync(ActiveUser, CustomerChoiceStoreId, enabled: false, challenge.CodeResult.TwoFactorToken, CurrentCode(ActiveUser));
 
         // Assert
         Assert.Equal(MfaChangeOutcome.Success, result.Outcome);
@@ -58,14 +60,35 @@ public class MfaSelfServiceTests : MfaTestsBase
     public async Task ChangeUserModeAsync_Should_Refuse_When_TheStoreDoesNotLetCustomersChoose(string storeId)
     {
         // Arrange
-        var challenge = await _selfService.SendChangeCodeAsync(ActiveUser, storeId);
+        var signIn = await MfaService.ChallengeAsync(ActiveUser, CustomerChoiceStoreId, purpose: ModuleConstants.Security.ChangeTicketPurpose);
 
         // Act
-        var result = await _selfService.ChangeUserModeAsync(ActiveUser, storeId, enabled: true, challenge.TwoFactorToken, CurrentCode(ActiveUser));
+        var result = await _selfService.ChangeUserModeAsync(ActiveUser, storeId, enabled: true, signIn.TwoFactorToken, CurrentCode(ActiveUser));
 
         // Assert
         Assert.Equal(MfaChangeOutcome.SelfServiceNotAllowed, result.Outcome);
         Assert.Equal(ModuleConstants.Modes.Off, await ModeService.GetUserModeAsync(ActiveUserId));
+    }
+
+    [Theory]
+    [InlineData(StoreId)]
+    [InlineData(MfaEnabledStoreId)]
+    [InlineData(MfaDisabledStoreId)]
+    [InlineData(AdminManagedStoreId)]
+    public async Task SendChangeCodeAsync_Should_SendNothing_When_TheStoreDoesNotLetCustomersChoose(string storeId)
+    {
+        // Act
+        var result = await _selfService.SendChangeCodeAsync(ActiveUser, storeId);
+
+        // Assert
+        Assert.Equal(MfaChangeOutcome.SelfServiceNotAllowed, result.Outcome);
+        Assert.Null(result.CodeResult);
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Never);
+
+        // the resend slot of the sign-in stays free
+        var signIn = await MfaService.ChallengeAsync(ActiveUser, storeId);
+        Assert.False(string.IsNullOrEmpty(signIn.TwoFactorToken));
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Once);
     }
 
     [Fact]
@@ -76,7 +99,7 @@ public class MfaSelfServiceTests : MfaTestsBase
         var challenge = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId);
 
         // Act
-        var result = await _selfService.ChangeUserModeAsync(ActiveUser, CustomerChoiceStoreId, enabled: false, challenge.TwoFactorToken, CurrentCode(ActiveUser));
+        var result = await _selfService.ChangeUserModeAsync(ActiveUser, CustomerChoiceStoreId, enabled: false, challenge.CodeResult.TwoFactorToken, CurrentCode(ActiveUser));
 
         // Assert
         Assert.Equal(MfaChangeOutcome.LockedByAdministrator, result.Outcome);
@@ -90,7 +113,7 @@ public class MfaSelfServiceTests : MfaTestsBase
         var challenge = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId);
 
         // Act
-        var result = await _selfService.ChangeUserModeAsync(ActiveUser, CustomerChoiceStoreId, enabled: true, challenge.TwoFactorToken, InvalidCode);
+        var result = await _selfService.ChangeUserModeAsync(ActiveUser, CustomerChoiceStoreId, enabled: true, challenge.CodeResult.TwoFactorToken, InvalidCode);
 
         // Assert
         Assert.Equal(MfaChangeOutcome.CodeRefused, result.Outcome);
@@ -119,7 +142,7 @@ public class MfaSelfServiceTests : MfaTestsBase
         var challenge = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId);
 
         // Act
-        var result = await MfaService.VerifyCodeAsync(challenge.TwoFactorToken, CurrentCode(ActiveUser), CustomerChoiceStoreId);
+        var result = await MfaService.VerifyCodeAsync(challenge.CodeResult.TwoFactorToken, CurrentCode(ActiveUser), CustomerChoiceStoreId);
 
         // Assert
         Assert.Equal(MfaOutcome.InvalidTwoFactorToken, result.Outcome);
@@ -132,7 +155,7 @@ public class MfaSelfServiceTests : MfaTestsBase
         var challenge = await _selfService.SendChangeCodeAsync(BackofficeUser, CustomerChoiceStoreId);
 
         // Act
-        var result = await _selfService.ChangeUserModeAsync(ActiveUser, CustomerChoiceStoreId, enabled: true, challenge.TwoFactorToken, CurrentCode(BackofficeUser));
+        var result = await _selfService.ChangeUserModeAsync(ActiveUser, CustomerChoiceStoreId, enabled: true, challenge.CodeResult.TwoFactorToken, CurrentCode(BackofficeUser));
 
         // Assert
         Assert.Equal(MfaChangeOutcome.CodeRefused, result.Outcome);
@@ -140,7 +163,7 @@ public class MfaSelfServiceTests : MfaTestsBase
         Assert.Equal(ModuleConstants.Modes.Off, await ModeService.GetUserModeAsync(ActiveUserId));
 
         // The code of the other user is still valid for that user
-        var otherUserResult = await _selfService.ChangeUserModeAsync(BackofficeUser, CustomerChoiceStoreId, enabled: true, challenge.TwoFactorToken, CurrentCode(BackofficeUser));
+        var otherUserResult = await _selfService.ChangeUserModeAsync(BackofficeUser, CustomerChoiceStoreId, enabled: true, challenge.CodeResult.TwoFactorToken, CurrentCode(BackofficeUser));
         Assert.Equal(MfaChangeOutcome.Success, otherUserResult.Outcome);
     }
 
@@ -152,7 +175,7 @@ public class MfaSelfServiceTests : MfaTestsBase
 
         // Act
         var result = await _selfService.ChangeOrganizationModeAsync(ActiveUser, CustomerChoiceStoreId, OrganizationId, canManageOrganization: true,
-            enabled: true, challenge.TwoFactorToken, CurrentCode(ActiveUser));
+            enabled: true, challenge.CodeResult.TwoFactorToken, CurrentCode(ActiveUser));
 
         // Assert
         Assert.Equal(MfaChangeOutcome.Success, result.Outcome);

@@ -100,7 +100,7 @@ With the xAPI module installed, the storefront reads and changes the modes over 
 * `requestMfaChangeCode(command: { storeId })` sends a code and returns a two-factor token for the change.
 * `updateMfaUserMode(command: { storeId, enabled, twoFactorToken, code })` and `updateMfaOrganizationMode(command: { storeId, organizationId, enabled, twoFactorToken, code })` set the mode to `Enabled` or `Off` and return the new settings.
 
-A change is refused with `mfa_self_service_not_allowed` outside a `CustomerChoice` store, `mfa_locked_by_administrator` when the mode is `Required`, and `mfa_organization_not_allowed` when the user lacks `xapi:my_organization:mfa:manage` or the organization isn't theirs. A refused code returns the same error codes as the sign-in.
+A change, and the code request before it, is refused with `mfa_self_service_not_allowed` outside a `CustomerChoice` store (no code is sent), `mfa_locked_by_administrator` when the mode is `Required`, and `mfa_organization_not_allowed` when the user lacks `xapi:my_organization:mfa:manage` or the organization isn't theirs. A refused code returns the same error codes as the sign-in.
 
 ### Backoffice and REST API
 

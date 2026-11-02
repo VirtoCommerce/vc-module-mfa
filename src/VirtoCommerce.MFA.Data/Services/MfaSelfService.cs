@@ -23,11 +23,11 @@ public class MfaSelfService(
         return GetSettingsCoreAsync(user, storeId, organizationId, canManageOrganization);
     }
 
-    public virtual Task<MfaResult> SendChangeCodeAsync(ApplicationUser user, string storeId)
+    public virtual Task<MfaChangeResult> SendChangeCodeAsync(ApplicationUser user, string storeId)
     {
         ArgumentNullException.ThrowIfNull(user);
 
-        return mfaService.ChallengeAsync(user, storeId, purpose: ModuleConstants.Security.ChangeTicketPurpose);
+        return SendChangeCodeCoreAsync(user, storeId);
     }
 
     public virtual Task<MfaChangeResult> ChangeUserModeAsync(ApplicationUser user, string storeId, bool enabled, string twoFactorToken, string code)
@@ -77,6 +77,27 @@ public class MfaSelfService(
     {
         var result = AbstractTypeFactory<MfaChangeResult>.TryCreateInstance();
         result.Outcome = outcome;
+        result.CodeResult = codeResult;
+
+        return result;
+    }
+
+    // Checked before the code is sent: a refused change must not spend an email or the shared resend slot of the sign-in
+    private async Task<MfaChangeResult> SendChangeCodeCoreAsync(ApplicationUser user, string storeId)
+    {
+        if (await requirementService.GetStoreModeAsync(storeId) != ModuleConstants.StoreModes.CustomerChoice)
+        {
+            return Fail(MfaChangeOutcome.SelfServiceNotAllowed);
+        }
+
+        var codeResult = await mfaService.ChallengeAsync(user, storeId, purpose: ModuleConstants.Security.ChangeTicketPurpose);
+        if (codeResult.Outcome != MfaOutcome.Success)
+        {
+            return Fail(MfaChangeOutcome.CodeRefused, codeResult);
+        }
+
+        var result = AbstractTypeFactory<MfaChangeResult>.TryCreateInstance();
+        result.Outcome = MfaChangeOutcome.Success;
         result.CodeResult = codeResult;
 
         return result;

@@ -74,6 +74,18 @@ public class MfaResponseFactoryTests : MfaTestsBase
         Assert.Equal(30, challenge.ResendSecondsRemaining);
     }
 
+    [Fact]
+    public void ToCodeChallenge_Should_ReportThatTheStoreRefusesTheChange_When_NoCodeWasSent()
+    {
+        // Act
+        var challenge = CreateFactory().ToCodeChallenge(new MfaChangeResult { Outcome = MfaChangeOutcome.SelfServiceNotAllowed });
+
+        // Assert
+        Assert.False(challenge.Succeeded);
+        Assert.Equal("mfa_self_service_not_allowed", challenge.ErrorCode);
+        Assert.Null(challenge.TwoFactorToken);
+    }
+
     private MfaResponseFactory CreateFactory()
     {
         return new MfaResponseFactory(ErrorDescriber);

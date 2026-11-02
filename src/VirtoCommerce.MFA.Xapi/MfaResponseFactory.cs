@@ -31,6 +31,23 @@ public class MfaResponseFactory(MfaErrorDescriber errorDescriber)
         return challenge;
     }
 
+    /// <summary>
+    /// The answer to a code request: the challenge of the sent code, or why the store refuses the change.
+    /// </summary>
+    public virtual MfaCodeChallenge ToCodeChallenge(MfaChangeResult result)
+    {
+        if (result.CodeResult != null)
+        {
+            return ToCodeChallenge(result.CodeResult);
+        }
+
+        var challenge = AbstractTypeFactory<MfaCodeChallenge>.TryCreateInstance();
+        challenge.Succeeded = false;
+        (challenge.ErrorCode, challenge.ErrorDescription) = GetChangeError(result.Outcome);
+
+        return challenge;
+    }
+
     public virtual MfaChangeResponse ToChangeResponse(MfaChangeResult result, ApplicationUser user)
     {
         var response = AbstractTypeFactory<MfaChangeResponse>.TryCreateInstance();
@@ -46,14 +63,19 @@ public class MfaResponseFactory(MfaErrorDescriber errorDescriber)
         }
         else if (!result.Succeeded)
         {
-            (response.ErrorCode, response.ErrorDescription) = result.Outcome switch
-            {
-                MfaChangeOutcome.LockedByAdministrator => ("mfa_locked_by_administrator", "Multi-factor authentication is managed by the administrator."),
-                MfaChangeOutcome.OrganizationNotAllowed => ("mfa_organization_not_allowed", "You can't manage multi-factor authentication of this organization."),
-                _ => ("mfa_self_service_not_allowed", "The store doesn't let customers manage multi-factor authentication."),
-            };
+            (response.ErrorCode, response.ErrorDescription) = GetChangeError(result.Outcome);
         }
 
         return response;
+    }
+
+    protected virtual (string Code, string Description) GetChangeError(MfaChangeOutcome outcome)
+    {
+        return outcome switch
+        {
+            MfaChangeOutcome.LockedByAdministrator => ("mfa_locked_by_administrator", "Multi-factor authentication is managed by the administrator."),
+            MfaChangeOutcome.OrganizationNotAllowed => ("mfa_organization_not_allowed", "You can't manage multi-factor authentication of this organization."),
+            _ => ("mfa_self_service_not_allowed", "The store doesn't let customers manage multi-factor authentication."),
+        };
     }
 }
