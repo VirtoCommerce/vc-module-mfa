@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
-using OpenIddict.Abstractions;
 using VirtoCommerce.MFA.Core;
 using VirtoCommerce.MFA.Core.Models;
 using VirtoCommerce.MFA.Core.Services;
@@ -11,8 +11,10 @@ using VirtoCommerce.Platform.Core.Events;
 using VirtoCommerce.Platform.Core.Security;
 using VirtoCommerce.Platform.Core.Security.SignInLog;
 using VirtoCommerce.Platform.Security;
+using VirtoCommerce.Platform.Security.Extensions;
 using VirtoCommerce.Platform.Security.OpenIddict;
 using static OpenIddict.Abstractions.OpenIddictConstants;
+using static VirtoCommerce.Platform.Core.Security.SignInLog.SignInType;
 
 namespace VirtoCommerce.MFA.Data.OpenIddict;
 
@@ -71,6 +73,16 @@ public class MfaGrantTypeHandler(
         return Task.FromResult(false);
     }
 
+    protected override async Task<AuthenticationTicket> CreateTicketAsync(TokenRequestContext context)
+    {
+        var ticket = await base.CreateTicketAsync(context);
+
+        // Two-factor sign-in only follows a password sign-in: every other sign-in bypasses it
+        ticket.Principal.SetAuthenticationMethod(Password, [Destinations.AccessToken]);
+
+        return ticket;
+    }
+
     protected override UserSignInAttemptEvent BuildSignInAttemptEvent(TokenRequestContext context, bool succeeded)
     {
         var attempt = base.BuildSignInAttemptEvent(context, succeeded);
@@ -78,17 +90,6 @@ public class MfaGrantTypeHandler(
         attempt.Provider = _provider;
 
         return attempt;
-    }
-
-    protected virtual string GetRequiredParameter(OpenIddictRequest request, string name, List<string> missingParameters)
-    {
-        var value = (string)request.GetParameter(name);
-        if (string.IsNullOrEmpty(value))
-        {
-            missingParameters.Add(name);
-        }
-
-        return value;
     }
 
     protected virtual SignInResult GetSignInResult(MfaOutcome outcome)
@@ -99,13 +100,6 @@ public class MfaGrantTypeHandler(
             MfaOutcome.AccountLocked => SignInResult.LockedOut,
             _ => SignInResult.Failed,
         };
-    }
-
-    protected virtual TokenResponse BuildErrorResponse(TokenRequestContext context, List<string> missingParameters)
-    {
-        context.FailureReason = ModuleConstants.Security.FailureReason.MissingParameter;
-
-        return errorDescriber.ToTokenResponse(errorDescriber.MissingParameters(missingParameters), Errors.InvalidRequest);
     }
 
     protected virtual TokenResponse BuildErrorResponse(TokenRequestContext context, MfaResult verifyResult)
