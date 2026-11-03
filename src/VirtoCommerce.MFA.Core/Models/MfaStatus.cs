@@ -17,5 +17,10 @@ public class MfaStatus
     /// </summary>
     public bool? IsRequiredForBackoffice { get; set; }
 
+    /// <summary>
+    /// The user's own store: it applies to the sign-ins to other stores too. Null for an organization.
+    /// </summary>
+    public string UserStoreId { get; set; }
+
     public IList<MfaStoreStatus> Stores { get; set; } = [];
 }

@@ -40,11 +40,33 @@ public class MfaRequirementService(
         return settingsManager.GetValueAsync<bool>(MfaModuleSettings.MfaEnabled);
     }
 
-    public virtual Task<MfaRequirement> GetRequirementAsync(ApplicationUser user, string storeId)
+    public virtual async Task<MfaRequirement> GetRequirementAsync(ApplicationUser user, string storeId)
     {
         ArgumentNullException.ThrowIfNull(user);
 
-        return GetUserRequirementAsync(user, storeId);
+        return await GetRequirementAsync(user, storeId, await modeService.GetUserModeAsync(user.Id));
+    }
+
+    public virtual async Task<MfaRequirement> GetRequirementAsync(ApplicationUser user, string storeId, string userMode)
+    {
+        ArgumentNullException.ThrowIfNull(user);
+
+        var requirement = await GetStoreRequirementAsync(user, storeId, userMode);
+
+        // Tokens are not bound to the store they were issued for, so the user's own store applies too:
+        // naming another store, or none, must not skip the code that the user's store requires
+        if (!requirement.IsRequired && !string.IsNullOrEmpty(user.StoreId) && !user.StoreId.EqualsIgnoreCase(storeId))
+        {
+            var userStoreRequirement = await GetStoreRequirementAsync(user, user.StoreId, userMode);
+            if (userStoreRequirement.IsRequired)
+            {
+                userStoreRequirement.IsRequiredByUserStore = true;
+
+                return userStoreRequirement;
+            }
+        }
+
+        return requirement;
     }
 
     public virtual async Task<MfaRequirement> GetRequirementAsync(string storeMode, IEnumerable<string> organizationModes, string userMode)
@@ -104,40 +126,32 @@ public class MfaRequirementService(
         return (member as Contact)?.Organizations ?? [];
     }
 
-    private async Task<MfaRequirement> GetUserRequirementAsync(ApplicationUser user, string storeId)
-    {
-        var requirement = await GetStoreRequirementAsync(user, storeId);
-
-        // Tokens are not bound to the store they were issued for, so the user's own store applies too:
-        // naming another store, or none, must not skip the code that the user's store requires
-        if (!requirement.IsRequired && !string.IsNullOrEmpty(user.StoreId) && !user.StoreId.EqualsIgnoreCase(storeId))
-        {
-            requirement = await GetStoreRequirementAsync(user, user.StoreId);
-        }
-
-        return requirement;
-    }
-
-    protected virtual async Task<MfaRequirement> GetStoreRequirementAsync(ApplicationUser user, string storeId)
+    protected virtual async Task<MfaRequirement> GetStoreRequirementAsync(ApplicationUser user, string storeId, string userMode)
     {
         var storeMode = await GetStoreModeAsync(storeId);
 
         // A Disabled store lets in without the code only its own customers: tokens are not bound to the store,
         // so the Backoffice accounts and the users of other stores follow the global setting there
-        if (storeMode == ModuleConstants.StoreModes.Disabled && !await CanSkipCodeInDisabledStoreAsync(user, storeId))
+        var isDisabledModeSkipped = storeMode == ModuleConstants.StoreModes.Disabled && !await CanSkipCodeInDisabledStoreAsync(user, storeId);
+        if (isDisabledModeSkipped)
         {
             storeMode = ModuleConstants.StoreModes.UseGlobalSetting;
         }
 
-        if (!IsChosenMode(storeMode))
+        MfaRequirement requirement;
+        if (IsChosenMode(storeMode))
         {
-            return await GetRequirementAsync(storeMode, [], userMode: null);
+            var organizationModes = await modeService.GetOrganizationModesAsync(await GetOrganizationIdsAsync(user));
+            requirement = await GetRequirementAsync(storeMode, organizationModes.Values, userMode);
+        }
+        else
+        {
+            requirement = await GetRequirementAsync(storeMode, [], userMode: null);
         }
 
-        var organizationModes = await modeService.GetOrganizationModesAsync(await GetOrganizationIdsAsync(user));
-        var userMode = await modeService.GetUserModeAsync(user.Id);
+        requirement.IsDisabledModeSkipped = isDisabledModeSkipped;
 
-        return await GetRequirementAsync(storeMode, organizationModes.Values, userMode);
+        return requirement;
     }
 
     protected virtual async Task<bool> CanSkipCodeInDisabledStoreAsync(ApplicationUser user, string storeId)

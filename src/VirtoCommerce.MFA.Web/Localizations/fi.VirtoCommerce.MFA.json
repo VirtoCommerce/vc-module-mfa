@@ -87,6 +87,8 @@
             "Global": "Yleinen asetus on käytössä.",
             "GlobalOff": "Yleinen asetus on pois käytöstä.",
             "Disabled": "Kauppa on poistanut sen käytöstä omilta asiakkailtaan.",
+            "UserStore": "Käyttäjän oma kauppa ({{store}}) vaatii sen.",
+            "DisabledSkipped": "Kauppa poistaa sen käytöstä vain omilta asiakkailtaan, joten yleinen asetus on voimassa.",
             "Organization": "Käyttäjän organisaatio vaatii sitä.",
             "OrganizationSelf": "Tämä organisaatio vaatii sitä kaikilta jäseniltään.",
             "UserRequired": "Järjestelmänvalvojan vaatima.",

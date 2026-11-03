@@ -13,11 +13,14 @@ export interface MfaStoreStatus {
   storeMode?: string;
   isRequired?: boolean;
   requiredBy?: string;
+  isRequiredByUserStore?: boolean;
+  isDisabledModeSkipped?: boolean;
 }
 
 export interface MfaStatus {
   isGloballyEnabled?: boolean;
   isRequiredForBackoffice?: boolean | null;
+  userStoreId?: string | null;
   stores?: MfaStoreStatus[];
 }
 

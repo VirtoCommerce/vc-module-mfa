@@ -87,6 +87,8 @@
             "Global": "The global setting is on.",
             "GlobalOff": "The global setting is off.",
             "Disabled": "The store turned it off for its own customers.",
+            "UserStore": "The user's own store ({{store}}) requires it.",
+            "DisabledSkipped": "The store turns it off only for its own customers, so the global setting applies.",
             "Organization": "The user's organization requires it.",
             "OrganizationSelf": "This organization requires it from all its members.",
             "UserRequired": "Required by the administrator.",

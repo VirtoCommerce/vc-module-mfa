@@ -102,6 +102,45 @@ public class MfaRequirementServiceTests : MfaTestsBase
     }
 
     [Theory]
+    [InlineData(EnabledStoreCustomerId, StoreId, false, true, true, false)]
+    [InlineData(EnabledStoreCustomerId, MfaEnabledStoreId, false, true, false, false)]
+    [InlineData(DisabledStoreManagerId, MfaDisabledStoreId, true, true, false, true)]
+    [InlineData(DisabledStoreManagerId, MfaDisabledStoreId, false, false, false, true)]
+    [InlineData(DisabledStoreCustomerId, MfaDisabledStoreId, true, false, false, false)]
+    public async Task GetRequirementAsync_Should_TellWhetherTheUserStoreOrTheSkippedDisabledModeDecided(
+        string userId, string storeId, bool isGloballyEnabled, bool expectedRequired, bool expectedByUserStore, bool expectedDisabledModeSkipped)
+    {
+        // Arrange
+        IsGloballyEnabled = isGloballyEnabled;
+        var user = await UserManager.Object.FindByIdAsync(userId);
+
+        // Act
+        var requirement = await RequirementService.GetRequirementAsync(user, storeId);
+
+        // Assert
+        Assert.Equal(expectedRequired, requirement.IsRequired);
+        Assert.Equal(expectedByUserStore, requirement.IsRequiredByUserStore);
+        Assert.Equal(expectedDisabledModeSkipped, requirement.IsDisabledModeSkipped);
+    }
+
+    [Fact]
+    public async Task GetRequirementAsync_Should_UseTheGivenUserModeInsteadOfTheSavedOne()
+    {
+        // Arrange
+        var user = await UserManager.Object.FindByIdAsync(ActiveUserId);
+
+        // Act
+        var saved = await RequirementService.GetRequirementAsync(user, CustomerChoiceStoreId);
+        var previewed = await RequirementService.GetRequirementAsync(user, CustomerChoiceStoreId, ModuleConstants.Modes.Enabled);
+
+        // Assert
+        Assert.False(saved.IsRequired);
+        Assert.True(previewed.IsRequired);
+        Assert.Equal(ModuleConstants.RequirementSources.User, previewed.Source);
+        Assert.Equal(ModuleConstants.Modes.Off, await ModeService.GetUserModeAsync(ActiveUserId));
+    }
+
+    [Theory]
     [InlineData(CustomerChoiceStoreId, ModuleConstants.Modes.Enabled, null, ModuleConstants.RequirementSources.User)]
     [InlineData(CustomerChoiceStoreId, null, ModuleConstants.Modes.Enabled, ModuleConstants.RequirementSources.Organization)]
     [InlineData(AdminManagedStoreId, ModuleConstants.Modes.Required, null, ModuleConstants.RequirementSources.User)]

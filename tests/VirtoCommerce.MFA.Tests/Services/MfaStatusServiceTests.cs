@@ -35,7 +35,8 @@ public class MfaStatusServiceTests : MfaTestsBase
     [InlineData(StoreId, false, null, null, null, false, Sources.None)]
     [InlineData(StoreId, true, null, null, null, true, Sources.Global)]
     [InlineData(MfaEnabledStoreId, false, null, null, null, true, Sources.Store)]
-    [InlineData(MfaDisabledStoreId, true, Modes.Required, Modes.Required, null, false, Sources.None)]
+    [InlineData(MfaDisabledStoreId, true, Modes.Required, Modes.Required, null, true, Sources.Global)]
+    [InlineData(MfaDisabledStoreId, false, Modes.Required, Modes.Required, null, false, Sources.None)]
     [InlineData(AdminManagedStoreId, false, Modes.Enabled, null, null, false, Sources.None)]
     [InlineData(AdminManagedStoreId, false, Modes.Required, null, null, true, Sources.User)]
     [InlineData(AdminManagedStoreId, false, null, null, Modes.Required, true, Sources.User)]
@@ -77,6 +78,50 @@ public class MfaStatusServiceTests : MfaTestsBase
         // Assert
         Assert.Equal(isGloballyEnabled, backofficeStatus.IsRequiredForBackoffice);
         Assert.Null(customerStatus.IsRequiredForBackoffice);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task GetUserStatusAsync_Should_ShowWhereTheUserStoreRequiresTheCode(bool isGloballyEnabled)
+    {
+        // Arrange
+        IsGloballyEnabled = isGloballyEnabled;
+
+        // Act
+        var status = await _statusService.GetUserStatusAsync(EnabledStoreCustomerId);
+
+        // Assert
+        Assert.Equal(MfaEnabledStoreId, status.UserStoreId);
+        Assert.All(status.Stores, x => Assert.True(x.IsRequired));
+
+        var userStore = Assert.Single(status.Stores, x => x.StoreId == MfaEnabledStoreId);
+        Assert.False(userStore.IsRequiredByUserStore);
+
+        var otherStore = Assert.Single(status.Stores, x => x.StoreId == StoreId);
+        Assert.Equal(!isGloballyEnabled, otherStore.IsRequiredByUserStore);
+        Assert.Equal(isGloballyEnabled ? Sources.Global : Sources.Store, otherStore.RequiredBy);
+    }
+
+    [Theory]
+    [InlineData(DisabledStoreManagerId, false, false, true)]
+    [InlineData(DisabledStoreManagerId, true, true, true)]
+    [InlineData(DisabledStoreCustomerId, true, false, false)]
+    [InlineData(ActiveUserId, true, true, true)]
+    public async Task GetUserStatusAsync_Should_ShowWhetherTheDisabledStoreLetsTheUserIn(
+        string userId, bool isGloballyEnabled, bool expectedRequired, bool expectedDisabledModeSkipped)
+    {
+        // Arrange
+        IsGloballyEnabled = isGloballyEnabled;
+
+        // Act
+        var status = await _statusService.GetUserStatusAsync(userId);
+
+        // Assert
+        var store = Assert.Single(status.Stores, x => x.StoreId == MfaDisabledStoreId);
+        Assert.Equal(expectedRequired, store.IsRequired);
+        Assert.Equal(expectedDisabledModeSkipped, store.IsDisabledModeSkipped);
+        Assert.False(store.IsRequiredByUserStore);
     }
 
     [Fact]

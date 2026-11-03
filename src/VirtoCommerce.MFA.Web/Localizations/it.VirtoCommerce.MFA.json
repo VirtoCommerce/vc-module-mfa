@@ -87,6 +87,8 @@
             "Global": "L'impostazione globale è attivata.",
             "GlobalOff": "L'impostazione globale è disattivata.",
             "Disabled": "Il negozio l'ha disattivata per i propri clienti.",
+            "UserStore": "Il negozio dell'utente ({{store}}) la richiede.",
+            "DisabledSkipped": "Il negozio la disattiva solo per i propri clienti, quindi si applica l'impostazione globale.",
             "Organization": "L'organizzazione dell'utente lo richiede.",
             "OrganizationSelf": "Questa organizzazione lo richiede a tutti i suoi membri.",
             "UserRequired": "Richiesto dall'amministratore.",

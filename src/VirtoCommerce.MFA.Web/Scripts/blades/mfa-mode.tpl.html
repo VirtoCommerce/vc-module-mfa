@@ -44,7 +44,7 @@
                                 <td class="table-col">
                                     <span class="mfa-status__result __per-member" ng-if="isPerMember(store)">{{ 'mfa.blades.mode.status.results.per-member' | translate }}</span>
                                     <span class="mfa-status__result" ng-if="!isPerMember(store)" ng-class="store.isRequired ? '__required' : '__off'">{{ (store.isRequired ? 'mfa.blades.mode.status.results.required' : 'mfa.blades.mode.status.results.not-required') | translate }}</span>
-                                    <div class="table-descr">{{ getReasonKey(store) | translate }}</div>
+                                    <div class="table-descr">{{ getReasonKey(store) | translate: getReasonParams() }}</div>
                                 </td>
                             </tr>
                         </tbody>

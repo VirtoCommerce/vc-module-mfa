@@ -87,6 +87,8 @@
             "Global": "Den globala inställningen är på.",
             "GlobalOff": "Den globala inställningen är av.",
             "Disabled": "Butiken har inaktiverat den för sina egna kunder.",
+            "UserStore": "Användarens egen butik ({{store}}) kräver den.",
+            "DisabledSkipped": "Butiken inaktiverar den bara för sina egna kunder, så den globala inställningen gäller.",
             "Organization": "Användarens organisation kräver den.",
             "OrganizationSelf": "Den här organisationen kräver den av alla sina medlemmar.",
             "UserRequired": "Krävs av administratören.",

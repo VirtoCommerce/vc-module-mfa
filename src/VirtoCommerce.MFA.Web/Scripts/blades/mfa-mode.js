@@ -57,6 +57,14 @@ angular.module('virtoCommerce.mfa')
             }
 
             function getRequiredReason(store) {
+                if (store.isRequiredByUserStore) {
+                    return 'UserStore';
+                }
+
+                if (store.isDisabledModeSkipped) {
+                    return 'DisabledSkipped';
+                }
+
                 if (store.requiredBy === 'Organization') {
                     return isOrganization ? 'OrganizationSelf' : 'Organization';
                 }
@@ -70,7 +78,7 @@ angular.module('virtoCommerce.mfa')
 
             function getNotRequiredReason(store) {
                 if (store.storeMode === 'Disabled') {
-                    return 'Disabled';
+                    return store.isDisabledModeSkipped ? 'GlobalOff' : 'Disabled';
                 }
 
                 if (isChosenStoreMode(store.storeMode)) {
@@ -87,6 +95,13 @@ angular.module('virtoCommerce.mfa')
 
             $scope.getReasonKey = function (store) {
                 return 'mfa.blades.mode.status.reasons.' + (store.isRequired ? getRequiredReason(store) : getNotRequiredReason(store));
+            };
+
+            $scope.getReasonParams = function () {
+                var userStoreId = blade.status.userStoreId;
+                var userStore = (blade.status.stores || []).filter(function (x) { return x.storeId === userStoreId; })[0];
+
+                return { store: userStore ? (userStore.storeName || userStore.storeId) : userStoreId };
             };
 
             $scope.$watch('blade.mode', function (mode) {

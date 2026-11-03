@@ -128,6 +128,14 @@ watch(mode, async (value) => {
 const isChosenStoreMode = (storeMode?: string) => storeMode === "AdminManaged" || storeMode === "CustomerChoice";
 
 function getRequiredReason(store: MfaStoreStatus) {
+  if (store.isRequiredByUserStore) {
+    return "UserStore";
+  }
+
+  if (store.isDisabledModeSkipped) {
+    return "DisabledSkipped";
+  }
+
   if (store.requiredBy === "Organization") {
     return isOrganization.value ? "OrganizationSelf" : "Organization";
   }
@@ -141,7 +149,7 @@ function getRequiredReason(store: MfaStoreStatus) {
 
 function getNotRequiredReason(store: MfaStoreStatus) {
   if (store.storeMode === "Disabled") {
-    return "Disabled";
+    return store.isDisabledModeSkipped ? "GlobalOff" : "Disabled";
   }
 
   if (isChosenStoreMode(store.storeMode)) {
@@ -150,6 +158,13 @@ function getNotRequiredReason(store: MfaStoreStatus) {
 
   return "GlobalOff";
 }
+
+// Names the user's own store in the reason of the stores it requires the code for
+const userStoreName = computed(() => {
+  const userStoreId = status.value?.userStoreId;
+  const userStore = status.value?.stores?.find((x) => x.storeId === userStoreId);
+  return userStore?.storeName || userStore?.storeId || userStoreId || "";
+});
 
 const storeModeLabel = (storeMode?: string) =>
   t(`mfa.store-modes.${storeMode === "Use global setting" ? "UseGlobalSetting" : storeMode}`);
@@ -169,7 +184,9 @@ function toRow(store: MfaStoreStatus) {
     store: store.storeName || store.storeId,
     storeSetting: storeModeLabel(store.storeMode),
     result: t(`mfa.blades.mode.status.results.${result}`),
-    reason: t(`mfa.blades.mode.status.reasons.${store.isRequired ? getRequiredReason(store) : getNotRequiredReason(store)}`),
+    reason: t(`mfa.blades.mode.status.reasons.${store.isRequired ? getRequiredReason(store) : getNotRequiredReason(store)}`, {
+      store: userStoreName.value,
+    }),
     variant: perMember ? "warning" : store.isRequired ? "success" : "info",
   };
 }

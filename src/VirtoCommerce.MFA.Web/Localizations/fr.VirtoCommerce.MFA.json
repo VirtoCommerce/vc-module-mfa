@@ -87,6 +87,8 @@
             "Global": "Le paramètre global est activé.",
             "GlobalOff": "Le paramètre global est désactivé.",
             "Disabled": "La boutique l'a désactivée pour ses propres clients.",
+            "UserStore": "La boutique de l'utilisateur ({{store}}) l'exige.",
+            "DisabledSkipped": "La boutique ne la désactive que pour ses propres clients, donc le paramètre global s'applique.",
             "Organization": "L'organisation de l'utilisateur l'exige.",
             "OrganizationSelf": "Cette organisation l'exige de tous ses membres.",
             "UserRequired": "Exigée par l'administrateur.",
