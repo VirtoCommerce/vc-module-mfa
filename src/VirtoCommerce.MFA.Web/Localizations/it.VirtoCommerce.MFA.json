@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "Autenticazione a più fattori",
-        "description": "Indica se un accesso con password a questo negozio richiede, oltre alla password, un codice monouso inviato via e-mail. Use global setting: segue l'impostazione globale dell'autenticazione a più fattori. Enabled: richiesto per ogni utente. Disabled: non richiesto. Admin managed: richiesto solo per gli utenti e le organizzazioni che un amministratore ha impostato su Required nel Backoffice; i clienti non possono modificarlo. Customer choice: i clienti la attivano o disattivano per sé stessi, e i responsabili dell'organizzazione con l'autorizzazione \"xapi:my_organization:mfa:manage\" per l'intera organizzazione; disattivata per impostazione predefinita; un Required impostato da un amministratore non può essere disattivato. L'accesso al Backoffice segue solo l'impostazione globale."
+        "description": "Indica se un accesso con password a questo negozio richiede, oltre alla password, un codice monouso inviato via e-mail. Use global setting: segue l'impostazione globale dell'autenticazione a più fattori. Enabled: richiesto per ogni utente. Disabled: non richiesto per i clienti del negozio; gli account del Backoffice e gli utenti di altri negozi seguono l'impostazione globale. Admin managed: richiesto solo per gli utenti e le organizzazioni che un amministratore ha impostato su Required nel Backoffice; i clienti non possono modificarlo. Customer choice: i clienti la attivano o disattivano per sé stessi, e i responsabili dell'organizzazione con l'autorizzazione \"xapi:my_organization:mfa:manage\" per l'intera organizzazione; disattivata per impostazione predefinita; un Required impostato da un amministratore non può essere disattivato. L'accesso al Backoffice segue solo l'impostazione globale."
       }
     }
   },
@@ -86,7 +86,7 @@
             "Store": "Il negozio lo richiede a tutti.",
             "Global": "L'impostazione globale è attivata.",
             "GlobalOff": "L'impostazione globale è disattivata.",
-            "Disabled": "Il negozio l'ha disattivata per tutti.",
+            "Disabled": "Il negozio l'ha disattivata per i propri clienti.",
             "Organization": "L'organizzazione dell'utente lo richiede.",
             "OrganizationSelf": "Questa organizzazione lo richiede a tutti i suoi membri.",
             "UserRequired": "Richiesto dall'amministratore.",

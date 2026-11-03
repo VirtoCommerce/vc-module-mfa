@@ -24,8 +24,10 @@ public class MfaRequirementServiceTests : MfaTestsBase
     [InlineData(MfaEnabledStoreId, false, BackofficeUserId, true)]
     [InlineData(MfaEnabledStoreId, false, DisabledStoreCustomerId, true)]
     [InlineData(MfaDisabledStoreId, true, DisabledStoreCustomerId, false)]
-    [InlineData(MfaDisabledStoreId, true, DisabledStoreAdministratorId, false)]
-    [InlineData(MfaDisabledStoreId, true, DisabledStoreManagerId, false)]
+    [InlineData(MfaDisabledStoreId, false, DisabledStoreAdministratorId, false)]
+    [InlineData(MfaDisabledStoreId, true, DisabledStoreAdministratorId, true)]
+    [InlineData(MfaDisabledStoreId, false, DisabledStoreManagerId, false)]
+    [InlineData(MfaDisabledStoreId, true, DisabledStoreManagerId, true)]
     [InlineData(MfaDisabledStoreId, false, EnabledStoreCustomerId, true)]
     [InlineData(MfaDisabledStoreId, true, EnabledStoreCustomerId, true)]
     [InlineData(MfaDisabledStoreId, false, BackofficeUserId, false)]
@@ -48,7 +50,8 @@ public class MfaRequirementServiceTests : MfaTestsBase
     [InlineData(null, true, true)]
     [InlineData(StoreId, false, false)]
     [InlineData(MfaEnabledStoreId, false, true)]
-    [InlineData(MfaDisabledStoreId, true, false)]
+    [InlineData(MfaDisabledStoreId, false, false)]
+    [InlineData(MfaDisabledStoreId, true, true)]
     public async Task IsRequiredAsync_Should_FollowTheNamedStore_When_TheUserHasNoStore(string storeId, bool isGloballyEnabled, bool expected)
     {
         // Arrange
@@ -60,6 +63,42 @@ public class MfaRequirementServiceTests : MfaTestsBase
 
         // Assert
         Assert.Equal(expected, isRequired);
+    }
+
+    [Theory]
+    [InlineData(null, false)]
+    [InlineData("order:read", true)]
+    public async Task IsRequiredAsync_Should_RequireTheCodeInADisabledStore_When_ACustomerOfTheStoreHasABackofficePermission(string permission, bool expected)
+    {
+        // Arrange
+        IsGloballyEnabled = true;
+        var user = await UserManager.Object.FindByIdAsync(DisabledStoreCustomerId);
+        if (permission != null)
+        {
+            user.Roles = [new Role { Name = "Order manager", Permissions = [new Permission { Name = permission }] }];
+        }
+
+        // Act
+        var isRequired = await RequirementService.IsRequiredAsync(user, MfaDisabledStoreId);
+
+        // Assert
+        Assert.Equal(expected, isRequired);
+    }
+
+    [Fact]
+    public async Task IsRequiredAsync_Should_FollowTheAdminUIAccessOfThePlatform_When_ItAllowsOnlySomeAccountTypes()
+    {
+        // Arrange
+        IsGloballyEnabled = true;
+        PlatformUIOptions.Access.AllowedAccountTypes = [nameof(UserType.Administrator), nameof(UserType.Manager)];
+        var user = await UserManager.Object.FindByIdAsync(DisabledStoreCustomerId);
+        user.Roles = [new Role { Name = "Order manager", Permissions = [new Permission { Name = "order:read" }] }];
+
+        // Act
+        var isRequired = await RequirementService.IsRequiredAsync(user, MfaDisabledStoreId);
+
+        // Assert
+        Assert.False(isRequired);
     }
 
     [Theory]

@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "Uwierzytelnianie wieloskładnikowe",
-        "description": "Czy logowanie hasłem do tego sklepu wymaga, oprócz hasła, jednorazowego kodu wysłanego e-mailem. Use global setting: zgodnie z globalnym ustawieniem uwierzytelniania wieloskładnikowego. Enabled: wymagany dla każdego użytkownika. Disabled: niewymagany. Admin managed: wymagany tylko dla użytkowników i organizacji, którym administrator ustawił Required w Backoffice; klienci nie mogą tego zmienić. Customer choice: klienci sami włączają je lub wyłączają dla siebie, a opiekunowie organizacji z uprawnieniem \"xapi:my_organization:mfa:manage\" — dla całej organizacji; domyślnie wyłączone; Required ustawionego przez administratora nie można wyłączyć. Logowanie do Backoffice podlega tylko ustawieniu globalnemu."
+        "description": "Czy logowanie hasłem do tego sklepu wymaga, oprócz hasła, jednorazowego kodu wysłanego e-mailem. Use global setting: zgodnie z globalnym ustawieniem uwierzytelniania wieloskładnikowego. Enabled: wymagany dla każdego użytkownika. Disabled: niewymagany dla klientów tego sklepu; konta Backoffice i użytkownicy innych sklepów stosują ustawienie globalne. Admin managed: wymagany tylko dla użytkowników i organizacji, którym administrator ustawił Required w Backoffice; klienci nie mogą tego zmienić. Customer choice: klienci sami włączają je lub wyłączają dla siebie, a opiekunowie organizacji z uprawnieniem \"xapi:my_organization:mfa:manage\" — dla całej organizacji; domyślnie wyłączone; Required ustawionego przez administratora nie można wyłączyć. Logowanie do Backoffice podlega tylko ustawieniu globalnemu."
       }
     }
   },
@@ -86,7 +86,7 @@
             "Store": "Sklep wymaga go od wszystkich.",
             "Global": "Ustawienie globalne jest włączone.",
             "GlobalOff": "Ustawienie globalne jest wyłączone.",
-            "Disabled": "Sklep wyłączył je dla wszystkich.",
+            "Disabled": "Sklep wyłączył je dla własnych klientów.",
             "Organization": "Wymaga go organizacja użytkownika.",
             "OrganizationSelf": "Ta organizacja wymaga go od wszystkich swoich członków.",
             "UserRequired": "Wymagane przez administratora.",

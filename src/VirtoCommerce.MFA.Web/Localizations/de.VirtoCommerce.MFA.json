@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "Multi-Faktor-Authentifizierung",
-        "description": "Ob bei der Anmeldung mit Passwort in diesem Shop zusätzlich ein per E-Mail gesendeter Einmalcode erforderlich ist. Use global setting: der globalen Einstellung für die Multi-Faktor-Authentifizierung folgen. Enabled: für jeden Benutzer erforderlich. Disabled: nicht erforderlich. Admin managed: nur für Benutzer und Organisationen erforderlich, die ein Administrator im Backoffice auf Required gesetzt hat; Kunden können dies nicht ändern. Customer choice: Kunden aktivieren oder deaktivieren sie für sich selbst, Organisationsverwalter mit der Berechtigung \"xapi:my_organization:mfa:manage\" für die gesamte Organisation; standardmäßig deaktiviert; ein vom Administrator gesetztes Required kann nicht deaktiviert werden. Die Anmeldung im Backoffice folgt nur der globalen Einstellung."
+        "description": "Ob bei der Anmeldung mit Passwort in diesem Shop zusätzlich ein per E-Mail gesendeter Einmalcode erforderlich ist. Use global setting: der globalen Einstellung für die Multi-Faktor-Authentifizierung folgen. Enabled: für jeden Benutzer erforderlich. Disabled: für die eigenen Kunden des Shops nicht erforderlich; Backoffice-Konten und Benutzer anderer Shops folgen der globalen Einstellung. Admin managed: nur für Benutzer und Organisationen erforderlich, die ein Administrator im Backoffice auf Required gesetzt hat; Kunden können dies nicht ändern. Customer choice: Kunden aktivieren oder deaktivieren sie für sich selbst, Organisationsverwalter mit der Berechtigung \"xapi:my_organization:mfa:manage\" für die gesamte Organisation; standardmäßig deaktiviert; ein vom Administrator gesetztes Required kann nicht deaktiviert werden. Die Anmeldung im Backoffice folgt nur der globalen Einstellung."
       }
     }
   },
@@ -86,7 +86,7 @@
             "Store": "Der Shop verlangt sie von allen.",
             "Global": "Die globale Einstellung ist aktiviert.",
             "GlobalOff": "Die globale Einstellung ist deaktiviert.",
-            "Disabled": "Der Shop hat sie für alle deaktiviert.",
+            "Disabled": "Der Shop hat sie für seine eigenen Kunden deaktiviert.",
             "Organization": "Die Organisation des Benutzers verlangt sie.",
             "OrganizationSelf": "Diese Organisation verlangt sie von allen Mitgliedern.",
             "UserRequired": "Vom Administrator verlangt.",

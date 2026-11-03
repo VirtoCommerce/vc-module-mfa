@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "Autenticação multifator",
-        "description": "Indica se um login com senha nesta loja precisa, além da senha, de um código de uso único enviado por e-mail. Use global setting: segue a configuração global de autenticação multifator. Enabled: obrigatório para todos os usuários. Disabled: não obrigatório. Admin managed: obrigatório apenas para os usuários e organizações que um administrador definiu como Required no Backoffice; os clientes não podem alterá-lo. Customer choice: os clientes ativam ou desativam para si mesmos, e os mantenedores da organização com a permissão \"xapi:my_organization:mfa:manage\" para toda a organização; desativado por padrão; um Required definido por um administrador não pode ser desativado. O login no Backoffice segue apenas a configuração global."
+        "description": "Indica se um login com senha nesta loja precisa, além da senha, de um código de uso único enviado por e-mail. Use global setting: segue a configuração global de autenticação multifator. Enabled: obrigatório para todos os usuários. Disabled: não obrigatório para os clientes da própria loja; as contas do Backoffice e os usuários de outras lojas seguem a configuração global. Admin managed: obrigatório apenas para os usuários e organizações que um administrador definiu como Required no Backoffice; os clientes não podem alterá-lo. Customer choice: os clientes ativam ou desativam para si mesmos, e os mantenedores da organização com a permissão \"xapi:my_organization:mfa:manage\" para toda a organização; desativado por padrão; um Required definido por um administrador não pode ser desativado. O login no Backoffice segue apenas a configuração global."
       }
     }
   },
@@ -86,7 +86,7 @@
             "Store": "A loja exige de todos.",
             "Global": "A configuração global está ativada.",
             "GlobalOff": "A configuração global está desativada.",
-            "Disabled": "A loja desativou para todos.",
+            "Disabled": "A loja desativou para os próprios clientes.",
             "Organization": "A organização do usuário exige.",
             "OrganizationSelf": "Esta organização exige de todos os seus membros.",
             "UserRequired": "Exigido pelo administrador.",

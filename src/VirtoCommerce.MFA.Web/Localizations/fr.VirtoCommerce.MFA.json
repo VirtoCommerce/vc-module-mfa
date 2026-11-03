@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "Authentification multifacteur",
-        "description": "Indique si une connexion par mot de passe à cette boutique nécessite, en plus du mot de passe, un code à usage unique envoyé par e-mail. Use global setting : suivre le paramètre global d'authentification multifacteur. Enabled : exigé pour chaque utilisateur. Disabled : non exigé. Admin managed : exigé uniquement pour les utilisateurs et organisations qu'un administrateur a définis sur Required dans le Backoffice ; les clients ne peuvent pas le modifier. Customer choice : les clients l'activent ou la désactivent pour eux-mêmes, et les responsables d'organisation disposant de l'autorisation \"xapi:my_organization:mfa:manage\" pour toute l'organisation ; désactivée par défaut ; un Required défini par un administrateur ne peut pas être désactivé. La connexion au Backoffice suit uniquement le paramètre global."
+        "description": "Indique si une connexion par mot de passe à cette boutique nécessite, en plus du mot de passe, un code à usage unique envoyé par e-mail. Use global setting : suivre le paramètre global d'authentification multifacteur. Enabled : exigé pour chaque utilisateur. Disabled : non exigé pour les clients de la boutique ; les comptes du Backoffice et les utilisateurs des autres boutiques suivent le paramètre global. Admin managed : exigé uniquement pour les utilisateurs et organisations qu'un administrateur a définis sur Required dans le Backoffice ; les clients ne peuvent pas le modifier. Customer choice : les clients l'activent ou la désactivent pour eux-mêmes, et les responsables d'organisation disposant de l'autorisation \"xapi:my_organization:mfa:manage\" pour toute l'organisation ; désactivée par défaut ; un Required défini par un administrateur ne peut pas être désactivé. La connexion au Backoffice suit uniquement le paramètre global."
       }
     }
   },
@@ -86,7 +86,7 @@
             "Store": "La boutique l'exige de tous.",
             "Global": "Le paramètre global est activé.",
             "GlobalOff": "Le paramètre global est désactivé.",
-            "Disabled": "La boutique l'a désactivée pour tous.",
+            "Disabled": "La boutique l'a désactivée pour ses propres clients.",
             "Organization": "L'organisation de l'utilisateur l'exige.",
             "OrganizationSelf": "Cette organisation l'exige de tous ses membres.",
             "UserRequired": "Exigée par l'administrateur.",

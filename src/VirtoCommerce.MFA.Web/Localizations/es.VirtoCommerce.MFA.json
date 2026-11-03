@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "Autenticación multifactor",
-        "description": "Indica si un inicio de sesión con contraseña en esta tienda necesita, además de la contraseña, un código de un solo uso enviado por correo. Use global setting: seguir la configuración global de autenticación multifactor. Enabled: obligatorio para todos los usuarios. Disabled: no obligatorio. Admin managed: obligatorio solo para los usuarios y organizaciones que un administrador configuró como Required en el Backoffice; los clientes no pueden cambiarlo. Customer choice: los clientes la activan o desactivan para sí mismos, y los responsables de organización con el permiso \"xapi:my_organization:mfa:manage\" para toda la organización; desactivada de forma predeterminada; un Required configurado por un administrador no se puede desactivar. El inicio de sesión en el Backoffice sigue solo la configuración global."
+        "description": "Indica si un inicio de sesión con contraseña en esta tienda necesita, además de la contraseña, un código de un solo uso enviado por correo. Use global setting: seguir la configuración global de autenticación multifactor. Enabled: obligatorio para todos los usuarios. Disabled: no obligatorio para los clientes de la propia tienda; las cuentas del Backoffice y los usuarios de otras tiendas siguen la configuración global. Admin managed: obligatorio solo para los usuarios y organizaciones que un administrador configuró como Required en el Backoffice; los clientes no pueden cambiarlo. Customer choice: los clientes la activan o desactivan para sí mismos, y los responsables de organización con el permiso \"xapi:my_organization:mfa:manage\" para toda la organización; desactivada de forma predeterminada; un Required configurado por un administrador no se puede desactivar. El inicio de sesión en el Backoffice sigue solo la configuración global."
       }
     }
   },
@@ -86,7 +86,7 @@
             "Store": "La tienda lo exige a todos.",
             "Global": "La configuración global está activada.",
             "GlobalOff": "La configuración global está desactivada.",
-            "Disabled": "La tienda la desactivó para todos.",
+            "Disabled": "La tienda la desactivó para sus propios clientes.",
             "Organization": "La organización del usuario lo exige.",
             "OrganizationSelf": "Esta organización lo exige a todos sus miembros.",
             "UserRequired": "Exigido por el administrador.",

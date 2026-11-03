@@ -25,9 +25,11 @@ using VirtoCommerce.MFA.Data.Providers;
 using VirtoCommerce.MFA.Data.Services;
 using VirtoCommerce.NotificationsModule.Core.Model;
 using VirtoCommerce.NotificationsModule.Core.Services;
+using VirtoCommerce.Platform.Core;
 using VirtoCommerce.Platform.Core.Common;
 using VirtoCommerce.Platform.Core.Security;
 using VirtoCommerce.Platform.Core.Settings;
+using VirtoCommerce.Platform.Security.Services;
 using VirtoCommerce.StoreModule.Core.Model;
 using VirtoCommerce.StoreModule.Core.Services;
 using MfaModuleSettings = VirtoCommerce.MFA.Core.ModuleConstants.Settings.General;
@@ -96,6 +98,8 @@ public abstract class MfaTestsBase
     public ApplicationUser TwoFactorAuthenticationUser { get; set; }
 
     public Mock<IStoreService> StoreService { get; }
+
+    public PlatformUIOptions PlatformUIOptions { get; } = new();
 
     public Store[] Stores { get; }
 
@@ -273,7 +277,10 @@ public abstract class MfaTestsBase
         TicketStore = new TwoFactorTicketStore(memoryCache, Options.Create(MfaOptions));
         CodeAttemptLimiter = new MfaCodeAttemptLimiter(memoryCache, Options.Create(MfaOptions), TimeProvider);
         ErrorDescriber = new MfaErrorDescriber(TimeProvider);
-        RequirementService = new MfaRequirementService(StoreService.Object, SettingsManager.Object, ModeService, memberService.Object);
+        var platformUIOptions = new Mock<IOptionsMonitor<PlatformUIOptions>>();
+        platformUIOptions.Setup(x => x.CurrentValue).Returns(() => PlatformUIOptions);
+        var adminUIAccessPolicy = new ConfigurationAdminUIAccessPolicy(platformUIOptions.Object);
+        RequirementService = new MfaRequirementService(StoreService.Object, SettingsManager.Object, ModeService, memberService.Object, adminUIAccessPolicy);
 
         MfaService = new MfaService(UserManager.Object, StoreService.Object, TwoFactorTokenService, TicketStore, [emailProvider],
             CodeAttemptLimiter, CodeDeliveryLimiter, Options.Create(MfaOptions), TimeProvider);

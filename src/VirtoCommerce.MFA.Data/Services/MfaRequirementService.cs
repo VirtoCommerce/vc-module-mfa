@@ -22,7 +22,8 @@ public class MfaRequirementService(
     IStoreService storeService,
     ISettingsManager settingsManager,
     IMfaModeService modeService,
-    IMemberService memberService)
+    IMemberService memberService,
+    IAdminUIAccessPolicy adminUIAccessPolicy)
     : IMfaRequirementService
 {
     public virtual async Task<bool> IsRequiredAsync(ApplicationUser user, string storeId)
@@ -120,6 +121,14 @@ public class MfaRequirementService(
     protected virtual async Task<MfaRequirement> GetStoreRequirementAsync(ApplicationUser user, string storeId)
     {
         var storeMode = await GetStoreModeAsync(storeId);
+
+        // A Disabled store lets in without the code only its own customers: tokens are not bound to the store,
+        // so the Backoffice accounts and the users of other stores follow the global setting there
+        if (storeMode == ModuleConstants.StoreModes.Disabled && !await CanSkipCodeInDisabledStoreAsync(user, storeId))
+        {
+            storeMode = ModuleConstants.StoreModes.UseGlobalSetting;
+        }
+
         if (!IsChosenMode(storeMode))
         {
             return await GetRequirementAsync(storeMode, [], userMode: null);
@@ -129,5 +138,33 @@ public class MfaRequirementService(
         var userMode = await modeService.GetUserModeAsync(user.Id);
 
         return await GetRequirementAsync(storeMode, organizationModes.Values, userMode);
+    }
+
+    protected virtual async Task<bool> CanSkipCodeInDisabledStoreAsync(ApplicationUser user, string storeId)
+    {
+        return !string.IsNullOrEmpty(user.StoreId) && user.StoreId.EqualsIgnoreCase(storeId) && !await IsBackofficeAccountAsync(user);
+    }
+
+    /// <summary>
+    /// Administrators, managers and the users the platform lets into the Backoffice (by default, any user with a permission).
+    /// </summary>
+    protected virtual async Task<bool> IsBackofficeAccountAsync(ApplicationUser user)
+    {
+        if (user.IsAdministrator ||
+            user.UserType.EqualsIgnoreCase(nameof(UserType.Administrator)) ||
+            user.UserType.EqualsIgnoreCase(nameof(UserType.Manager)))
+        {
+            return true;
+        }
+
+        var permissions = user.Roles?
+            .SelectMany(x => x.Permissions ?? [])
+            .Select(x => x.Name)
+            .Distinct()
+            .ToList() ?? [];
+
+        var access = await adminUIAccessPolicy.EvaluateAsync(new AdminUIAccessContext { User = user, Permissions = permissions });
+
+        return access.IsAllowed;
     }
 }

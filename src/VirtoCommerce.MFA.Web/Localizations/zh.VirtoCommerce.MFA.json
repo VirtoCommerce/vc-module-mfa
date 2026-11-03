@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "多重身份验证",
-        "description": "使用密码登录此店铺时，是否在密码之外还要求输入通过电子邮件发送的一次性验证码。Use global setting：遵循全局多重身份验证设置。Enabled：所有用户都需要。Disabled：不需要。Admin managed：仅管理员在 Backoffice 中设为 Required 的用户和组织需要；客户无法更改。Customer choice：客户自行开启或关闭，拥有 \"xapi:my_organization:mfa:manage\" 权限的组织维护者可为整个组织开启或关闭；默认关闭；管理员设置的 Required 无法关闭。Backoffice 登录仅遵循全局设置。"
+        "description": "使用密码登录此店铺时，是否在密码之外还要求输入通过电子邮件发送的一次性验证码。Use global setting：遵循全局多重身份验证设置。Enabled：所有用户都需要。Disabled：店铺自己的客户不需要；Backoffice 账户和其他店铺的用户遵循全局设置。Admin managed：仅管理员在 Backoffice 中设为 Required 的用户和组织需要；客户无法更改。Customer choice：客户自行开启或关闭，拥有 \"xapi:my_organization:mfa:manage\" 权限的组织维护者可为整个组织开启或关闭；默认关闭；管理员设置的 Required 无法关闭。Backoffice 登录仅遵循全局设置。"
       }
     }
   },
@@ -86,7 +86,7 @@
             "Store": "店铺要求所有人使用。",
             "Global": "全局设置已开启。",
             "GlobalOff": "全局设置已关闭。",
-            "Disabled": "店铺已为所有人关闭。",
+            "Disabled": "店铺已为自己的客户关闭。",
             "Organization": "用户所在组织要求使用。",
             "OrganizationSelf": "此组织要求其所有成员使用。",
             "UserRequired": "管理员要求使用。",

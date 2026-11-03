@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "多要素認証",
-        "description": "このストアへのパスワードでのサインインで、パスワードに加えてメールで送信されるワンタイムコードを要求するかどうか。Use global setting: グローバルな多要素認証の設定に従います。Enabled: すべてのユーザーに必要です。Disabled: 不要です。Admin managed: 管理者が Backoffice で Required に設定したユーザーと組織にのみ必要です。顧客は変更できません。Customer choice: 顧客が自分でオン・オフを切り替え、\"xapi:my_organization:mfa:manage\" 権限を持つ組織管理者が組織全体に対して切り替えます。既定ではオフです。管理者が設定した Required はオフにできません。Backoffice へのサインインはグローバル設定のみに従います。"
+        "description": "このストアへのパスワードでのサインインで、パスワードに加えてメールで送信されるワンタイムコードを要求するかどうか。Use global setting: グローバルな多要素認証の設定に従います。Enabled: すべてのユーザーに必要です。Disabled: ストア自身の顧客には不要です。Backoffice アカウントと他のストアのユーザーはグローバル設定に従います。Admin managed: 管理者が Backoffice で Required に設定したユーザーと組織にのみ必要です。顧客は変更できません。Customer choice: 顧客が自分でオン・オフを切り替え、\"xapi:my_organization:mfa:manage\" 権限を持つ組織管理者が組織全体に対して切り替えます。既定ではオフです。管理者が設定した Required はオフにできません。Backoffice へのサインインはグローバル設定のみに従います。"
       }
     }
   },
@@ -86,7 +86,7 @@
             "Store": "ストアがすべてのユーザーに要求しています。",
             "Global": "グローバル設定がオンです。",
             "GlobalOff": "グローバル設定がオフです。",
-            "Disabled": "ストアがすべてのユーザーに対してオフにしています。",
+            "Disabled": "ストアが自身の顧客に対してオフにしています。",
             "Organization": "ユーザーの組織が要求しています。",
             "OrganizationSelf": "この組織がすべてのメンバーに要求しています。",
             "UserRequired": "管理者が必須にしています。",

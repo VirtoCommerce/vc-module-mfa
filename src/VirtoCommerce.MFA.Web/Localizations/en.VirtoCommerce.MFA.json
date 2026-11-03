@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "Multi-factor authentication",
-        "description": "Whether a password sign-in to this store needs a one-time code sent by email in addition to the password. Use global setting: follow the global multi-factor authentication setting. Enabled: required for every user. Disabled: not required. Admin managed: required only for the users and organizations an administrator set to Required in the Backoffice; customers can't change it. Customer choice: customers turn it on or off for themselves, and organization maintainers with the \"xapi:my_organization:mfa:manage\" permission for the whole organization; off by default; a Required set by an administrator can't be turned off. The Backoffice sign-in follows only the global setting."
+        "description": "Whether a password sign-in to this store needs a one-time code sent by email in addition to the password. Use global setting: follow the global multi-factor authentication setting. Enabled: required for every user. Disabled: not required for the store's own customers; Backoffice accounts and the users of other stores follow the global setting. Admin managed: required only for the users and organizations an administrator set to Required in the Backoffice; customers can't change it. Customer choice: customers turn it on or off for themselves, and organization maintainers with the \"xapi:my_organization:mfa:manage\" permission for the whole organization; off by default; a Required set by an administrator can't be turned off. The Backoffice sign-in follows only the global setting."
       }
     }
   },
@@ -86,7 +86,7 @@
             "Store": "The store requires it from everyone.",
             "Global": "The global setting is on.",
             "GlobalOff": "The global setting is off.",
-            "Disabled": "The store turned it off for everyone.",
+            "Disabled": "The store turned it off for its own customers.",
             "Organization": "The user's organization requires it.",
             "OrganizationSelf": "This organization requires it from all its members.",
             "UserRequired": "Required by the administrator.",

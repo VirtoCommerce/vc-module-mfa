@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "Flerfaktorautentisering",
-        "description": "Om en passordpålogging i denne butikken krever en engangskode sendt på e-post i tillegg til passordet. Use global setting: følg den globale innstillingen for flerfaktorautentisering. Enabled: påkrevd for alle brukere. Disabled: ikke påkrevd. Admin managed: påkrevd bare for brukere og organisasjoner som en administrator har satt til Required i Backoffice; kundene kan ikke endre det. Customer choice: kundene slår den på eller av for seg selv, og organisasjonsansvarlige med tillatelsen \"xapi:my_organization:mfa:manage\" for hele organisasjonen; av som standard; en Required satt av en administrator kan ikke slås av. Pålogging i Backoffice følger bare den globale innstillingen."
+        "description": "Om en passordpålogging i denne butikken krever en engangskode sendt på e-post i tillegg til passordet. Use global setting: følg den globale innstillingen for flerfaktorautentisering. Enabled: påkrevd for alle brukere. Disabled: ikke påkrevd for butikkens egne kunder; Backoffice-kontoer og brukere i andre butikker følger den globale innstillingen. Admin managed: påkrevd bare for brukere og organisasjoner som en administrator har satt til Required i Backoffice; kundene kan ikke endre det. Customer choice: kundene slår den på eller av for seg selv, og organisasjonsansvarlige med tillatelsen \"xapi:my_organization:mfa:manage\" for hele organisasjonen; av som standard; en Required satt av en administrator kan ikke slås av. Pålogging i Backoffice følger bare den globale innstillingen."
       }
     }
   },
@@ -86,7 +86,7 @@
             "Store": "Butikken krever den av alle.",
             "Global": "Den globale innstillingen er på.",
             "GlobalOff": "Den globale innstillingen er av.",
-            "Disabled": "Butikken har slått den av for alle.",
+            "Disabled": "Butikken har slått den av for sine egne kunder.",
             "Organization": "Brukerens organisasjon krever den.",
             "OrganizationSelf": "Denne organisasjonen krever den av alle sine medlemmer.",
             "UserRequired": "Påkrevd av administratoren.",

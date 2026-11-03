@@ -7,7 +7,7 @@
       },
       "StoreMode": {
         "title": "Monivaiheinen tunnistautuminen",
-        "description": "Tarvitaanko salasanan lisäksi sähköpostitse lähetetty kertakoodi, kun tähän kauppaan kirjaudutaan salasanalla. Use global setting: noudata monivaiheisen tunnistautumisen yleistä asetusta. Enabled: pakollinen kaikille käyttäjille. Disabled: ei pakollinen. Admin managed: pakollinen vain käyttäjille ja organisaatioille, joille järjestelmänvalvoja on asettanut Backofficessa tilan Required; asiakkaat eivät voi muuttaa sitä. Customer choice: asiakkaat ottavat sen käyttöön tai poistavat sen käytöstä itseltään, ja organisaation ylläpitäjät, joilla on oikeus \"xapi:my_organization:mfa:manage\", koko organisaatiolta; oletuksena pois käytöstä; järjestelmänvalvojan asettamaa Required-tilaa ei voi poistaa käytöstä. Backoffice-kirjautuminen noudattaa vain yleistä asetusta."
+        "description": "Tarvitaanko salasanan lisäksi sähköpostitse lähetetty kertakoodi, kun tähän kauppaan kirjaudutaan salasanalla. Use global setting: noudata monivaiheisen tunnistautumisen yleistä asetusta. Enabled: pakollinen kaikille käyttäjille. Disabled: ei pakollinen kaupan omille asiakkaille; Backoffice-tilit ja muiden kauppojen käyttäjät noudattavat yleistä asetusta. Admin managed: pakollinen vain käyttäjille ja organisaatioille, joille järjestelmänvalvoja on asettanut Backofficessa tilan Required; asiakkaat eivät voi muuttaa sitä. Customer choice: asiakkaat ottavat sen käyttöön tai poistavat sen käytöstä itseltään, ja organisaation ylläpitäjät, joilla on oikeus \"xapi:my_organization:mfa:manage\", koko organisaatiolta; oletuksena pois käytöstä; järjestelmänvalvojan asettamaa Required-tilaa ei voi poistaa käytöstä. Backoffice-kirjautuminen noudattaa vain yleistä asetusta."
       }
     }
   },
@@ -86,7 +86,7 @@
             "Store": "Kauppa vaatii sitä kaikilta.",
             "Global": "Yleinen asetus on käytössä.",
             "GlobalOff": "Yleinen asetus on pois käytöstä.",
-            "Disabled": "Kauppa on poistanut sen käytöstä kaikilta.",
+            "Disabled": "Kauppa on poistanut sen käytöstä omilta asiakkailtaan.",
             "Organization": "Käyttäjän organisaatio vaatii sitä.",
             "OrganizationSelf": "Tämä organisaatio vaatii sitä kaikilta jäseniltään.",
             "UserRequired": "Järjestelmänvalvojan vaatima.",
