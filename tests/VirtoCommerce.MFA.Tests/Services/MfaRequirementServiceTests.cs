@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using VirtoCommerce.MFA.Core;
+using VirtoCommerce.Platform.Core.Security;
 using Xunit;
 
 namespace VirtoCommerce.MFA.Tests.Services;
@@ -10,21 +11,26 @@ public class MfaRequirementServiceTests : MfaTestsBase
     [Theory]
     [InlineData(null, false, ActiveUserId, false)]
     [InlineData(null, true, ActiveUserId, true)]
-    [InlineData(null, false, EnabledStoreCustomerId, false)]
+    [InlineData(null, false, EnabledStoreCustomerId, true)]
+    [InlineData(null, false, DisabledStoreCustomerId, false)]
     [InlineData(null, true, DisabledStoreCustomerId, true)]
     [InlineData(UnknownStoreId, false, ActiveUserId, false)]
     [InlineData(UnknownStoreId, true, ActiveUserId, true)]
+    [InlineData(UnknownStoreId, false, EnabledStoreCustomerId, true)]
     [InlineData(StoreId, false, ActiveUserId, false)]
     [InlineData(StoreId, true, ActiveUserId, true)]
-    [InlineData(StoreId, false, EnabledStoreCustomerId, false)]
+    [InlineData(StoreId, false, EnabledStoreCustomerId, true)]
     [InlineData(MfaEnabledStoreId, false, ActiveUserId, true)]
     [InlineData(MfaEnabledStoreId, false, BackofficeUserId, true)]
+    [InlineData(MfaEnabledStoreId, false, DisabledStoreCustomerId, true)]
     [InlineData(MfaDisabledStoreId, true, DisabledStoreCustomerId, false)]
     [InlineData(MfaDisabledStoreId, true, DisabledStoreAdministratorId, false)]
     [InlineData(MfaDisabledStoreId, true, DisabledStoreManagerId, false)]
-    [InlineData(MfaDisabledStoreId, true, EnabledStoreCustomerId, false)]
-    [InlineData(MfaDisabledStoreId, true, BackofficeUserId, false)]
-    public async Task IsRequiredAsync_Should_FollowTheNamedStoreOrTheGlobalSetting(string storeId, bool isGloballyEnabled, string userId, bool expected)
+    [InlineData(MfaDisabledStoreId, false, EnabledStoreCustomerId, true)]
+    [InlineData(MfaDisabledStoreId, true, EnabledStoreCustomerId, true)]
+    [InlineData(MfaDisabledStoreId, false, BackofficeUserId, false)]
+    [InlineData(MfaDisabledStoreId, true, BackofficeUserId, true)]
+    public async Task IsRequiredAsync_Should_FollowTheNamedStoreAndTheUserStore(string storeId, bool isGloballyEnabled, string userId, bool expected)
     {
         // Arrange
         IsGloballyEnabled = isGloballyEnabled;
@@ -35,6 +41,55 @@ public class MfaRequirementServiceTests : MfaTestsBase
 
         // Assert
         Assert.Equal(expected, isRequired);
+    }
+
+    [Theory]
+    [InlineData(null, false, false)]
+    [InlineData(null, true, true)]
+    [InlineData(StoreId, false, false)]
+    [InlineData(MfaEnabledStoreId, false, true)]
+    [InlineData(MfaDisabledStoreId, true, false)]
+    public async Task IsRequiredAsync_Should_FollowTheNamedStore_When_TheUserHasNoStore(string storeId, bool isGloballyEnabled, bool expected)
+    {
+        // Arrange
+        IsGloballyEnabled = isGloballyEnabled;
+        var user = new ApplicationUser { Id = "no-store-user" };
+
+        // Act
+        var isRequired = await RequirementService.IsRequiredAsync(user, storeId);
+
+        // Assert
+        Assert.Equal(expected, isRequired);
+    }
+
+    [Theory]
+    [InlineData(CustomerChoiceStoreId, ModuleConstants.Modes.Enabled, null, ModuleConstants.RequirementSources.User)]
+    [InlineData(CustomerChoiceStoreId, null, ModuleConstants.Modes.Enabled, ModuleConstants.RequirementSources.Organization)]
+    [InlineData(AdminManagedStoreId, ModuleConstants.Modes.Required, null, ModuleConstants.RequirementSources.User)]
+    [InlineData(AdminManagedStoreId, null, ModuleConstants.Modes.Required, ModuleConstants.RequirementSources.Organization)]
+    public async Task GetRequirementAsync_Should_ApplyTheModesOfTheUserStore_When_TheRequestNamesAStoreWithoutMfa(
+        string userStoreId, string userMode, string organizationMode, string expectedSource)
+    {
+        // Arrange
+        if (userMode != null)
+        {
+            await ModeService.SetUserModeAsync(ActiveUserId, userMode);
+        }
+
+        if (organizationMode != null)
+        {
+            await ModeService.SetOrganizationModeAsync(OrganizationId, organizationMode);
+        }
+
+        var user = await UserManager.Object.FindByIdAsync(ActiveUserId);
+        user.StoreId = userStoreId;
+
+        // Act
+        var requirement = await RequirementService.GetRequirementAsync(user, MfaDisabledStoreId);
+
+        // Assert
+        Assert.True(requirement.IsRequired);
+        Assert.Equal(expectedSource, requirement.Source);
     }
 
     [Theory]

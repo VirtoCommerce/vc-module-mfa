@@ -105,6 +105,20 @@ public class MfaRequirementService(
 
     private async Task<MfaRequirement> GetUserRequirementAsync(ApplicationUser user, string storeId)
     {
+        var requirement = await GetStoreRequirementAsync(user, storeId);
+
+        // Tokens are not bound to the store they were issued for, so the user's own store applies too:
+        // naming another store, or none, must not skip the code that the user's store requires
+        if (!requirement.IsRequired && !string.IsNullOrEmpty(user.StoreId) && !user.StoreId.EqualsIgnoreCase(storeId))
+        {
+            requirement = await GetStoreRequirementAsync(user, user.StoreId);
+        }
+
+        return requirement;
+    }
+
+    protected virtual async Task<MfaRequirement> GetStoreRequirementAsync(ApplicationUser user, string storeId)
+    {
         var storeMode = await GetStoreModeAsync(storeId);
         if (!IsChosenMode(storeMode))
         {
