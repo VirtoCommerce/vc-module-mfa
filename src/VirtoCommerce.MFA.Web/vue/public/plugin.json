@@ -1,0 +1,3 @@
+{
+  "remote": { "name": "mfa_admin", "exposed": "./Module" }
+}

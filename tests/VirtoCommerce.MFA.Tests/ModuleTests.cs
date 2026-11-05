@@ -6,10 +6,13 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Moq;
 using VirtoCommerce.MFA.Core.Models;
 using VirtoCommerce.MFA.Core.Services;
 using VirtoCommerce.MFA.Data.Providers;
 using VirtoCommerce.MFA.Web;
+using VirtoCommerce.MFA.Xapi.Authorization;
+using VirtoCommerce.Platform.Core.Modularity;
 using VirtoCommerce.Platform.Core.Security;
 using Xunit;
 
@@ -79,12 +82,29 @@ public class ModuleTests
         Assert.Throws<OptionsValidationException>(readOptions);
     }
 
-    private static ServiceCollection Initialize(Dictionary<string, string> configuration = null, ServiceCollection services = null)
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Initialize_Should_RegisterTheXapiSchemaOnlyWhenTheXapiModuleIsInstalled(bool isXapiInstalled)
+    {
+        // Act
+        var services = Initialize(isXapiInstalled: isXapiInstalled);
+
+        // Assert
+        Assert.Equal(isXapiInstalled, services.Any(x => x.ServiceType == typeof(MfaUserResolver)));
+        Assert.Contains(services, x => x.ServiceType == typeof(IMfaService));
+    }
+
+    private static ServiceCollection Initialize(Dictionary<string, string> configuration = null, ServiceCollection services = null, bool isXapiInstalled = true)
     {
         services ??= new ServiceCollection();
+        var moduleService = new Mock<IModuleService>();
+        moduleService.Setup(x => x.IsInstalled("VirtoCommerce.Xapi")).Returns(isXapiInstalled);
+
         var module = new Module
         {
             Configuration = new ConfigurationBuilder().AddInMemoryCollection(configuration ?? []).Build(),
+            ModuleService = moduleService.Object,
         };
 
         module.Initialize(services);

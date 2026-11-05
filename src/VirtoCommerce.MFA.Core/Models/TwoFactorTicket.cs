@@ -17,4 +17,10 @@ public class TwoFactorTicket
     public string SecurityStamp { get; set; }
 
     public string Provider { get; set; }
+
+    /// <summary>
+    /// Null for a sign-in, <see cref="ModuleConstants.Security.ChangeTicketPurpose"/> for confirming a change of the MFA mode.
+    /// A ticket can be redeemed only for its own purpose.
+    /// </summary>
+    public string Purpose { get; set; }
 }

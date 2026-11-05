@@ -2,3 +2,37 @@
     opacity: 0.5;
     pointer-events: none;
 }
+
+.mfa-status__result {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.mfa-status__result.__required {
+    background: #dff3e4;
+    color: #1e7b3a;
+}
+
+.mfa-status__result.__off {
+    background: #eef0f2;
+    color: #6b7280;
+}
+
+.mfa-status__result.__per-member {
+    background: #fff4d6;
+    color: #8a5a00;
+}
+
+.mfa-status .table .table-col {
+    text-align: left;
+    white-space: nowrap;
+    vertical-align: top;
+}
+
+.mfa-status .table .table-col:last-child {
+    white-space: normal;
+    width: 100%;
+}
