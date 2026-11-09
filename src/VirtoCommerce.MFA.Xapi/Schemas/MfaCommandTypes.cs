@@ -10,6 +10,7 @@ public class InputRequestMfaChangeCodeType : InputObjectGraphType<RequestMfaChan
     public InputRequestMfaChangeCodeType()
     {
         Field(x => x.StoreId);
+        Field(x => x.OrganizationId, nullable: true).Description("The organization whose mode is changed. Omit it to change the mode of the current user.");
     }
 }
 

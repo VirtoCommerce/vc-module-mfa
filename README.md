@@ -97,10 +97,10 @@ The two-factor token proves that the password was verified. It is an encrypted t
 With the xAPI module installed, the storefront reads and changes the modes over GraphQL. Every change is confirmed with a code, so a stolen session can't turn MFA off:
 
 * `mfaSettings(storeId, organizationId)` returns the store mode, whether the current user's sign-in needs the code and what requires it (`requiredBy`: `None`, `Global`, `Store`, `Organization` or `User`), the user's and the organization's modes, whether the user may change them, and the masked destination of the code.
-* `requestMfaChangeCode(command: { storeId })` sends a code and returns a two-factor token for the change.
+* `requestMfaChangeCode(command: { storeId, organizationId })` sends a code and returns a two-factor token for the change: of the organization's mode when `organizationId` is given, otherwise of the user's mode. A request within `MultiFactorAuthentication:CodeResendInterval` sends nothing and returns a new two-factor token with `resendSecondsRemaining`: the code sent shortly before is still valid.
 * `updateMfaUserMode(command: { storeId, enabled, twoFactorToken, code })` and `updateMfaOrganizationMode(command: { storeId, organizationId, enabled, twoFactorToken, code })` set the mode to `Enabled` or `Off` and return the new settings.
 
-A change, and the code request before it, is refused with `mfa_self_service_not_allowed` outside a `CustomerChoice` store (no code is sent), `mfa_locked_by_administrator` when the mode is `Required`, and `mfa_organization_not_allowed` when the user lacks `xapi:my_organization:mfa:manage` or the organization isn't theirs. A refused code returns the same error codes as the sign-in.
+A change, and the code request before it, is refused with `mfa_self_service_not_allowed` outside a `CustomerChoice` store, `mfa_locked_by_administrator` when the changed mode is `Required`, and `mfa_organization_not_allowed` when the user lacks `xapi:my_organization:mfa:manage` or the organization isn't theirs. A refused code request sends no code. A refused code returns the same error codes as the sign-in.
 
 ### Backoffice and REST API
 
@@ -142,7 +142,7 @@ The code is sent by the `MfaSignInEmailNotification` notification in the user's 
 | `sign_in_not_allowed` | `mfa` grant, Backoffice code screen | The account can't sign in: to the Backoffice, or at all, for example when it is not active. |
 | `lockout_disabled` | all | The account has lockout disabled, so it can't pass the second factor. Enable lockout for the account. |
 | `mfa_provider_not_available` | all | No provider can deliver a code to the account, for example the email is not confirmed or the notification is not active. Confirm the email or activate the notification. |
-| `resend_too_soon` | resend, Backoffice code screen | A code has just been sent. Request a new one after `resendSecondsRemaining` seconds. |
+| `resend_too_soon` | resend, Backoffice code screen | A code has just been sent. Request a new one after `resendSecondsRemaining` seconds. The password grant and `requestMfaChangeCode` don't return it: they issue a new two-factor token for the code sent before. |
 | `user_is_locked_out`, `user_is_temporary_locked_out` | all | The account is locked; `lockoutSecondsRemaining` is returned. |
 | `login_failed` | password grant, resend, Backoffice code screen | Any other failure, for example a lockout at the token endpoint without `PasswordLogin:DetailedErrors`, or several accounts with the same email. |
 
