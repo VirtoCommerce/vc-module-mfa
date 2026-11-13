@@ -23,11 +23,11 @@ public class MfaSelfService(
         return GetSettingsCoreAsync(user, storeId, organizationId, canManageOrganization);
     }
 
-    public virtual Task<MfaChangeResult> SendChangeCodeAsync(ApplicationUser user, string storeId)
+    public virtual Task<MfaChangeResult> SendChangeCodeAsync(ApplicationUser user, string storeId, string organizationId, bool canManageOrganization)
     {
         ArgumentNullException.ThrowIfNull(user);
 
-        return SendChangeCodeCoreAsync(user, storeId);
+        return SendChangeCodeCoreAsync(user, storeId, organizationId, canManageOrganization);
     }
 
     public virtual Task<MfaChangeResult> ChangeUserModeAsync(ApplicationUser user, string storeId, bool enabled, string twoFactorToken, string code)
@@ -83,11 +83,15 @@ public class MfaSelfService(
     }
 
     // Checked before the code is sent: a refused change must not spend an email or the shared resend slot of the sign-in
-    private async Task<MfaChangeResult> SendChangeCodeCoreAsync(ApplicationUser user, string storeId)
+    private async Task<MfaChangeResult> SendChangeCodeCoreAsync(ApplicationUser user, string storeId, string organizationId, bool canManageOrganization)
     {
-        if (await requirementService.GetStoreModeAsync(storeId) != ModuleConstants.StoreModes.CustomerChoice)
+        var refusal = string.IsNullOrEmpty(organizationId)
+            ? await GetUserModeRefusalAsync(user, storeId)
+            : await GetOrganizationModeRefusalAsync(user, storeId, organizationId, canManageOrganization);
+
+        if (refusal != null)
         {
-            return Fail(MfaChangeOutcome.SelfServiceNotAllowed);
+            return refusal;
         }
 
         var codeResult = await mfaService.ChallengeAsync(user, storeId, purpose: ModuleConstants.Security.ChangeTicketPurpose);
@@ -133,12 +137,46 @@ public class MfaSelfService(
         return settings;
     }
 
-    private async Task<MfaChangeResult> ChangeUserModeCoreAsync(ApplicationUser user, string storeId, bool enabled, string twoFactorToken, string code)
+    private async Task<MfaChangeResult> GetUserModeRefusalAsync(ApplicationUser user, string storeId)
     {
         var settings = await GetSettingsAsync(user, storeId, organizationId: null, canManageOrganization: false);
         if (!settings.CanChangeUserMode)
         {
-            return Fail(settings.UserMode == Modes.Required ? MfaChangeOutcome.LockedByAdministrator : MfaChangeOutcome.SelfServiceNotAllowed);
+            return Fail(GetRefusalOutcome(settings, settings.UserMode));
+        }
+
+        return null;
+    }
+
+    private async Task<MfaChangeResult> GetOrganizationModeRefusalAsync(ApplicationUser user, string storeId, string organizationId, bool canManageOrganization)
+    {
+        if (string.IsNullOrEmpty(organizationId) || !canManageOrganization)
+        {
+            return Fail(MfaChangeOutcome.OrganizationNotAllowed);
+        }
+
+        var settings = await GetSettingsAsync(user, storeId, organizationId, canManageOrganization);
+        if (!settings.CanChangeOrganizationMode)
+        {
+            return Fail(GetRefusalOutcome(settings, settings.OrganizationMode));
+        }
+
+        return null;
+    }
+
+    private static MfaChangeOutcome GetRefusalOutcome(MfaSettings settings, string mode)
+    {
+        return settings.StoreMode == ModuleConstants.StoreModes.CustomerChoice && mode == Modes.Required
+            ? MfaChangeOutcome.LockedByAdministrator
+            : MfaChangeOutcome.SelfServiceNotAllowed;
+    }
+
+    private async Task<MfaChangeResult> ChangeUserModeCoreAsync(ApplicationUser user, string storeId, bool enabled, string twoFactorToken, string code)
+    {
+        var refusal = await GetUserModeRefusalAsync(user, storeId);
+        if (refusal != null)
+        {
+            return refusal;
         }
 
         var codeResult = await VerifyCodeAsync(user, storeId, twoFactorToken, code);
@@ -155,15 +193,10 @@ public class MfaSelfService(
     private async Task<MfaChangeResult> ChangeOrganizationModeCoreAsync(ApplicationUser user, string storeId, string organizationId, bool canManageOrganization,
         bool enabled, string twoFactorToken, string code)
     {
-        if (string.IsNullOrEmpty(organizationId) || !canManageOrganization)
+        var refusal = await GetOrganizationModeRefusalAsync(user, storeId, organizationId, canManageOrganization);
+        if (refusal != null)
         {
-            return Fail(MfaChangeOutcome.OrganizationNotAllowed);
-        }
-
-        var settings = await GetSettingsAsync(user, storeId, organizationId, canManageOrganization);
-        if (!settings.CanChangeOrganizationMode)
-        {
-            return Fail(settings.OrganizationMode == Modes.Required ? MfaChangeOutcome.LockedByAdministrator : MfaChangeOutcome.SelfServiceNotAllowed);
+            return refusal;
         }
 
         var codeResult = await VerifyCodeAsync(user, storeId, twoFactorToken, code);

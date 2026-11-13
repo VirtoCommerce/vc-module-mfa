@@ -22,7 +22,7 @@ public class MfaSelfServiceTests : MfaTestsBase
     public async Task ChangeUserModeAsync_Should_TurnMfaOnWithTheCode()
     {
         // Arrange
-        var challenge = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId);
+        var challenge = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId, organizationId: null, canManageOrganization: false);
 
         // Act
         var result = await _selfService.ChangeUserModeAsync(ActiveUser, CustomerChoiceStoreId, enabled: true, challenge.CodeResult.TwoFactorToken, CurrentCode(ActiveUser));
@@ -41,7 +41,7 @@ public class MfaSelfServiceTests : MfaTestsBase
     {
         // Arrange
         await ModeService.SetUserModeAsync(ActiveUserId, ModuleConstants.Modes.Enabled);
-        var challenge = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId);
+        var challenge = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId, organizationId: null, canManageOrganization: false);
 
         // Act
         var result = await _selfService.ChangeUserModeAsync(ActiveUser, CustomerChoiceStoreId, enabled: false, challenge.CodeResult.TwoFactorToken, CurrentCode(ActiveUser));
@@ -78,7 +78,7 @@ public class MfaSelfServiceTests : MfaTestsBase
     public async Task SendChangeCodeAsync_Should_SendNothing_When_TheStoreDoesNotLetCustomersChoose(string storeId)
     {
         // Act
-        var result = await _selfService.SendChangeCodeAsync(ActiveUser, storeId);
+        var result = await _selfService.SendChangeCodeAsync(ActiveUser, storeId, organizationId: null, canManageOrganization: false);
 
         // Assert
         Assert.Equal(MfaChangeOutcome.SelfServiceNotAllowed, result.Outcome);
@@ -91,15 +91,36 @@ public class MfaSelfServiceTests : MfaTestsBase
         NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Once);
     }
 
+    [Theory]
+    [InlineData(StoreId)]
+    [InlineData(MfaEnabledStoreId)]
+    [InlineData(MfaDisabledStoreId)]
+    [InlineData(AdminManagedStoreId)]
+    public async Task SendChangeCodeAsync_Should_RefuseTheStore_When_TheAdministratorRequiresMfaInAStoreThatDoesNotLetCustomersChoose(string storeId)
+    {
+        // Arrange
+        await ModeService.SetUserModeAsync(ActiveUserId, ModuleConstants.Modes.Required);
+        await ModeService.SetOrganizationModeAsync(OrganizationId, ModuleConstants.Modes.Required);
+
+        // Act
+        var userResult = await _selfService.SendChangeCodeAsync(ActiveUser, storeId, organizationId: null, canManageOrganization: false);
+        var organizationResult = await _selfService.SendChangeCodeAsync(ActiveUser, storeId, OrganizationId, canManageOrganization: true);
+
+        // Assert
+        Assert.Equal(MfaChangeOutcome.SelfServiceNotAllowed, userResult.Outcome);
+        Assert.Equal(MfaChangeOutcome.SelfServiceNotAllowed, organizationResult.Outcome);
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Never);
+    }
+
     [Fact]
     public async Task ChangeUserModeAsync_Should_Refuse_When_TheAdministratorRequiresMfa()
     {
         // Arrange
         await ModeService.SetUserModeAsync(ActiveUserId, ModuleConstants.Modes.Required);
-        var challenge = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId);
+        var challenge = await MfaService.ChallengeAsync(ActiveUser, CustomerChoiceStoreId, purpose: ModuleConstants.Security.ChangeTicketPurpose);
 
         // Act
-        var result = await _selfService.ChangeUserModeAsync(ActiveUser, CustomerChoiceStoreId, enabled: false, challenge.CodeResult.TwoFactorToken, CurrentCode(ActiveUser));
+        var result = await _selfService.ChangeUserModeAsync(ActiveUser, CustomerChoiceStoreId, enabled: false, challenge.TwoFactorToken, CurrentCode(ActiveUser));
 
         // Assert
         Assert.Equal(MfaChangeOutcome.LockedByAdministrator, result.Outcome);
@@ -107,10 +128,87 @@ public class MfaSelfServiceTests : MfaTestsBase
     }
 
     [Fact]
+    public async Task SendChangeCodeAsync_Should_SendNothing_When_TheAdministratorRequiresMfa()
+    {
+        // Arrange
+        await ModeService.SetUserModeAsync(ActiveUserId, ModuleConstants.Modes.Required);
+
+        // Act
+        var result = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId, organizationId: null, canManageOrganization: false);
+
+        // Assert
+        Assert.Equal(MfaChangeOutcome.LockedByAdministrator, result.Outcome);
+        Assert.Null(result.CodeResult);
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SendChangeCodeAsync_Should_SendNothing_When_TheAdministratorRequiresMfaForTheOrganization()
+    {
+        // Arrange
+        await ModeService.SetOrganizationModeAsync(OrganizationId, ModuleConstants.Modes.Required);
+
+        // Act
+        var result = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId, OrganizationId, canManageOrganization: true);
+
+        // Assert
+        Assert.Equal(MfaChangeOutcome.LockedByAdministrator, result.Outcome);
+        Assert.Null(result.CodeResult);
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SendChangeCodeAsync_Should_SendNothing_WithoutThePermissionToManageTheOrganization()
+    {
+        // Act
+        var result = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId, OrganizationId, canManageOrganization: false);
+
+        // Assert
+        Assert.Equal(MfaChangeOutcome.OrganizationNotAllowed, result.Outcome);
+        Assert.Null(result.CodeResult);
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SendChangeCodeAsync_Should_SendTheCode_ForTheOrganization_When_TheAdministratorRequiresMfaForTheUser()
+    {
+        // Arrange
+        await ModeService.SetUserModeAsync(ActiveUserId, ModuleConstants.Modes.Required);
+
+        // Act
+        var result = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId, OrganizationId, canManageOrganization: true);
+
+        // Assert
+        Assert.Equal(MfaChangeOutcome.Success, result.Outcome);
+        Assert.False(string.IsNullOrEmpty(result.CodeResult.TwoFactorToken));
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendChangeCodeAsync_Should_SendNoSecondEmail_WithinTheResendInterval()
+    {
+        // Arrange
+        var first = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId, organizationId: null, canManageOrganization: false);
+
+        // Act
+        var second = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId, organizationId: null, canManageOrganization: false);
+
+        // Assert
+        Assert.Equal(MfaChangeOutcome.Success, second.Outcome);
+        Assert.NotEqual(first.CodeResult.TwoFactorToken, second.CodeResult.TwoFactorToken);
+        Assert.True(second.CodeResult.ResendSecondsRemaining > 0);
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Once);
+
+        // the code sent first confirms the change with the new token
+        var result = await _selfService.ChangeUserModeAsync(ActiveUser, CustomerChoiceStoreId, enabled: true, second.CodeResult.TwoFactorToken, CurrentCode(ActiveUser));
+        Assert.Equal(MfaChangeOutcome.Success, result.Outcome);
+    }
+
+    [Fact]
     public async Task ChangeUserModeAsync_Should_Refuse_AWrongCode()
     {
         // Arrange
-        var challenge = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId);
+        var challenge = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId, organizationId: null, canManageOrganization: false);
 
         // Act
         var result = await _selfService.ChangeUserModeAsync(ActiveUser, CustomerChoiceStoreId, enabled: true, challenge.CodeResult.TwoFactorToken, InvalidCode);
@@ -139,7 +237,7 @@ public class MfaSelfServiceTests : MfaTestsBase
     public async Task VerifyCodeAsync_Should_Refuse_AChangeTokenAtSignIn()
     {
         // Arrange
-        var challenge = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId);
+        var challenge = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId, organizationId: null, canManageOrganization: false);
 
         // Act
         var result = await MfaService.VerifyCodeAsync(challenge.CodeResult.TwoFactorToken, CurrentCode(ActiveUser), CustomerChoiceStoreId);
@@ -152,7 +250,7 @@ public class MfaSelfServiceTests : MfaTestsBase
     public async Task ChangeUserModeAsync_Should_Refuse_TheTokenOfAnotherUser()
     {
         // Arrange
-        var challenge = await _selfService.SendChangeCodeAsync(BackofficeUser, CustomerChoiceStoreId);
+        var challenge = await _selfService.SendChangeCodeAsync(BackofficeUser, CustomerChoiceStoreId, organizationId: null, canManageOrganization: false);
 
         // Act
         var result = await _selfService.ChangeUserModeAsync(ActiveUser, CustomerChoiceStoreId, enabled: true, challenge.CodeResult.TwoFactorToken, CurrentCode(BackofficeUser));
@@ -171,7 +269,7 @@ public class MfaSelfServiceTests : MfaTestsBase
     public async Task ChangeOrganizationModeAsync_Should_RequireMfaForTheMembers()
     {
         // Arrange
-        var challenge = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId);
+        var challenge = await _selfService.SendChangeCodeAsync(ActiveUser, CustomerChoiceStoreId, OrganizationId, canManageOrganization: true);
 
         // Act
         var result = await _selfService.ChangeOrganizationModeAsync(ActiveUser, CustomerChoiceStoreId, OrganizationId, canManageOrganization: true,

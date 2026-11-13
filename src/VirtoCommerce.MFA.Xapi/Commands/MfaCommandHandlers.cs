@@ -11,7 +11,7 @@ public class RequestMfaChangeCodeCommandHandler(IMfaSelfService selfService, Mfa
 {
     public virtual async Task<MfaCodeChallenge> Handle(RequestMfaChangeCodeCommand request, CancellationToken cancellationToken)
     {
-        var result = await selfService.SendChangeCodeAsync(request.User, request.StoreId);
+        var result = await selfService.SendChangeCodeAsync(request.User, request.StoreId, request.OrganizationId, request.CanManageOrganization);
 
         return responseFactory.ToCodeChallenge(result);
     }
