@@ -18,6 +18,7 @@ public class RequestMfaChangeCodeCommandBuilder(IAuthorizationService authorizat
         await base.BeforeMediatorSend(context, request);
 
         request.User = await userResolver.GetCurrentUserAsync(context, isChange: true);
+        request.CanManageOrganization = await userResolver.CanManageOrganizationAsync(context, request.User, request.OrganizationId);
     }
 }
 

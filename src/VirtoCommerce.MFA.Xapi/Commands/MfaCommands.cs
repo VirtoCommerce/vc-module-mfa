@@ -14,7 +14,12 @@ public abstract class MfaCommand<TResult> : ICommand<TResult>
 /// <summary>
 /// Sends a code that confirms a change of the MFA mode.
 /// </summary>
-public class RequestMfaChangeCodeCommand : MfaCommand<MfaCodeChallenge>;
+public class RequestMfaChangeCodeCommand : MfaCommand<MfaCodeChallenge>
+{
+    public string OrganizationId { get; set; }
+
+    public bool CanManageOrganization { get; set; }
+}
 
 public abstract class ChangeMfaModeCommand : MfaCommand<MfaChangeResponse>
 {
