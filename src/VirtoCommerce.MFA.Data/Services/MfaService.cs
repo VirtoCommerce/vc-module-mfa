@@ -189,7 +189,7 @@ public class MfaService(
 
     protected virtual async Task ConfirmEmailAsync(ApplicationUser user, IMfaProvider mfaProvider)
     {
-        if (mfaProvider.Name != TokenOptions.DefaultEmailProvider || await userManager.IsEmailConfirmedAsync(user))
+        if (!mfaProvider.Name.EqualsIgnoreCase(TokenOptions.DefaultEmailProvider) || await userManager.IsEmailConfirmedAsync(user))
         {
             return;
         }

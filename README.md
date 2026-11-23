@@ -96,7 +96,7 @@ The two-factor token proves that the password was verified. It is an encrypted t
 
 ### Storefront (xAPI)
 
-With the xAPI module installed, the storefront reads and changes the modes over GraphQL. Every change is confirmed with a code, so a stolen session can't turn MFA off:
+With the xAPI module installed, the storefront reads and changes the modes over GraphQL. Every change is confirmed with a code sent to the current email of the account. A stolen session alone can't turn MFA off, but the code protects the mode only as long as the email is the user's: whoever controls the session can change the email with `updatePersonalData` and receive the next code there.
 
 * `mfaSettings(storeId, organizationId)` returns the store mode, whether the current user's sign-in needs the code and what requires it (`requiredBy`: `None`, `Global`, `Store`, `Organization` or `User`), the user's and the organization's modes, whether the user may change them, whether the account has lockout enabled (`isLockoutEnabled`; without it neither mode can be changed), and the masked destination of the code.
 * `requestMfaChangeCode(command: { storeId, organizationId })` sends a code and returns a two-factor token for the change: of the organization's mode when `organizationId` is given, otherwise of the user's mode. A request within `MultiFactorAuthentication:CodeResendInterval` sends nothing and returns a new two-factor token with `resendSecondsRemaining`: the code sent shortly before is still valid.
