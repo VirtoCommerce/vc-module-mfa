@@ -499,6 +499,24 @@ public class MfaServiceTests : MfaTestsBase
         Assert.False(isAccepted);
     }
 
+    [Theory]
+    [InlineData("Authenticator", false)]
+    [InlineData("email", true)]
+    public async Task AcceptCodeAsync_Should_ConfirmEmail_When_ProviderIsEmail(string providerName, bool expectedEmailConfirmed)
+    {
+        // Arrange
+        var provider = new Mock<IMfaProvider>();
+        provider.SetupGet(x => x.Name).Returns(providerName);
+
+        // Act
+        var isAccepted = await MfaService.AcceptCodeAsync(UnconfirmedEmailUser, provider.Object);
+
+        // Assert
+        Assert.True(isAccepted);
+        Assert.Equal(expectedEmailConfirmed, UnconfirmedEmailUser.EmailConfirmed);
+        UserManager.Verify(x => x.UpdateAsync(It.IsAny<ApplicationUser>()), expectedEmailConfirmed ? Times.Once() : Times.Never());
+    }
+
     [Fact]
     public async Task VerifyCodeAsync_Should_RejectToken_When_TheUserSignedInAfterItWasIssued()
     {
