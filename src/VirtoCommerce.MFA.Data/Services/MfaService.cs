@@ -153,6 +153,7 @@ public class MfaService(
         }
 
         await codeDeliveryLimiter.ReleaseAsync(GetCodeDeliveryKey(user, mfaProvider));
+        await ConfirmEmailAsync(user, mfaProvider);
 
         return true;
     }
@@ -184,6 +185,22 @@ public class MfaService(
         ArgumentNullException.ThrowIfNull(user);
 
         return SelectProvider(await GetAvailableProvidersAsync(user), provider);
+    }
+
+    protected virtual async Task ConfirmEmailAsync(ApplicationUser user, IMfaProvider mfaProvider)
+    {
+        if (mfaProvider.Name != TokenOptions.DefaultEmailProvider || await userManager.IsEmailConfirmedAsync(user))
+        {
+            return;
+        }
+
+        user.EmailConfirmed = true;
+
+        var result = await userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            user.EmailConfirmed = false;
+        }
     }
 
     protected virtual async Task<MfaResult> FailCodeAsync(TwoFactorTicket ticket, ApplicationUser user, IMfaProvider mfaProvider)

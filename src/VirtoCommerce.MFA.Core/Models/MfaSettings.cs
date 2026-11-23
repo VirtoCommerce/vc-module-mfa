@@ -39,9 +39,14 @@ public class MfaSettings
     public bool CanChangeOrganizationMode { get; set; }
 
     /// <summary>
-    /// Whether a code can be delivered to the user, for example the email is confirmed.
+    /// Whether a code can be delivered to the user, for example the user has an email.
     /// </summary>
     public bool IsProviderAvailable { get; set; }
+
+    /// <summary>
+    /// Whether the account has lockout enabled: without it the user can't pass the second factor, so neither mode can be changed.
+    /// </summary>
+    public bool IsLockoutEnabled { get; set; }
 
     public string Provider { get; set; }
 

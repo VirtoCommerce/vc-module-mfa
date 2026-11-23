@@ -220,20 +220,79 @@ public class MfaServiceTests : MfaTestsBase
         NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Never);
     }
 
-    [Theory]
-    [InlineData(NoEmailUserId)]
-    [InlineData(UnconfirmedEmailUserId)]
-    public async Task ChallengeAsync_Should_ReportProviderNotAvailable_When_IdentityHasNoValidProvider(string userId)
+    [Fact]
+    public async Task ChallengeAsync_Should_ReportProviderNotAvailable_When_UserHasNoEmail()
     {
-        // Arrange
-        var user = userId == NoEmailUserId ? NoEmailUser : UnconfirmedEmailUser;
-
         // Act
-        var result = await MfaService.ChallengeAsync(user, StoreId);
+        var result = await MfaService.ChallengeAsync(NoEmailUser, StoreId);
 
         // Assert
         Assert.Equal(MfaOutcome.ProviderNotAvailable, result.Outcome);
         NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ChallengeAsync_Should_SendCode_When_EmailIsNotConfirmed()
+    {
+        // Act
+        var result = await MfaService.ChallengeAsync(UnconfirmedEmailUser, StoreId);
+
+        // Assert
+        Assert.Equal(MfaOutcome.Success, result.Outcome);
+        Assert.False(UnconfirmedEmailUser.EmailConfirmed);
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.Is<Notification>(n =>
+            ((MfaSignInEmailNotification)n).To == UnconfirmedEmailUser.Email)), Times.Once);
+    }
+
+    [Fact]
+    public async Task VerifyCodeAsync_Should_ConfirmEmail_When_CodeIsAccepted()
+    {
+        // Act
+        var result = await MfaService.VerifyCodeAsync(CreateTwoFactorToken(UnconfirmedEmailUserId), ValidCode, StoreId);
+
+        // Assert
+        Assert.Equal(MfaOutcome.Success, result.Outcome);
+        Assert.True(UnconfirmedEmailUser.EmailConfirmed);
+        UserManager.Verify(x => x.UpdateAsync(It.Is<ApplicationUser>(u => u.Id == UnconfirmedEmailUserId && u.EmailConfirmed)), Times.Once);
+    }
+
+    [Fact]
+    public async Task VerifyCodeAsync_Should_LeaveEmailUnconfirmed_When_CodeIsWrong()
+    {
+        // Act
+        var result = await MfaService.VerifyCodeAsync(CreateTwoFactorToken(UnconfirmedEmailUserId), InvalidCode, StoreId);
+
+        // Assert
+        Assert.Equal(MfaOutcome.InvalidCode, result.Outcome);
+        Assert.False(UnconfirmedEmailUser.EmailConfirmed);
+        UserManager.Verify(x => x.UpdateAsync(It.IsAny<ApplicationUser>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task VerifyCodeAsync_Should_SucceedAndLeaveEmailUnconfirmed_When_ConfirmationIsNotSaved()
+    {
+        // Arrange
+        UserManager
+            .Setup(x => x.UpdateAsync(It.IsAny<ApplicationUser>()))
+            .ReturnsAsync(IdentityResult.Failed());
+
+        // Act
+        var result = await MfaService.VerifyCodeAsync(CreateTwoFactorToken(UnconfirmedEmailUserId), ValidCode, StoreId);
+
+        // Assert
+        Assert.Equal(MfaOutcome.Success, result.Outcome);
+        Assert.False(UnconfirmedEmailUser.EmailConfirmed);
+    }
+
+    [Fact]
+    public async Task VerifyCodeAsync_Should_NotUpdateUser_When_EmailIsAlreadyConfirmed()
+    {
+        // Act
+        var result = await MfaService.VerifyCodeAsync(CreateTwoFactorToken(), ValidCode, StoreId);
+
+        // Assert
+        Assert.Equal(MfaOutcome.Success, result.Outcome);
+        UserManager.Verify(x => x.UpdateAsync(It.IsAny<ApplicationUser>()), Times.Never);
     }
 
     [Fact]

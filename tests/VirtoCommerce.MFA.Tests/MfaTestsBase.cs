@@ -196,10 +196,14 @@ public abstract class MfaTestsBase
             .Setup(x => x.IsLockedOutAsync(It.IsAny<ApplicationUser>()))
             .ReturnsAsync((ApplicationUser user) => user.LockoutEnd > TimeProvider.GetUtcNow());
 
-        // Like the Identity "Email" token provider: only a confirmed email can receive a code
+        // Like MfaEmailTokenProvider: any email can receive a code, confirmed or not
         UserManager
             .Setup(x => x.GetValidTwoFactorProvidersAsync(It.IsAny<ApplicationUser>()))
-            .ReturnsAsync((ApplicationUser user) => !string.IsNullOrEmpty(user.Email) && user.EmailConfirmed ? [EmailProvider] : []);
+            .ReturnsAsync((ApplicationUser user) => !string.IsNullOrEmpty(user.Email) ? [EmailProvider] : []);
+
+        UserManager
+            .Setup(x => x.IsEmailConfirmedAsync(It.IsAny<ApplicationUser>()))
+            .ReturnsAsync((ApplicationUser user) => user.EmailConfirmed);
 
         UserManager
             .Setup(x => x.GenerateTwoFactorTokenAsync(It.IsAny<ApplicationUser>(), EmailProvider))

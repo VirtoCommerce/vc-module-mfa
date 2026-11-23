@@ -86,10 +86,10 @@ public class MfaTwoFactorSignInHandlerTests : MfaTestsBase
     [Theory]
     [InlineData(true, "mfa_provider_not_available")]
     [InlineData(false, "mfa_provider_not_available")]
-    public async Task ChallengeAsync_Should_RefuseSignIn_When_EmailIsNotConfirmed(bool detailedErrors, string expectedCode)
+    public async Task ChallengeAsync_Should_RefuseSignIn_When_UserHasNoEmail(bool detailedErrors, string expectedCode)
     {
         // Arrange
-        var requestContext = CreateRequestContext(UnconfirmedEmailUser, StoreId, detailedErrors);
+        var requestContext = CreateRequestContext(NoEmailUser, StoreId, detailedErrors);
 
         // Act
         var actionResult = await _handler.ChallengeAsync(requestContext);

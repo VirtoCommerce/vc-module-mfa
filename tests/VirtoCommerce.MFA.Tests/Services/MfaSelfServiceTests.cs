@@ -316,12 +316,62 @@ public class MfaSelfServiceTests : MfaTestsBase
     public async Task GetSettingsAsync_Should_ReportAnUnavailableProvider()
     {
         // Act
-        var settings = await _selfService.GetSettingsAsync(UnconfirmedEmailUser, CustomerChoiceStoreId, organizationId: null, canManageOrganization: false);
+        var settings = await _selfService.GetSettingsAsync(NoEmailUser, CustomerChoiceStoreId, organizationId: null, canManageOrganization: false);
 
         // Assert
         Assert.False(settings.IsProviderAvailable);
         Assert.Null(settings.Destination);
         Assert.True(settings.CanChangeUserMode);
         Assert.Null(settings.OrganizationMode);
+    }
+
+    [Fact]
+    public async Task GetSettingsAsync_Should_ForbidModeChanges_When_LockoutIsDisabled()
+    {
+        // Act
+        var settings = await _selfService.GetSettingsAsync(LockoutDisabledUser, CustomerChoiceStoreId, OrganizationId, canManageOrganization: true);
+
+        // Assert
+        Assert.False(settings.IsLockoutEnabled);
+        Assert.False(settings.CanChangeUserMode);
+        Assert.False(settings.CanChangeOrganizationMode);
+    }
+
+    [Theory]
+    [InlineData(null, false)]
+    [InlineData(OrganizationId, true)]
+    public async Task SendChangeCodeAsync_Should_SendNothing_When_LockoutIsDisabled(string organizationId, bool canManageOrganization)
+    {
+        // Act
+        var result = await _selfService.SendChangeCodeAsync(LockoutDisabledUser, CustomerChoiceStoreId, organizationId, canManageOrganization);
+
+        // Assert
+        Assert.Equal(MfaChangeOutcome.LockoutDisabled, result.Outcome);
+        Assert.Null(result.CodeResult);
+        NotificationSender.Verify(x => x.ScheduleSendNotificationAsync(It.IsAny<Notification>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SendChangeCodeAsync_Should_ReportSelfServiceNotAllowed_When_LockoutIsDisabledInStoreWithoutCustomerChoice()
+    {
+        // Act
+        var result = await _selfService.SendChangeCodeAsync(LockoutDisabledUser, AdminManagedStoreId, organizationId: null, canManageOrganization: false);
+
+        // Assert
+        Assert.Equal(MfaChangeOutcome.SelfServiceNotAllowed, result.Outcome);
+    }
+
+    [Fact]
+    public async Task ChangeUserModeAsync_Should_ConfirmEmail_When_CodeIsAccepted()
+    {
+        // Arrange
+        var challenge = await _selfService.SendChangeCodeAsync(UnconfirmedEmailUser, CustomerChoiceStoreId, organizationId: null, canManageOrganization: false);
+
+        // Act
+        var result = await _selfService.ChangeUserModeAsync(UnconfirmedEmailUser, CustomerChoiceStoreId, enabled: true, challenge.CodeResult.TwoFactorToken, CurrentCode(UnconfirmedEmailUser));
+
+        // Assert
+        Assert.Equal(MfaChangeOutcome.Success, result.Outcome);
+        Assert.True(UnconfirmedEmailUser.EmailConfirmed);
     }
 }

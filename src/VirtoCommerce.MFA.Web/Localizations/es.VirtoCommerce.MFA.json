@@ -3,7 +3,7 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Autenticación multifactor",
-        "description": "Exige, además de la contraseña, un código de un solo uso enviado por correo electrónico en cada inicio de sesión en el Backoffice y en cada otro inicio de sesión con contraseña (tienda, aplicaciones, clientes de API) que no indica ninguna tienda o indica una tienda que sigue esta configuración. Los usuarios sin correo confirmado o con el bloqueo desactivado no podrán iniciar sesión mientras se exija el código: confirme su correo y active su bloqueo antes de activar esta opción."
+        "description": "Exige, además de la contraseña, un código de un solo uso enviado por correo electrónico en cada inicio de sesión en el Backoffice y en cada otro inicio de sesión con contraseña (tienda, aplicaciones, clientes de API) que no indica ninguna tienda o indica una tienda que sigue esta configuración. Los usuarios con el bloqueo desactivado no podrán iniciar sesión mientras se exija el código: active su bloqueo antes de activar esta opción."
       },
       "StoreMode": {
         "title": "Autenticación multifactor",
@@ -30,7 +30,7 @@
         "user_is_temporary_locked_out": "Su cuenta ha sido bloqueada temporalmente. Inténtelo de nuevo más tarde.",
         "sign_in_not_allowed": "No puede iniciar sesión en el Backoffice con esta cuenta.",
         "lockout_disabled": "Esta cuenta no puede iniciar sesión con un código. Póngase en contacto con su administrador.",
-        "mfa_provider_not_available": "No podemos enviar un código a esta cuenta. Confirme su correo o póngase en contacto con su administrador."
+        "mfa_provider_not_available": "No podemos enviar un código a esta cuenta. Póngase en contacto con su administrador."
       }
     },
     "sign-in-log": {
@@ -63,6 +63,7 @@
         "placeholders": {
           "mode": "Seleccione un modo"
         },
+        "lockout-disabled": "El bloqueo está desactivado en esta cuenta, por lo que el usuario no puede iniciar sesión donde se exige el código. El bloqueo no se puede activar en el Backoffice: consulte la documentación del módulo de autenticación multifactor.",
         "status": {
           "title": "Estado efectivo",
           "preview": "Vista previa del modo seleccionado. Guarde para aplicarlo.",

@@ -34,6 +34,7 @@ public class MfaStatusService(
         // Each store is evaluated as the sign-in of this user, so the user's own store and their account type count too
         var status = await CreateStatusAsync((storeId, _) => requirementService.GetRequirementAsync(user, storeId, userMode));
         status.UserStoreId = user.StoreId;
+        status.IsLockoutEnabled = user.LockoutEnabled;
 
         if (user.UserType != nameof(UserType.Customer))
         {

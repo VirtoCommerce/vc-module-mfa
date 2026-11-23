@@ -38,6 +38,23 @@ public class MfaEmailTokenProviderTests
             .ReturnsAsync((ApplicationUser user, string _, string _) => _codeStamps.GetValueOrDefault(user.Id));
     }
 
+    [Theory]
+    [InlineData("john.smith@acme.com", false, true)]
+    [InlineData("john.smith@acme.com", true, true)]
+    [InlineData(null, false, false)]
+    [InlineData(" ", false, false)]
+    public async Task CanGenerateTwoFactorTokenAsync_Should_AllowCode_When_UserHasEmail(string email, bool emailConfirmed, bool expected)
+    {
+        // Arrange
+        var user = new ApplicationUser { Id = "user-2", Email = email, EmailConfirmed = emailConfirmed };
+
+        // Act
+        var canGenerate = await _provider.CanGenerateTwoFactorTokenAsync(_userManager.Object, user);
+
+        // Assert
+        Assert.Equal(expected, canGenerate);
+    }
+
     [Fact]
     public async Task ValidateAsync_Should_AcceptTheCode_When_TheCodeStampIsTheSame()
     {

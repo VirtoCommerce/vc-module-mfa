@@ -7,6 +7,13 @@ namespace VirtoCommerce.MFA.Data.Providers;
 
 public class MfaEmailTokenProvider : EmailTokenProvider<ApplicationUser>
 {
+    public override async Task<bool> CanGenerateTwoFactorTokenAsync(UserManager<ApplicationUser> manager, ApplicationUser user)
+    {
+        var email = await manager.GetEmailAsync(user);
+
+        return !string.IsNullOrWhiteSpace(email);
+    }
+
     public override async Task<string> GetUserModifierAsync(string purpose, UserManager<ApplicationUser> manager, ApplicationUser user)
     {
         var modifier = await base.GetUserModifierAsync(purpose, manager, user);

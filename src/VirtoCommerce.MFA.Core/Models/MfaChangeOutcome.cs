@@ -23,4 +23,9 @@ public enum MfaChangeOutcome
     /// The code or the two-factor token was refused; see <see cref="MfaChangeResult.CodeResult"/>.
     /// </summary>
     CodeRefused,
+
+    /// <summary>
+    /// The account has lockout disabled, so it can't receive a code to confirm the change.
+    /// </summary>
+    LockoutDisabled,
 }

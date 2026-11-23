@@ -3,7 +3,7 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Authentification multifacteur",
-        "description": "Exige, en plus du mot de passe, un code à usage unique envoyé par e-mail pour chaque connexion au Backoffice et pour chaque autre connexion par mot de passe (boutique, applications, clients d'API) qui n'indique aucune boutique ou une boutique qui suit ce paramètre. Les utilisateurs sans e-mail confirmé ou dont le verrouillage est désactivé ne pourront pas se connecter tant que le code est exigé : confirmez leur e-mail et activez leur verrouillage avant d'activer ce paramètre."
+        "description": "Exige, en plus du mot de passe, un code à usage unique envoyé par e-mail pour chaque connexion au Backoffice et pour chaque autre connexion par mot de passe (boutique, applications, clients d'API) qui n'indique aucune boutique ou une boutique qui suit ce paramètre. Les utilisateurs dont le verrouillage est désactivé ne pourront pas se connecter tant que le code est exigé : activez leur verrouillage avant d'activer ce paramètre."
       },
       "StoreMode": {
         "title": "Authentification multifacteur",
@@ -30,7 +30,7 @@
         "user_is_temporary_locked_out": "Votre compte a été temporairement verrouillé. Veuillez réessayer plus tard.",
         "sign_in_not_allowed": "Vous ne pouvez pas vous connecter au Backoffice avec ce compte.",
         "lockout_disabled": "Ce compte ne peut pas se connecter avec un code. Contactez votre administrateur.",
-        "mfa_provider_not_available": "Impossible d'envoyer un code de connexion à ce compte. Confirmez son e-mail ou contactez votre administrateur."
+        "mfa_provider_not_available": "Impossible d'envoyer un code de connexion à ce compte. Contactez votre administrateur."
       }
     },
     "sign-in-log": {
@@ -63,6 +63,7 @@
         "placeholders": {
           "mode": "Sélectionnez un mode"
         },
+        "lockout-disabled": "Le verrouillage est désactivé pour ce compte : l'utilisateur ne peut pas se connecter là où le code est exigé. Le verrouillage ne peut pas être activé dans le Backoffice : consultez la documentation du module d'authentification multifacteur.",
         "status": {
           "title": "Statut effectif",
           "preview": "Aperçu du mode sélectionné. Enregistrez pour l'appliquer.",

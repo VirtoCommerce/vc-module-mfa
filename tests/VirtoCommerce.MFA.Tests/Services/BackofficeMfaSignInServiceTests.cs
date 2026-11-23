@@ -78,7 +78,7 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
 
     [Theory]
     [InlineData(LockoutDisabledUserId, MfaOutcome.LockoutDisabled, ModuleConstants.Security.FailureReason.LockoutDisabled)]
-    [InlineData(UnconfirmedEmailUserId, MfaOutcome.ProviderNotAvailable, ModuleConstants.Security.FailureReason.ProviderNotAvailable)]
+    [InlineData(NoEmailUserId, MfaOutcome.ProviderNotAvailable, ModuleConstants.Security.FailureReason.ProviderNotAvailable)]
     public async Task SendCodeAsync_Should_LogTheReason_When_NoCodeCanBeSent(string userId, MfaOutcome expectedOutcome, string expectedReason)
     {
         // Arrange
@@ -121,6 +121,21 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
         UserManager.Verify(x => x.UpdateAsync(It.Is<ApplicationUser>(u => u.Id == BackofficeUserId && u.LastLoginDate != null)), Times.Once);
         _eventPublisher.Verify(x => x.Publish(It.IsAny<UserLoginEvent>()), Times.Once);
         VerifySignInAttempt(succeeded: true, failureReason: null);
+    }
+
+    [Fact]
+    public async Task SignInAsync_Should_ConfirmEmail_When_CodeIsAccepted()
+    {
+        // Arrange
+        TwoFactorAuthenticationUser = UnconfirmedEmailUser;
+
+        // Act
+        var result = await _service.SignInAsync(ValidCode);
+
+        // Assert
+        Assert.Equal(MfaOutcome.Success, result.Outcome);
+        Assert.True(UnconfirmedEmailUser.EmailConfirmed);
+        UserManager.Verify(x => x.UpdateAsync(It.Is<ApplicationUser>(u => u.Id == UnconfirmedEmailUserId && u.EmailConfirmed)), Times.AtLeastOnce);
     }
 
     [Fact]

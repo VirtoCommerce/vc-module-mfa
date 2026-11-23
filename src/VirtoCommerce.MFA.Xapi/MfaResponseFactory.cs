@@ -1,4 +1,5 @@
 using System.Linq;
+using Microsoft.AspNetCore.Identity;
 using VirtoCommerce.MFA.Core.Models;
 using VirtoCommerce.MFA.Data.Services;
 using VirtoCommerce.MFA.Xapi.Models;
@@ -75,7 +76,13 @@ public class MfaResponseFactory(MfaErrorDescriber errorDescriber)
         {
             MfaChangeOutcome.LockedByAdministrator => ("mfa_locked_by_administrator", "Multi-factor authentication is managed by the administrator."),
             MfaChangeOutcome.OrganizationNotAllowed => ("mfa_organization_not_allowed", "You can't manage multi-factor authentication of this organization."),
+            MfaChangeOutcome.LockoutDisabled => ToCodeAndDescription(errorDescriber.LockoutDisabled()),
             _ => ("mfa_self_service_not_allowed", "The store doesn't let customers manage multi-factor authentication."),
         };
+    }
+
+    private static (string Code, string Description) ToCodeAndDescription(IdentityError error)
+    {
+        return (error.Code, error.Description);
     }
 }

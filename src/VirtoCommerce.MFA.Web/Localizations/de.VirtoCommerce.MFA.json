@@ -3,7 +3,7 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Multi-Faktor-Authentifizierung",
-        "description": "Verlangt zusätzlich zum Passwort einen per E-Mail gesendeten Einmalcode bei jeder Anmeldung im Backoffice sowie bei jeder anderen Anmeldung mit Passwort (Shop, Apps, API-Clients), die keinen Shop oder einen Shop angibt, der dieser Einstellung folgt. Benutzer ohne bestätigte E-Mail-Adresse oder mit deaktivierter Sperre können sich nicht anmelden, solange der Code erforderlich ist: Bestätigen Sie vor dem Aktivieren deren E-Mail-Adresse und aktivieren Sie die Sperre."
+        "description": "Verlangt zusätzlich zum Passwort einen per E-Mail gesendeten Einmalcode bei jeder Anmeldung im Backoffice sowie bei jeder anderen Anmeldung mit Passwort (Shop, Apps, API-Clients), die keinen Shop oder einen Shop angibt, der dieser Einstellung folgt. Benutzer mit deaktivierter Sperre können sich nicht anmelden, solange der Code erforderlich ist: Aktivieren Sie vorher deren Sperre."
       },
       "StoreMode": {
         "title": "Multi-Faktor-Authentifizierung",
@@ -30,7 +30,7 @@
         "user_is_temporary_locked_out": "Ihr Konto wurde vorübergehend gesperrt. Bitte versuchen Sie es später erneut.",
         "sign_in_not_allowed": "Mit diesem Konto können Sie sich nicht im Backoffice anmelden.",
         "lockout_disabled": "Dieses Konto kann sich nicht mit einem Code anmelden. Wenden Sie sich an Ihren Administrator.",
-        "mfa_provider_not_available": "An dieses Konto kann kein Anmeldecode gesendet werden. Bestätigen Sie die E-Mail-Adresse oder wenden Sie sich an Ihren Administrator."
+        "mfa_provider_not_available": "An dieses Konto kann kein Anmeldecode gesendet werden. Wenden Sie sich an Ihren Administrator."
       }
     },
     "sign-in-log": {
@@ -63,6 +63,7 @@
         "placeholders": {
           "mode": "Modus auswählen"
         },
+        "lockout-disabled": "Für dieses Konto ist die Sperre deaktiviert, daher kann sich der Benutzer nicht anmelden, wo der Code erforderlich ist. Die Sperre lässt sich im Backoffice nicht aktivieren: siehe die Dokumentation des Moduls für die Multi-Faktor-Authentifizierung.",
         "status": {
           "title": "Tatsächlicher Status",
           "preview": "Vorschau des ausgewählten Modus. Speichern Sie, um ihn anzuwenden.",

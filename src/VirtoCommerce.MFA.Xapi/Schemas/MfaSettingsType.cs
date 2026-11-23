@@ -18,7 +18,8 @@ public class MfaSettingsType : ExtendableGraphType<MfaSettings>
         Field(x => x.OrganizationId, nullable: true);
         Field(x => x.OrganizationMode, nullable: true).Description("Off, Enabled (by the organization maintainer) or Required (by the administrator).");
         Field(x => x.CanChangeOrganizationMode);
-        Field(x => x.IsProviderAvailable).Description("Whether a code can be delivered to the user, for example the email is confirmed.");
+        Field(x => x.IsProviderAvailable).Description("Whether a code can be delivered to the user, for example the user has an email.");
+        Field(x => x.IsLockoutEnabled).Description("Whether the account has lockout enabled. Without it the user can't pass the second factor, and neither mode can be changed.");
         Field(x => x.Provider, nullable: true);
         Field(x => x.Destination, nullable: true);
     }

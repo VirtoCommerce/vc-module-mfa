@@ -22,6 +22,15 @@
         <VcHint v-if="mode">{{ $t(`mfa.blades.mode.description.${mode}`) }}</VcHint>
       </VcForm>
 
+      <VcBanner
+        v-if="status?.isLockoutEnabled === false"
+        class="tw-mt-4"
+        variant="warning"
+        icon="lucide-triangle-alert"
+      >
+        {{ $t("mfa.blades.mode.lockout-disabled") }}
+      </VcBanner>
+
       <section
         v-if="status"
         class="tw-mt-6 tw-space-y-3"
@@ -74,7 +83,7 @@
 
 <script setup lang="ts">
 import { useBlade, usePermissions, type IBladeToolbar } from "@vc-shell/framework";
-import { VcBlade, VcColumn, VcContainer, VcDataTable, VcForm, VcHint, VcSelect, VcStatus } from "@vc-shell/framework/ui";
+import { VcBanner, VcBlade, VcColumn, VcContainer, VcDataTable, VcForm, VcHint, VcSelect, VcStatus } from "@vc-shell/framework/ui";
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { getMode, getStatus, MFA_MODES, setMode, type MfaMode, type MfaStatus, type MfaStoreStatus, type MfaSubjectType } from "../api";

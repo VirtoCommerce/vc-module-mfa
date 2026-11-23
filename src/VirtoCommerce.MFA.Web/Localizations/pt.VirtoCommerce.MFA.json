@@ -3,7 +3,7 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Autenticação multifator",
-        "description": "Exige, além da senha, um código de uso único enviado por e-mail em cada login no Backoffice e em cada outro login com senha (loja, aplicativos, clientes de API) que não informa nenhuma loja ou informa uma loja que segue esta configuração. Usuários sem e-mail confirmado ou com o bloqueio desativado não conseguirão fazer login enquanto o código for exigido: confirme o e-mail deles e ative o bloqueio antes de ativar esta opção."
+        "description": "Exige, além da senha, um código de uso único enviado por e-mail em cada login no Backoffice e em cada outro login com senha (loja, aplicativos, clientes de API) que não informa nenhuma loja ou informa uma loja que segue esta configuração. Usuários com o bloqueio desativado não conseguirão fazer login enquanto o código for exigido: ative o bloqueio deles antes de ativar esta opção."
       },
       "StoreMode": {
         "title": "Autenticação multifator",
@@ -30,7 +30,7 @@
         "user_is_temporary_locked_out": "Sua conta foi bloqueada temporariamente. Tente novamente mais tarde.",
         "sign_in_not_allowed": "Você não pode fazer login no Backoffice com esta conta.",
         "lockout_disabled": "Esta conta não pode fazer login com um código. Entre em contato com o administrador.",
-        "mfa_provider_not_available": "Não é possível enviar um código de acesso para esta conta. Confirme o e-mail ou entre em contato com o administrador."
+        "mfa_provider_not_available": "Não é possível enviar um código de acesso para esta conta. Entre em contato com o administrador."
       }
     },
     "sign-in-log": {
@@ -63,6 +63,7 @@
         "placeholders": {
           "mode": "Selecione um modo"
         },
+        "lockout-disabled": "O bloqueio está desativado nesta conta, então o usuário não consegue fazer login onde o código é exigido. O bloqueio não pode ser ativado no Backoffice: consulte a documentação do módulo de autenticação multifator.",
         "status": {
           "title": "Status efetivo",
           "preview": "Prévia do modo selecionado. Salve para aplicá-lo.",

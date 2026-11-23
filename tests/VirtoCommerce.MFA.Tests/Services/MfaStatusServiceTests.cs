@@ -81,6 +81,28 @@ public class MfaStatusServiceTests : MfaTestsBase
     }
 
     [Theory]
+    [InlineData(LockoutDisabledUserId, false)]
+    [InlineData(ActiveUserId, true)]
+    public async Task GetUserStatusAsync_Should_ReportLockout(string userId, bool expectedLockoutEnabled)
+    {
+        // Act
+        var status = await _statusService.GetUserStatusAsync(userId);
+
+        // Assert
+        Assert.Equal(expectedLockoutEnabled, status.IsLockoutEnabled);
+    }
+
+    [Fact]
+    public async Task GetOrganizationStatusAsync_Should_NotReportLockout()
+    {
+        // Act
+        var status = await _statusService.GetOrganizationStatusAsync(OrganizationId);
+
+        // Assert
+        Assert.Null(status.IsLockoutEnabled);
+    }
+
+    [Theory]
     [InlineData(false)]
     [InlineData(true)]
     public async Task GetUserStatusAsync_Should_ShowWhereTheUserStoreRequiresTheCode(bool isGloballyEnabled)
