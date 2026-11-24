@@ -1,7 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Moq;
-using VirtoCommerce.MFA.Core;
 using VirtoCommerce.MFA.Data.Services;
 using VirtoCommerce.StoreModule.Core.Model.Search;
 using VirtoCommerce.StoreModule.Core.Services;

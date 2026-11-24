@@ -253,7 +253,7 @@ public class MfaServiceTests : MfaTestsBase
         // Assert
         Assert.Equal(MfaOutcome.Success, result.Outcome);
         Assert.True(UnconfirmedEmailUser.EmailConfirmed);
-        UserManager.Verify(x => x.UpdateAsync(It.Is<ApplicationUser>(u => u.Id == UnconfirmedEmailUserId && u.EmailConfirmed)), Times.Once);
+        Assert.True(IsEmailConfirmationSaved(UnconfirmedEmailUser));
     }
 
     [Fact]
@@ -265,34 +265,21 @@ public class MfaServiceTests : MfaTestsBase
         // Assert
         Assert.Equal(MfaOutcome.InvalidCode, result.Outcome);
         Assert.False(UnconfirmedEmailUser.EmailConfirmed);
-        UserManager.Verify(x => x.UpdateAsync(It.IsAny<ApplicationUser>()), Times.Never);
+        Assert.False(IsEmailConfirmationSaved(UnconfirmedEmailUser));
     }
 
     [Fact]
-    public async Task VerifyCodeAsync_Should_SucceedAndLeaveEmailUnconfirmed_When_ConfirmationIsNotSaved()
+    public async Task VerifyCodeAsync_Should_LeaveEmailUnconfirmed_When_CodeStampIsNotSaved()
     {
         // Arrange
-        UserManager
-            .Setup(x => x.UpdateAsync(It.IsAny<ApplicationUser>()))
-            .ReturnsAsync(IdentityResult.Failed());
+        CodeStampUpdateResult = IdentityResult.Failed();
 
         // Act
         var result = await MfaService.VerifyCodeAsync(CreateTwoFactorToken(UnconfirmedEmailUserId), ValidCode, StoreId);
 
         // Assert
-        Assert.Equal(MfaOutcome.Success, result.Outcome);
+        Assert.Equal(MfaOutcome.AcceptedCodeNotRecorded, result.Outcome);
         Assert.False(UnconfirmedEmailUser.EmailConfirmed);
-    }
-
-    [Fact]
-    public async Task VerifyCodeAsync_Should_NotUpdateUser_When_EmailIsAlreadyConfirmed()
-    {
-        // Act
-        var result = await MfaService.VerifyCodeAsync(CreateTwoFactorToken(), ValidCode, StoreId);
-
-        // Assert
-        Assert.Equal(MfaOutcome.Success, result.Outcome);
-        UserManager.Verify(x => x.UpdateAsync(It.IsAny<ApplicationUser>()), Times.Never);
     }
 
     [Fact]
@@ -514,7 +501,7 @@ public class MfaServiceTests : MfaTestsBase
         // Assert
         Assert.True(isAccepted);
         Assert.Equal(expectedEmailConfirmed, UnconfirmedEmailUser.EmailConfirmed);
-        UserManager.Verify(x => x.UpdateAsync(It.IsAny<ApplicationUser>()), expectedEmailConfirmed ? Times.Once() : Times.Never());
+        Assert.Equal(expectedEmailConfirmed, IsEmailConfirmationSaved(UnconfirmedEmailUser));
     }
 
     [Fact]

@@ -71,11 +71,17 @@ public class MfaResponseFactory(MfaErrorDescriber errorDescriber)
 
     protected virtual (string Code, string Description) GetChangeError(MfaChangeOutcome outcome)
     {
+        if (outcome == MfaChangeOutcome.LockoutDisabled)
+        {
+            var error = errorDescriber.LockoutDisabled();
+
+            return (error.Code, error.Description);
+        }
+
         return outcome switch
         {
             MfaChangeOutcome.LockedByAdministrator => ("mfa_locked_by_administrator", "Multi-factor authentication is managed by the administrator."),
             MfaChangeOutcome.OrganizationNotAllowed => ("mfa_organization_not_allowed", "You can't manage multi-factor authentication of this organization."),
-            MfaChangeOutcome.LockoutDisabled => (errorDescriber.LockoutDisabled().Code, "Multi-factor authentication can't be managed for an account without lockout protection."),
             _ => ("mfa_self_service_not_allowed", "The store doesn't let customers manage multi-factor authentication."),
         };
     }

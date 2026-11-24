@@ -134,8 +134,7 @@ public class BackofficeMfaSignInServiceTests : MfaTestsBase
 
         // Assert
         Assert.Equal(MfaOutcome.Success, result.Outcome);
-        Assert.True(UnconfirmedEmailUser.EmailConfirmed);
-        UserManager.Verify(x => x.UpdateAsync(It.Is<ApplicationUser>(u => u.Id == UnconfirmedEmailUserId && u.EmailConfirmed)), Times.AtLeastOnce);
+        Assert.True(IsEmailConfirmationSaved(UnconfirmedEmailUser));
     }
 
     [Fact]

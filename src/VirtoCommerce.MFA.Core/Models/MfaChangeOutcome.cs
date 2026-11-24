@@ -25,7 +25,7 @@ public enum MfaChangeOutcome
     CodeRefused,
 
     /// <summary>
-    /// The account has lockout disabled, so it can't receive a code to confirm the change.
+    /// The account has lockout disabled, so it can't pass the second factor.
     /// </summary>
     LockoutDisabled,
 }

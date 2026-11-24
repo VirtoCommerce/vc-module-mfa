@@ -372,6 +372,54 @@ public class MfaSelfServiceTests : MfaTestsBase
 
         // Assert
         Assert.Equal(MfaChangeOutcome.Success, result.Outcome);
-        Assert.True(UnconfirmedEmailUser.EmailConfirmed);
+        Assert.True(IsEmailConfirmationSaved(UnconfirmedEmailUser));
+    }
+
+    [Fact]
+    public async Task ChangeUserModeAsync_Should_RefuseBeforeCheckingCode_When_LockoutIsDisabled()
+    {
+        // Act
+        var result = await _selfService.ChangeUserModeAsync(LockoutDisabledUser, CustomerChoiceStoreId, enabled: true, twoFactorToken: "token", code: ValidCode);
+
+        // Assert
+        Assert.Equal(MfaChangeOutcome.LockoutDisabled, result.Outcome);
+        Assert.Null(result.CodeResult);
+    }
+
+    [Fact]
+    public async Task ChangeOrganizationModeAsync_Should_RefuseBeforeCheckingCode_When_LockoutIsDisabled()
+    {
+        // Act
+        var result = await _selfService.ChangeOrganizationModeAsync(LockoutDisabledUser, CustomerChoiceStoreId, OrganizationId, canManageOrganization: true,
+            enabled: true, twoFactorToken: "token", code: ValidCode);
+
+        // Assert
+        Assert.Equal(MfaChangeOutcome.LockoutDisabled, result.Outcome);
+        Assert.Null(result.CodeResult);
+        Assert.Equal(ModuleConstants.Modes.Off, await ModeService.GetOrganizationModeAsync(OrganizationId));
+    }
+
+    [Fact]
+    public async Task ChangeUserModeAsync_Should_ReportLockedByAdministrator_When_ModeIsRequiredAndLockoutIsDisabled()
+    {
+        // Arrange
+        await ModeService.SetUserModeAsync(LockoutDisabledUserId, ModuleConstants.Modes.Required);
+
+        // Act
+        var result = await _selfService.ChangeUserModeAsync(LockoutDisabledUser, CustomerChoiceStoreId, enabled: false, twoFactorToken: "token", code: ValidCode);
+
+        // Assert
+        Assert.Equal(MfaChangeOutcome.LockedByAdministrator, result.Outcome);
+    }
+
+    [Fact]
+    public async Task ChangeOrganizationModeAsync_Should_ReportOrganizationNotAllowed_When_PermissionIsMissingAndLockoutIsDisabled()
+    {
+        // Act
+        var result = await _selfService.ChangeOrganizationModeAsync(LockoutDisabledUser, CustomerChoiceStoreId, OrganizationId, canManageOrganization: false,
+            enabled: true, twoFactorToken: "token", code: ValidCode);
+
+        // Assert
+        Assert.Equal(MfaChangeOutcome.OrganizationNotAllowed, result.Outcome);
     }
 }
