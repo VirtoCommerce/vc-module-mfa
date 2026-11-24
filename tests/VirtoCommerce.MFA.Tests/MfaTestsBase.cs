@@ -126,6 +126,7 @@ public abstract class MfaTestsBase
     public IdentityResult CodeStampUpdateResult { get; set; } = IdentityResult.Success;
 
     private readonly ConcurrentDictionary<string, string> _codeStamps = new();
+    private readonly ConcurrentDictionary<string, bool> _savedEmailConfirmations = new();
 
     protected MfaTestsBase()
     {
@@ -196,10 +197,19 @@ public abstract class MfaTestsBase
             .Setup(x => x.IsLockedOutAsync(It.IsAny<ApplicationUser>()))
             .ReturnsAsync((ApplicationUser user) => user.LockoutEnd > TimeProvider.GetUtcNow());
 
-        // Like the Identity "Email" token provider: only a confirmed email can receive a code
+        UserManager
+            .Setup(x => x.GetEmailAsync(It.IsAny<ApplicationUser>()))
+            .ReturnsAsync((ApplicationUser user) => user.Email);
+
+        var emailTokenProvider = new MfaEmailTokenProvider();
+
         UserManager
             .Setup(x => x.GetValidTwoFactorProvidersAsync(It.IsAny<ApplicationUser>()))
-            .ReturnsAsync((ApplicationUser user) => !string.IsNullOrEmpty(user.Email) && user.EmailConfirmed ? [EmailProvider] : []);
+            .Returns(async (ApplicationUser user) => await emailTokenProvider.CanGenerateTwoFactorTokenAsync(UserManager.Object, user) ? [EmailProvider] : new List<string>());
+
+        UserManager
+            .Setup(x => x.IsEmailConfirmedAsync(It.IsAny<ApplicationUser>()))
+            .ReturnsAsync((ApplicationUser user) => user.EmailConfirmed);
 
         UserManager
             .Setup(x => x.GenerateTwoFactorTokenAsync(It.IsAny<ApplicationUser>(), EmailProvider))
@@ -364,9 +374,15 @@ public abstract class MfaTestsBase
         if (CodeStampUpdateResult.Succeeded)
         {
             _codeStamps[user.Id] = codeStamp;
+            _savedEmailConfirmations[user.Id] = user.EmailConfirmed;
         }
 
         return CodeStampUpdateResult;
+    }
+
+    protected bool IsEmailConfirmationSaved(ApplicationUser user)
+    {
+        return _savedEmailConfirmations.TryGetValue(user.Id, out var emailConfirmed) && emailConfirmed;
     }
 
     // Like Identity: a wrong code counts toward the lockout, which starts at MaxFailedAccessAttempts

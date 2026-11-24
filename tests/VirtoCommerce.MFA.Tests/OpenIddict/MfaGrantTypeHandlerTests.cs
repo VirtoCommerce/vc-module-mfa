@@ -68,8 +68,8 @@ public class MfaGrantTypeHandlerTests : MfaTestsBase
     [InlineData(LockedUserId, ValidCode, false, "invalid_code", SignInFailureReason.LockedOut)]
     [InlineData(LockoutDisabledUserId, ValidCode, true, "lockout_disabled", ModuleConstants.Security.FailureReason.LockoutDisabled)]
     [InlineData(LockoutDisabledUserId, ValidCode, false, "lockout_disabled", ModuleConstants.Security.FailureReason.LockoutDisabled)]
-    [InlineData(UnconfirmedEmailUserId, ValidCode, true, "mfa_provider_not_available", ModuleConstants.Security.FailureReason.ProviderNotAvailable)]
-    [InlineData(UnconfirmedEmailUserId, ValidCode, false, "mfa_provider_not_available", ModuleConstants.Security.FailureReason.ProviderNotAvailable)]
+    [InlineData(NoEmailUserId, ValidCode, true, "mfa_provider_not_available", ModuleConstants.Security.FailureReason.ProviderNotAvailable)]
+    [InlineData(NoEmailUserId, ValidCode, false, "mfa_provider_not_available", ModuleConstants.Security.FailureReason.ProviderNotAvailable)]
     public async Task HandleAsync_Should_ReturnExpectedError(string userId, string code, bool detailedErrors, string expectedErrorCode, string expectedFailureReason)
     {
         // Arrange

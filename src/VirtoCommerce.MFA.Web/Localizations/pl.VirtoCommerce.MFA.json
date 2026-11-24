@@ -3,7 +3,7 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Uwierzytelnianie wieloskładnikowe",
-        "description": "Wymaga, oprócz hasła, jednorazowego kodu wysyłanego e-mailem przy każdym logowaniu do Backoffice oraz przy każdym innym logowaniu hasłem (sklep, aplikacje, klienci API), które nie wskazuje sklepu albo wskazuje sklep stosujący to ustawienie. Użytkownicy bez potwierdzonego adresu e-mail lub z wyłączoną blokadą nie zalogują się, dopóki kod jest wymagany: przed włączeniem potwierdź ich e-mail i włącz blokadę."
+        "description": "Wymaga, oprócz hasła, jednorazowego kodu wysyłanego e-mailem przy każdym logowaniu do Backoffice oraz przy każdym innym logowaniu hasłem (sklep, aplikacje, klienci API), które nie wskazuje sklepu albo wskazuje sklep stosujący to ustawienie. Użytkownicy z wyłączoną blokadą nie zalogują się, dopóki kod jest wymagany: przed włączeniem włącz im blokadę."
       },
       "StoreMode": {
         "title": "Uwierzytelnianie wieloskładnikowe",
@@ -30,7 +30,7 @@
         "user_is_temporary_locked_out": "Twoje konto zostało tymczasowo zablokowane. Spróbuj ponownie później.",
         "sign_in_not_allowed": "Tym kontem nie można zalogować się do Backoffice.",
         "lockout_disabled": "To konto nie może logować się kodem. Skontaktuj się z administratorem.",
-        "mfa_provider_not_available": "Nie możemy wysłać kodu logowania na to konto. Potwierdź adres e-mail lub skontaktuj się z administratorem."
+        "mfa_provider_not_available": "Nie możemy wysłać kodu logowania na to konto. Skontaktuj się z administratorem."
       }
     },
     "sign-in-log": {
@@ -63,6 +63,7 @@
         "placeholders": {
           "mode": "Wybierz tryb"
         },
+        "lockout-disabled": "To konto ma wyłączoną blokadę, więc użytkownik nie zaloguje się tam, gdzie kod jest wymagany. Blokady nie można włączyć w Backoffice: zobacz dokumentację modułu uwierzytelniania wieloskładnikowego.",
         "status": {
           "title": "Rzeczywisty stan",
           "preview": "Podgląd dla wybranego trybu. Zapisz, aby go zastosować.",

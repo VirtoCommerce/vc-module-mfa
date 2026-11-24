@@ -16,6 +16,8 @@
                 <p class="note" ng-if="blade.mode">{{ ('mfa.blades.mode.description.' + blade.mode) | translate }}</p>
             </form>
 
+            <div class="note warning" ng-if="blade.status.isLockoutEnabled === false">{{ 'mfa.blades.mode.lockout-disabled' | translate }}</div>
+
             <fieldset class="mfa-status" ng-if="blade.status">
                 <legend>{{ 'mfa.blades.mode.status.title' | translate }}</legend>
                 <p class="note" ng-if="isDirty()"><i class="fa fa-eye"></i> {{ 'mfa.blades.mode.status.preview' | translate }}</p>

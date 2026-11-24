@@ -21,6 +21,7 @@ export interface MfaStatus {
   isGloballyEnabled?: boolean;
   isRequiredForBackoffice?: boolean | null;
   userStoreId?: string | null;
+  isLockoutEnabled?: boolean | null;
   stores?: MfaStoreStatus[];
 }
 

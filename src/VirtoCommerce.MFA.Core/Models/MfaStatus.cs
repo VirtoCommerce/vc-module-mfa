@@ -22,5 +22,10 @@ public class MfaStatus
     /// </summary>
     public string UserStoreId { get; set; }
 
+    /// <summary>
+    /// Whether the user's account has lockout enabled: without it the user can't pass the second factor. Null for an organization.
+    /// </summary>
+    public bool? IsLockoutEnabled { get; set; }
+
     public IList<MfaStoreStatus> Stores { get; set; } = [];
 }

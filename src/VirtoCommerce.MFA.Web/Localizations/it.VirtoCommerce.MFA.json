@@ -3,7 +3,7 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Autenticazione a più fattori",
-        "description": "Richiede, oltre alla password, un codice monouso inviato via e-mail per ogni accesso al Backoffice e per ogni altro accesso con password (negozio, app, client API) che non indica alcun negozio o indica un negozio che segue questa impostazione. Gli utenti senza e-mail confermata o con il blocco disattivato non potranno accedere finché il codice è richiesto: conferma la loro e-mail e attiva il blocco prima di abilitare questa opzione."
+        "description": "Richiede, oltre alla password, un codice monouso inviato via e-mail per ogni accesso al Backoffice e per ogni altro accesso con password (negozio, app, client API) che non indica alcun negozio o indica un negozio che segue questa impostazione. Gli utenti con il blocco disattivato non potranno accedere finché il codice è richiesto: attiva il loro blocco prima di abilitare questa opzione."
       },
       "StoreMode": {
         "title": "Autenticazione a più fattori",
@@ -30,7 +30,7 @@
         "user_is_temporary_locked_out": "Il tuo account è stato bloccato temporaneamente. Riprova più tardi.",
         "sign_in_not_allowed": "Non puoi accedere al Backoffice con questo account.",
         "lockout_disabled": "Questo account non può accedere con un codice. Contatta l'amministratore.",
-        "mfa_provider_not_available": "Impossibile inviare un codice di accesso a questo account. Conferma l'e-mail o contatta l'amministratore."
+        "mfa_provider_not_available": "Impossibile inviare un codice di accesso a questo account. Contatta l'amministratore."
       }
     },
     "sign-in-log": {
@@ -63,6 +63,7 @@
         "placeholders": {
           "mode": "Seleziona una modalità"
         },
+        "lockout-disabled": "Il blocco è disattivato per questo account, quindi l'utente non può accedere dove il codice è richiesto. Il blocco non può essere attivato nel Backoffice: consulta la documentazione del modulo di autenticazione a più fattori.",
         "status": {
           "title": "Stato effettivo",
           "preview": "Anteprima della modalità selezionata. Salva per applicarla.",

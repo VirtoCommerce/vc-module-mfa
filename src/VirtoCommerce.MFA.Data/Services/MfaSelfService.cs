@@ -119,14 +119,16 @@ public class MfaSelfService(
         settings.IsRequired = requirement.IsRequired;
         settings.RequiredBy = requirement.Source;
 
+        settings.IsLockoutEnabled = user.LockoutEnabled;
+
         settings.UserMode = await modeService.GetUserModeAsync(user.Id);
-        settings.CanChangeUserMode = isCustomerChoice && settings.UserMode != Modes.Required;
+        settings.CanChangeUserMode = isCustomerChoice && settings.IsLockoutEnabled && settings.UserMode != Modes.Required;
 
         if (!string.IsNullOrEmpty(organizationId))
         {
             settings.OrganizationId = organizationId;
             settings.OrganizationMode = await modeService.GetOrganizationModeAsync(organizationId);
-            settings.CanChangeOrganizationMode = isCustomerChoice && canManageOrganization && settings.OrganizationMode != Modes.Required;
+            settings.CanChangeOrganizationMode = isCustomerChoice && settings.IsLockoutEnabled && canManageOrganization && settings.OrganizationMode != Modes.Required;
         }
 
         var provider = await mfaService.GetProviderAsync(user);
@@ -166,9 +168,19 @@ public class MfaSelfService(
 
     private static MfaChangeOutcome GetRefusalOutcome(MfaSettings settings, string mode)
     {
-        return settings.StoreMode == ModuleConstants.StoreModes.CustomerChoice && mode == Modes.Required
-            ? MfaChangeOutcome.LockedByAdministrator
-            : MfaChangeOutcome.SelfServiceNotAllowed;
+        if (settings.StoreMode != ModuleConstants.StoreModes.CustomerChoice)
+        {
+            return MfaChangeOutcome.SelfServiceNotAllowed;
+        }
+
+        if (mode == Modes.Required)
+        {
+            return MfaChangeOutcome.LockedByAdministrator;
+        }
+
+        return settings.IsLockoutEnabled
+            ? MfaChangeOutcome.SelfServiceNotAllowed
+            : MfaChangeOutcome.LockoutDisabled;
     }
 
     private async Task<MfaChangeResult> ChangeUserModeCoreAsync(ApplicationUser user, string storeId, bool enabled, string twoFactorToken, string code)

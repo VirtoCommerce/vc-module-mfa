@@ -1,7 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Moq;
-using VirtoCommerce.MFA.Core;
 using VirtoCommerce.MFA.Data.Services;
 using VirtoCommerce.StoreModule.Core.Model.Search;
 using VirtoCommerce.StoreModule.Core.Services;
@@ -78,6 +77,28 @@ public class MfaStatusServiceTests : MfaTestsBase
         // Assert
         Assert.Equal(isGloballyEnabled, backofficeStatus.IsRequiredForBackoffice);
         Assert.Null(customerStatus.IsRequiredForBackoffice);
+    }
+
+    [Theory]
+    [InlineData(LockoutDisabledUserId, false)]
+    [InlineData(ActiveUserId, true)]
+    public async Task GetUserStatusAsync_Should_ReportLockout(string userId, bool expectedLockoutEnabled)
+    {
+        // Act
+        var status = await _statusService.GetUserStatusAsync(userId);
+
+        // Assert
+        Assert.Equal(expectedLockoutEnabled, status.IsLockoutEnabled);
+    }
+
+    [Fact]
+    public async Task GetOrganizationStatusAsync_Should_NotReportLockout()
+    {
+        // Act
+        var status = await _statusService.GetOrganizationStatusAsync(OrganizationId);
+
+        // Assert
+        Assert.Null(status.IsLockoutEnabled);
     }
 
     [Theory]

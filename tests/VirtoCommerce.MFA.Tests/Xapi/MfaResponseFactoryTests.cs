@@ -11,6 +11,7 @@ public class MfaResponseFactoryTests : MfaTestsBase
     [InlineData(MfaChangeOutcome.LockedByAdministrator, "mfa_locked_by_administrator")]
     [InlineData(MfaChangeOutcome.OrganizationNotAllowed, "mfa_organization_not_allowed")]
     [InlineData(MfaChangeOutcome.SelfServiceNotAllowed, "mfa_self_service_not_allowed")]
+    [InlineData(MfaChangeOutcome.LockoutDisabled, "lockout_disabled")]
     public void ToChangeResponse_Should_ReportWhyTheChangeIsRefused(MfaChangeOutcome outcome, string expectedCode)
     {
         // Act

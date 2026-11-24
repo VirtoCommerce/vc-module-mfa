@@ -3,7 +3,7 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Multi-factor authentication",
-        "description": "Require a one-time code sent by email, in addition to the password, for every Backoffice sign-in, and for every other password sign-in (storefront, apps, API clients) that names no store or a store that follows this setting. Users without a confirmed email or with lockout disabled can't sign in while the code is required: confirm their email and enable their lockout before turning this on."
+        "description": "Require a one-time code sent by email, in addition to the password, for every Backoffice sign-in, and for every other password sign-in (storefront, apps, API clients) that names no store or a store that follows this setting. Users with lockout disabled can't sign in while the code is required: enable their lockout before turning this on."
       },
       "StoreMode": {
         "title": "Multi-factor authentication",
@@ -30,7 +30,7 @@
         "user_is_temporary_locked_out": "Your account has been temporarily locked. Please try again later.",
         "sign_in_not_allowed": "You can't sign in to the Backoffice with this account.",
         "lockout_disabled": "This account can't sign in with a code. Contact your administrator.",
-        "mfa_provider_not_available": "We can't send a sign-in code to this account. Confirm its email or contact your administrator."
+        "mfa_provider_not_available": "We can't send a sign-in code to this account. Contact your administrator."
       }
     },
     "sign-in-log": {
@@ -63,6 +63,7 @@
         "placeholders": {
           "mode": "Select a mode"
         },
+        "lockout-disabled": "Lockout is disabled for this account, so the user can't sign in where the code is required. Lockout can't be enabled in the Backoffice: see the documentation of the multi-factor authentication module.",
         "status": {
           "title": "Effective status",
           "preview": "Preview of the selected mode. Save to apply it.",

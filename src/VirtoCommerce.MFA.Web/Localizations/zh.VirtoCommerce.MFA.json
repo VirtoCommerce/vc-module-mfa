@@ -3,7 +3,7 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "多重身份验证",
-        "description": "在每次登录 Backoffice 时，以及在其他未指定店铺或所指定店铺遵循此设置的密码登录（店铺、应用、API 客户端）时，除密码外还要求输入通过电子邮件发送的一次性验证码。需要验证码期间，未确认电子邮件或已禁用锁定的用户将无法登录：启用此设置前，请先确认其电子邮件并启用锁定。"
+        "description": "在每次登录 Backoffice 时，以及在其他未指定店铺或所指定店铺遵循此设置的密码登录（店铺、应用、API 客户端）时，除密码外还要求输入通过电子邮件发送的一次性验证码。需要验证码期间，已禁用锁定的用户将无法登录：启用此设置前，请先为其启用锁定。"
       },
       "StoreMode": {
         "title": "多重身份验证",
@@ -30,7 +30,7 @@
         "user_is_temporary_locked_out": "您的账户已被暂时锁定，请稍后再试。",
         "sign_in_not_allowed": "此账户无法登录 Backoffice。",
         "lockout_disabled": "此账户无法使用验证码登录，请联系管理员。",
-        "mfa_provider_not_available": "无法向此账户发送登录验证码。请确认电子邮件或联系管理员。"
+        "mfa_provider_not_available": "无法向此账户发送登录验证码。请联系管理员。"
       }
     },
     "sign-in-log": {
@@ -63,6 +63,7 @@
         "placeholders": {
           "mode": "选择模式"
         },
+        "lockout-disabled": "此账户已禁用锁定，因此在需要验证码的地方无法登录。无法在 Backoffice 中启用锁定：请参阅多因素身份验证模块的文档。",
         "status": {
           "title": "实际状态",
           "preview": "所选模式的预览。保存后生效。",

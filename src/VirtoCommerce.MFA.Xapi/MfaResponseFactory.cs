@@ -71,6 +71,13 @@ public class MfaResponseFactory(MfaErrorDescriber errorDescriber)
 
     protected virtual (string Code, string Description) GetChangeError(MfaChangeOutcome outcome)
     {
+        if (outcome == MfaChangeOutcome.LockoutDisabled)
+        {
+            var error = errorDescriber.LockoutDisabled();
+
+            return (error.Code, error.Description);
+        }
+
         return outcome switch
         {
             MfaChangeOutcome.LockedByAdministrator => ("mfa_locked_by_administrator", "Multi-factor authentication is managed by the administrator."),

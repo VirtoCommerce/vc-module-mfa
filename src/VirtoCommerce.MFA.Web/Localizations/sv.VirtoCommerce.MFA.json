@@ -3,7 +3,7 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Multifaktorautentisering",
-        "description": "Kräver, utöver lösenordet, en engångskod som skickas via e-post vid varje inloggning i Backoffice och vid varje annan lösenordsinloggning (butik, appar, API-klienter) som inte anger någon butik eller anger en butik som följer den här inställningen. Användare utan bekräftad e-post eller med inaktiverad låsning kan inte logga in medan koden krävs: bekräfta deras e-post och aktivera låsning innan du aktiverar detta."
+        "description": "Kräver, utöver lösenordet, en engångskod som skickas via e-post vid varje inloggning i Backoffice och vid varje annan lösenordsinloggning (butik, appar, API-klienter) som inte anger någon butik eller anger en butik som följer den här inställningen. Användare med inaktiverad låsning kan inte logga in medan koden krävs: aktivera deras låsning innan du aktiverar detta."
       },
       "StoreMode": {
         "title": "Multifaktorautentisering",
@@ -30,7 +30,7 @@
         "user_is_temporary_locked_out": "Ditt konto har låsts tillfälligt. Försök igen senare.",
         "sign_in_not_allowed": "Du kan inte logga in i Backoffice med det här kontot.",
         "lockout_disabled": "Det här kontot kan inte logga in med en kod. Kontakta administratören.",
-        "mfa_provider_not_available": "Vi kan inte skicka en inloggningskod till det här kontot. Bekräfta e-posten eller kontakta administratören."
+        "mfa_provider_not_available": "Vi kan inte skicka en inloggningskod till det här kontot. Kontakta administratören."
       }
     },
     "sign-in-log": {
@@ -63,6 +63,7 @@
         "placeholders": {
           "mode": "Välj ett läge"
         },
+        "lockout-disabled": "Låsning är inaktiverad för det här kontot, så användaren kan inte logga in där koden krävs. Låsning kan inte aktiveras i Backoffice: se dokumentationen för modulen för multifaktorautentisering.",
         "status": {
           "title": "Faktisk status",
           "preview": "Förhandsvisning av det valda läget. Spara för att tillämpa det.",

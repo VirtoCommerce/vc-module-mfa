@@ -3,7 +3,7 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Flerfaktorautentisering",
-        "description": "Krever i tillegg til passordet en engangskode sendt på e-post ved hver pålogging i Backoffice og ved hver annen passordpålogging (butikk, apper, API-klienter) som ikke angir noen butikk eller angir en butikk som følger denne innstillingen. Brukere uten bekreftet e-post eller med deaktivert låsing kan ikke logge på mens koden kreves: bekreft e-posten deres og aktiver låsing før du slår på dette."
+        "description": "Krever i tillegg til passordet en engangskode sendt på e-post ved hver pålogging i Backoffice og ved hver annen passordpålogging (butikk, apper, API-klienter) som ikke angir noen butikk eller angir en butikk som følger denne innstillingen. Brukere med deaktivert låsing kan ikke logge på mens koden kreves: aktiver låsing for dem før du slår på dette."
       },
       "StoreMode": {
         "title": "Flerfaktorautentisering",
@@ -30,7 +30,7 @@
         "user_is_temporary_locked_out": "Kontoen din er midlertidig låst. Prøv igjen senere.",
         "sign_in_not_allowed": "Du kan ikke logge på Backoffice med denne kontoen.",
         "lockout_disabled": "Denne kontoen kan ikke logge på med en kode. Kontakt administratoren.",
-        "mfa_provider_not_available": "Vi kan ikke sende en påloggingskode til denne kontoen. Bekreft e-posten eller kontakt administratoren."
+        "mfa_provider_not_available": "Vi kan ikke sende en påloggingskode til denne kontoen. Kontakt administratoren."
       }
     },
     "sign-in-log": {
@@ -63,6 +63,7 @@
         "placeholders": {
           "mode": "Velg en modus"
         },
+        "lockout-disabled": "Låsing er deaktivert for denne kontoen, så brukeren kan ikke logge på der koden kreves. Låsing kan ikke aktiveres i Backoffice: se dokumentasjonen for modulen for flerfaktorautentisering.",
         "status": {
           "title": "Faktisk status",
           "preview": "Forhåndsvisning av valgt modus. Lagre for å ta den i bruk.",
