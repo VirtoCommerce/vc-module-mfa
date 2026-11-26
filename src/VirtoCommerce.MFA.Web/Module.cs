@@ -61,7 +61,7 @@ public class Module : IModule, IHasConfiguration, IHasModuleService
             options.Tokens.ProviderMap[TokenOptions.DefaultEmailProvider] = new TokenProviderDescriptor(typeof(MfaEmailTokenProvider)));
 
         serviceCollection.TryAddSingleton(TimeProvider.System);
-        serviceCollection.AddSingleton<IMfaCodeAttemptLimiter, MfaCodeAttemptLimiter>();
+        serviceCollection.AddSingleton<IMfaCodeAttemptLimiter, MfaUserTokenCodeAttemptLimiter>();
         serviceCollection.AddSingleton<IMfaCodeDeliveryLimiter, MfaCodeDeliveryLimiter>();
         serviceCollection.AddSingleton<ITwoFactorTicketStore, TwoFactorTicketStore>();
         serviceCollection.AddSingleton<MfaErrorDescriber>();
