@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using VirtoCommerce.MFA.Core;
 using VirtoCommerce.MFA.Core.Models;
@@ -16,7 +17,8 @@ namespace VirtoCommerce.MFA.Data.Services;
 public class MfaUserTokenCodeAttemptLimiter(
     IServiceScopeFactory serviceScopeFactory,
     IOptions<MfaOptions> options,
-    TimeProvider timeProvider)
+    TimeProvider timeProvider,
+    ILogger<MfaUserTokenCodeAttemptLimiter> logger)
     : IMfaCodeAttemptLimiter
 {
     private const int MaxSwapAttempts = 10;
@@ -65,11 +67,18 @@ public class MfaUserTokenCodeAttemptLimiter(
         });
     }
 
-    public virtual Task ResetAsync(string userId)
+    public virtual async Task ResetAsync(string userId)
     {
         ArgumentException.ThrowIfNullOrEmpty(userId);
 
-        return UseDbContextAsync(dbContext => GetTokenQuery(dbContext, userId).ExecuteDeleteAsync());
+        try
+        {
+            await UseDbContextAsync(dbContext => GetTokenQuery(dbContext, userId).ExecuteDeleteAsync());
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "The wrong code count of user {UserId} was not reset.", userId);
+        }
     }
 
     protected virtual IQueryable<IdentityUserToken<string>> GetTokenQuery(SecurityDbContext dbContext, string userId)

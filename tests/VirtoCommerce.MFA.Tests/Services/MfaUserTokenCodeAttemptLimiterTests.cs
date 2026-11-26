@@ -175,7 +175,7 @@ public sealed class MfaUserTokenCodeAttemptLimiterTests : IDisposable
         }
 
         var isOtherAttemptAllowed = false;
-        var interceptor = new BeforeTokenUpdateInterceptor(async () => isOtherAttemptAllowed = await otherInstance.TryConsumeAttemptAsync(UserId));
+        var interceptor = new BeforeTokenWriteInterceptor(async () => isOtherAttemptAllowed = await otherInstance.TryConsumeAttemptAsync(UserId));
         var limiter = CreatePlatformInstanceLimiter(interceptor);
 
         // Act
@@ -201,10 +201,47 @@ public sealed class MfaUserTokenCodeAttemptLimiterTests : IDisposable
         await Assert.ThrowsAsync<DbUpdateException>(action);
     }
 
+    [Fact]
+    public async Task TryConsumeAttemptAsync_Should_NotLoseCount_When_AnotherPlatformInstanceAddsFirstCountBeforeInsert()
+    {
+        // Arrange
+        var otherInstance = CreatePlatformInstanceLimiter();
+        var isOtherAttemptAllowed = false;
+        var interceptor = new BeforeTokenWriteInterceptor(async () => isOtherAttemptAllowed = await otherInstance.TryConsumeAttemptAsync(UserId));
+        var limiter = CreatePlatformInstanceLimiter(interceptor);
+
+        // Act
+        var isAllowed = await limiter.TryConsumeAttemptAsync(UserId);
+
+        // Assert
+        Assert.True(isOtherAttemptAllowed);
+        Assert.True(isAllowed);
+        Assert.True(await limiter.TryConsumeAttemptAsync(UserId));
+        Assert.False(await limiter.TryConsumeAttemptAsync(UserId));
+    }
+
+    [Fact]
+    public async Task ResetAsync_Should_NotThrow_When_DeletingCountFails()
+    {
+        // Arrange
+        var limiter = CreatePlatformInstanceLimiter(new FailingTokenDeleteInterceptor());
+        for (var i = 0; i < MaxCodeAttempts; i++)
+        {
+            await limiter.TryConsumeAttemptAsync(UserId);
+        }
+
+        // Act
+        await limiter.ResetAsync(UserId);
+
+        // Assert
+        Assert.False(await limiter.HasAttemptsLeftAsync(UserId));
+    }
+
     private IMfaCodeAttemptLimiter CreatePlatformInstanceLimiter(IInterceptor interceptor = null)
     {
         // Each platform instance has its own service provider, memory and database connections, but the same database
         var services = new ServiceCollection();
+        services.AddLogging();
         services.AddMemoryCache();
         services.AddSingleton<TimeProvider>(_timeProvider);
         services.AddDbContext<SecurityDbContext>(builder =>
@@ -247,20 +284,50 @@ public sealed class MfaUserTokenCodeAttemptLimiterTests : IDisposable
         builder.UseSqlite($"Data Source={_databasePath};Default Timeout=60");
     }
 
-    private sealed class BeforeTokenUpdateInterceptor(Func<Task> action) : DbCommandInterceptor
+    private sealed class BeforeTokenWriteInterceptor(Func<Task> action) : DbCommandInterceptor
     {
         private bool _isDone;
 
         public override async ValueTask<InterceptionResult<int>> NonQueryExecutingAsync(DbCommand command, CommandEventData eventData,
             InterceptionResult<int> result, CancellationToken cancellationToken = default)
         {
-            if (!_isDone && command.CommandText.Contains("AspNetUserTokens", StringComparison.Ordinal))
+            await RunBeforeFirstWriteAsync(command);
+
+            return result;
+        }
+
+        public override async ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(DbCommand command, CommandEventData eventData,
+            InterceptionResult<DbDataReader> result, CancellationToken cancellationToken = default)
+        {
+            await RunBeforeFirstWriteAsync(command);
+
+            return result;
+        }
+
+        private async Task RunBeforeFirstWriteAsync(DbCommand command)
+        {
+            if (!_isDone &&
+                command.CommandText.Contains("AspNetUserTokens", StringComparison.Ordinal) &&
+                !command.CommandText.TrimStart().StartsWith("SELECT", StringComparison.OrdinalIgnoreCase))
             {
                 _isDone = true;
                 await action();
             }
+        }
+    }
 
-            return result;
+    private sealed class FailingTokenDeleteInterceptor : DbCommandInterceptor
+    {
+        public override ValueTask<InterceptionResult<int>> NonQueryExecutingAsync(DbCommand command, CommandEventData eventData,
+            InterceptionResult<int> result, CancellationToken cancellationToken = default)
+        {
+            if (command.CommandText.Contains("DELETE", StringComparison.OrdinalIgnoreCase) &&
+                command.CommandText.Contains("AspNetUserTokens", StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("The database is not available.");
+            }
+
+            return ValueTask.FromResult(result);
         }
     }
 }
