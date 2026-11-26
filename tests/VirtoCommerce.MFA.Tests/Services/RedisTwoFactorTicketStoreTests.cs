@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
+using StackExchange.Redis;
 using VirtoCommerce.MFA.Core.Models;
 using VirtoCommerce.MFA.Data.Services;
 using Xunit;
@@ -79,6 +80,20 @@ public class RedisTwoFactorTicketStoreTests
 
         // Assert
         Assert.False(isRedeemed);
+    }
+
+    [Fact]
+    public async Task IsRedeemedAsync_Should_Throw_When_RedisIsNotAvailable()
+    {
+        // Arrange
+        var store = CreateStore();
+        _redis.IsAvailable = false;
+
+        // Act
+        var isRedeemed = () => store.IsRedeemedAsync(_ticket);
+
+        // Assert
+        await Assert.ThrowsAsync<RedisConnectionException>(isRedeemed);
     }
 
     private RedisTwoFactorTicketStore CreateStore()

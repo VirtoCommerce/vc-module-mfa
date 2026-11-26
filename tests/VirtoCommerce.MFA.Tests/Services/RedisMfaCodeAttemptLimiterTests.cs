@@ -133,6 +133,20 @@ public class RedisMfaCodeAttemptLimiterTests
         await Assert.ThrowsAsync<RedisConnectionException>(consume);
     }
 
+    [Fact]
+    public async Task HasAttemptsLeftAsync_Should_Throw_When_RedisIsNotAvailable()
+    {
+        // Arrange
+        var limiter = CreateLimiter();
+        _redis.IsAvailable = false;
+
+        // Act
+        var hasAttemptsLeft = () => limiter.HasAttemptsLeftAsync(UserId);
+
+        // Assert
+        await Assert.ThrowsAsync<RedisConnectionException>(hasAttemptsLeft);
+    }
+
     private RedisMfaCodeAttemptLimiter CreateLimiter()
     {
         var options = new MfaOptions { MaxCodeAttempts = MaxCodeAttempts, TwoFactorTokenLifetime = Window };
