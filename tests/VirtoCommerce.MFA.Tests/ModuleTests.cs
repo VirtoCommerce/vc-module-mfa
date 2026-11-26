@@ -10,6 +10,7 @@ using Moq;
 using VirtoCommerce.MFA.Core.Models;
 using VirtoCommerce.MFA.Core.Services;
 using VirtoCommerce.MFA.Data.Providers;
+using VirtoCommerce.MFA.Data.Services;
 using VirtoCommerce.MFA.Web;
 using VirtoCommerce.MFA.Xapi.Authorization;
 using VirtoCommerce.Platform.Core.Modularity;
@@ -32,6 +33,27 @@ public class ModuleTests
 
         // Assert
         Assert.Equal(ServiceLifetime.Singleton, services.Single(x => x.ServiceType == serviceType).Lifetime);
+    }
+
+    [Theory]
+    [InlineData(typeof(IMfaCodeAttemptLimiter), typeof(MfaCodeAttemptLimiter), typeof(RedisMfaCodeAttemptLimiter))]
+    [InlineData(typeof(IMfaCodeDeliveryLimiter), typeof(MfaCodeDeliveryLimiter), typeof(RedisMfaCodeDeliveryLimiter))]
+    [InlineData(typeof(ITwoFactorTicketStore), typeof(TwoFactorTicketStore), typeof(RedisTwoFactorTicketStore))]
+    public void Initialize_Should_KeepLimitsInRedis_When_PlatformUsesRedis(Type serviceType, Type inMemoryType, Type redisType)
+    {
+        // Arrange
+        var redisServices = CreatePlatformServices();
+        redisServices.AddSingleton(new FakeRedis(TimeProvider.System).Connection);
+        using var redisServiceProvider = Initialize(services: redisServices).BuildServiceProvider();
+        using var inMemoryServiceProvider = Initialize(services: CreatePlatformServices()).BuildServiceProvider();
+
+        // Act
+        var redisService = redisServiceProvider.GetRequiredService(serviceType);
+        var inMemoryService = inMemoryServiceProvider.GetRequiredService(serviceType);
+
+        // Assert
+        Assert.IsType(redisType, redisService);
+        Assert.IsType(inMemoryType, inMemoryService);
     }
 
     [Fact]
@@ -93,6 +115,15 @@ public class ModuleTests
         // Assert
         Assert.Equal(isXapiInstalled, services.Any(x => x.ServiceType == typeof(MfaUserResolver)));
         Assert.Contains(services, x => x.ServiceType == typeof(IMfaService));
+    }
+
+    private static ServiceCollection CreatePlatformServices()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddMemoryCache();
+
+        return services;
     }
 
     private static ServiceCollection Initialize(Dictionary<string, string> configuration = null, ServiceCollection services = null, bool isXapiInstalled = true)
