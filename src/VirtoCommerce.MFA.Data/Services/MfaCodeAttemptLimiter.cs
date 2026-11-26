@@ -8,6 +8,7 @@ using VirtoCommerce.MFA.Core.Services;
 
 namespace VirtoCommerce.MFA.Data.Services;
 
+[Obsolete("Counts wrong codes in the memory of each platform instance. Use MfaUserTokenCodeAttemptLimiter, which shares the count across instances.", DiagnosticId = "VC0016", UrlFormat = "https://docs.virtocommerce.org/products/products-virto3-versions")]
 public class MfaCodeAttemptLimiter(
     IMemoryCache memoryCache,
     IOptions<MfaOptions> options,

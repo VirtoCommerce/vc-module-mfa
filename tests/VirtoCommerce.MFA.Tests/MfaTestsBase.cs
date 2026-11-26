@@ -285,7 +285,9 @@ public abstract class MfaTestsBase
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
         CodeDeliveryLimiter = new MfaCodeDeliveryLimiter(memoryCache, Options.Create(MfaOptions), TimeProvider);
         TicketStore = new TwoFactorTicketStore(memoryCache, Options.Create(MfaOptions));
+#pragma warning disable VC0016 // The service tests run on one instance, where the in-memory limiter behaves the same
         CodeAttemptLimiter = new MfaCodeAttemptLimiter(memoryCache, Options.Create(MfaOptions), TimeProvider);
+#pragma warning restore VC0016
         ErrorDescriber = new MfaErrorDescriber(TimeProvider);
         var platformUIOptions = new Mock<IOptionsMonitor<PlatformUIOptions>>();
         platformUIOptions.Setup(x => x.CurrentValue).Returns(() => PlatformUIOptions);

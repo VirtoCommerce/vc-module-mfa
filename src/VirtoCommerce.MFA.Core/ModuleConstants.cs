@@ -13,8 +13,10 @@ public static class ModuleConstants
         public const string TwoFactorTokenPurpose = "VirtoCommerce.MFA.TwoFactorToken";
         public const string ChangeTicketPurpose = "Change";
         public const string IdentityTwoFactorPurpose = "TwoFactor";
-        public const string CodeStampLoginProvider = "VirtoCommerce.MFA";
+        public const string LoginProvider = "VirtoCommerce.MFA";
+        public const string CodeStampLoginProvider = LoginProvider;
         public const string CodeStampName = "CodeStamp";
+        public const string CodeAttemptsName = "CodeAttempts";
 
         public static class Parameters
         {

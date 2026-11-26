@@ -8,6 +8,8 @@ using VirtoCommerce.MFA.Core.Models;
 using VirtoCommerce.MFA.Data.Services;
 using Xunit;
 
+#pragma warning disable VC0016 // Tests the obsolete in-memory limiter
+
 namespace VirtoCommerce.MFA.Tests.Services;
 
 [Trait("Category", "Unit")]
