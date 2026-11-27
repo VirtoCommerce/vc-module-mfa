@@ -27,7 +27,7 @@ public class MfaStatusServiceTests : MfaTestsBase
                 Results = Stores.Skip(criteria.Skip).Take(criteria.Take).ToList(),
             });
 
-        _statusService = new MfaStatusService(UserManager.Object, storeSearchService.Object, SettingsManager.Object, RequirementService, ModeService);
+        _statusService = new MfaStatusService(UserManager.Object, storeSearchService.Object, SettingsManager.Object, RequirementService, ModeService, BackofficeExemptionService.Object);
     }
 
     [Theory]
@@ -77,6 +77,24 @@ public class MfaStatusServiceTests : MfaTestsBase
         // Assert
         Assert.Equal(isGloballyEnabled, backofficeStatus.IsRequiredForBackoffice);
         Assert.Null(customerStatus.IsRequiredForBackoffice);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, true)]
+    public async Task GetUserStatusAsync_Should_ShowAnExemptionWithoutSuppressingIdentityMfa(bool identityEnabled, bool expectedRequired)
+    {
+        IsGloballyEnabled = true;
+        BackofficeUser.TwoFactorEnabled = identityEnabled;
+        BackofficeExemptionService.Setup(x => x.IsExemptAsync(BackofficeUserId)).ReturnsAsync(true);
+
+        var status = await _statusService.GetUserStatusAsync(BackofficeUserId);
+
+        Assert.True(status.IsBackofficeExempt);
+        Assert.Equal(identityEnabled, status.IsRequiredByIdentity);
+        Assert.Equal(expectedRequired, status.IsRequiredForBackoffice);
+        Assert.True(Assert.Single(status.Stores, x => x.StoreId == MfaEnabledStoreId).IsRequired);
+        Assert.True(Assert.Single(status.Stores, x => x.StoreId == StoreId).IsRequired);
     }
 
     [Theory]

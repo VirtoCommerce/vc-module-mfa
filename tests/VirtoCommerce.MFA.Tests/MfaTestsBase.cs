@@ -128,6 +128,8 @@ public abstract class MfaTestsBase
     private readonly ConcurrentDictionary<string, string> _codeStamps = new();
     private readonly ConcurrentDictionary<string, bool> _savedEmailConfirmations = new();
 
+    protected Mock<IMfaBackofficeExemptionService> BackofficeExemptionService { get; } = new();
+
     protected MfaTestsBase()
     {
         Stores =
@@ -180,6 +182,9 @@ public abstract class MfaTestsBase
         UserManager = new Mock<UserManager<ApplicationUser>>(Mock.Of<IUserStore<ApplicationUser>>(), null, null, null, null, null, null, null, null);
 
         UserManager.SetupGet(x => x.SupportsUserLockout).Returns(true);
+        UserManager.SetupGet(x => x.SupportsUserTwoFactor).Returns(true);
+        UserManager.Setup(x => x.GetTwoFactorEnabledAsync(It.IsAny<ApplicationUser>()))
+            .ReturnsAsync((ApplicationUser user) => user.TwoFactorEnabled);
 
         UserManager
             .Setup(x => x.FindByIdAsync(It.IsAny<string>()))
@@ -290,7 +295,7 @@ public abstract class MfaTestsBase
         var platformUIOptions = new Mock<IOptionsMonitor<PlatformUIOptions>>();
         platformUIOptions.Setup(x => x.CurrentValue).Returns(() => PlatformUIOptions);
         var adminUIAccessPolicy = new ConfigurationAdminUIAccessPolicy(platformUIOptions.Object);
-        RequirementService = new MfaRequirementService(StoreService.Object, SettingsManager.Object, ModeService, memberService.Object, adminUIAccessPolicy);
+        RequirementService = new MfaRequirementService(StoreService.Object, SettingsManager.Object, ModeService, memberService.Object, adminUIAccessPolicy, BackofficeExemptionService.Object);
 
         MfaService = new MfaService(UserManager.Object, StoreService.Object, TwoFactorTokenService, TicketStore, [emailProvider],
             CodeAttemptLimiter, CodeDeliveryLimiter, Options.Create(MfaOptions), TimeProvider);

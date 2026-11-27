@@ -12,12 +12,26 @@ The module is built on the ASP.NET Core Identity two-factor mechanism. It tells 
 
 | Setting | Level and place in the Backoffice | Description | Default |
 | --- | --- | --- | --- |
-| `MultiFactorAuthentication.Enabled` | Global: Settings > Platform > Security | Requires the code for every Backoffice sign-in, and for every password sign-in to the token endpoint that names no store, an unknown store or a store that follows the global setting, or that is made by a user of such a store. | `false` |
+| `MultiFactorAuthentication.Enabled` | Global: Settings > Platform > Security | Requires the code for every Backoffice password sign-in except explicitly exempt accounts, and for every password sign-in to the token endpoint that names no store, an unknown store or a store that follows the global setting, or that is made by a user of such a store. | `false` |
 | `MultiFactorAuthentication.StoreMode` | Store: Stores > store > Settings > Store > Security | Applies to the password sign-ins to the token endpoint that name this store, and to every password sign-in to the token endpoint of the users of this store. `Use global setting`: follow `MultiFactorAuthentication.Enabled`. `Enabled`: the code is required from everyone. `Disabled`: the code is not required from the store's own customers; Backoffice accounts and the users of other stores or without a store follow `MultiFactorAuthentication.Enabled` there. `AdminManaged`: required from the users and organizations an administrator set to `Required`. `CustomerChoice`: required from the users and organizations with the mode `Enabled` or `Required`; customers change their own mode, and organization maintainers the mode of their organization, in the storefront. | `Use global setting` |
 
 A password sign-in to the token endpoint requires the code when the store the request names requires it, or, when the request names no store, the global setting does. Tokens are not limited to the store the request names, so the user's own store (`ApplicationUser.StoreId`) applies too: a user whose own store requires the code, by its mode or by the user's or organization's mode, can't skip it by signing in without a store, or by naming another store that doesn't require it. For the same reason, a `Disabled` store lets in without the code only its own customers (`ApplicationUser.StoreId` is the store) that are not Backoffice accounts. Everyone else, such as an administrator without a store or a user of another store, follows the global setting there. A Backoffice account is an administrator (`IsAdministrator`), a user of the `Administrator` or `Manager` type, or a user the platform lets into the Backoffice through `IAdminUIAccessPolicy`: by default, any user with a permission, which can be limited in `VirtoCommerce:PlatformUI:Access`.
 
-The Backoffice sign-in has no token request and follows only the global setting, for every user. Basic authentication follows the same rule.
+The Backoffice password sign-in has no token request and follows the global setting unless the user has an explicit Backoffice exemption. Basic authentication follows the same requirement.
+
+### Backoffice exemptions
+
+To require MFA for all Backoffice password sign-ins except selected accounts, enable `MultiFactorAuthentication.Enabled`. In Users, open the account's MFA blade and select **Allow Backoffice sign-in without mandatory MFA** for an exception. The separate object setting `MultiFactorAuthentication.BackofficeExempt` defaults to `false`: existing accounts and accounts with user mode `Off` are not exempt.
+
+The AngularJS Backoffice and Admin Shell offer the same control. Reading requires `mfa:read`; changing it requires `mfa:manage`. `GET /api/mfa/users/{userId}/backoffice-exemption` reads the exception, and `PUT` to the same endpoint saves `{ "isExempt": true }` or `{ "isExempt": false }`. An unknown user returns `404`.
+
+The exception removes only the mandatory Backoffice requirement. An explicit storefront sign-in to an `Enabled` store or a store following an enabled global setting still requires MFA, as do the user's and organization's requirements in `AdminManaged` and `CustomerChoice` stores. The user's own store still applies when another store, or none, is named. For example, a manager assigned to an MFA-required store still needs a code at the token endpoint even with a Backoffice exemption. A `Disabled` store does not introduce its own MFA requirement.
+
+For Backoffice accounts without an exception, the global Backoffice requirement also applies to password grants naming an `AdminManaged` or `CustomerChoice` store: choosing a different store must not issue a token that bypasses Backoffice MFA.
+
+Identity's `TwoFactorEnabled` remains independent: an account with it enabled and an available two-factor provider still needs a code even when exempt. The blade reports this separately. External SSO sign-ins follow their provider's policy; a user with SSO who signs in with a local password follows the password rules.
+
+For the requested combination, set the storefront's `MultiFactorAuthentication.StoreMode` to `Enabled`, turn on global MFA, and grant only the selected Backoffice exemptions. Before enabling it, check email delivery and account lockout as described below. Changes apply to subsequent password sign-ins; existing sessions, refresh tokens and API keys are not revoked.
 
 | appsettings.json | Description | Default |
 | --- | --- | --- |
@@ -36,7 +50,7 @@ The storefront calls `POST /api/mfa/resend` on its own host. **When the storefro
 
 ### User and organization modes
 
-Every user and every organization has an MFA mode, kept in the platform object settings `MultiFactorAuthentication.UserMode` and `MultiFactorAuthentication.OrganizationMode`. Only the stores with `AdminManaged` or `CustomerChoice` read them; the other store modes, the global setting and the Backoffice sign-in ignore them.
+Every user and every organization has an MFA mode, kept in the platform object settings `MultiFactorAuthentication.UserMode` and `MultiFactorAuthentication.OrganizationMode`. Only the stores with `AdminManaged` or `CustomerChoice` read them; the other store modes, the global setting and the Backoffice sign-in ignore them. A Backoffice exemption is a separate setting and does not change these modes.
 
 | Mode | Set by | `AdminManaged` store | `CustomerChoice` store |
 | --- | --- | --- | --- |
@@ -98,7 +112,7 @@ The two-factor token proves that the password was verified. It is an encrypted t
 
 With the xAPI module installed, the storefront reads and changes the modes over GraphQL. Every change is confirmed with a code sent to the current email of the account:
 
-* `mfaSettings(storeId, organizationId)` returns the store mode, whether the current user's sign-in needs the code and what requires it (`requiredBy`: `None`, `Global`, `Store`, `Organization` or `User`), the user's and the organization's modes, whether the user may change them, whether the account has lockout enabled (`isLockoutEnabled`; without it neither mode can be changed), and the masked destination of the code.
+* `mfaSettings(storeId, organizationId)` returns the store mode, whether the current user's sign-in needs the code and what requires it (`requiredBy`: `None`, `Global`, `Backoffice`, `Store`, `Organization` or `User`), the user's and the organization's modes, whether the user may change them, whether the account has lockout enabled (`isLockoutEnabled`; without it neither mode can be changed), and the masked destination of the code.
 * `requestMfaChangeCode(command: { storeId, organizationId })` sends a code and returns a two-factor token for the change: of the organization's mode when `organizationId` is given, otherwise of the user's mode. A request within `MultiFactorAuthentication:CodeResendInterval` sends nothing and returns a new two-factor token with `resendSecondsRemaining`: the code sent shortly before is still valid.
 * `updateMfaUserMode(command: { storeId, enabled, twoFactorToken, code })` and `updateMfaOrganizationMode(command: { storeId, organizationId, enabled, twoFactorToken, code })` set the mode to `Enabled` or `Off` and return the new settings.
 
@@ -112,7 +126,7 @@ The code doesn't protect the mode from whoever holds the session: they can chang
 | --- | --- | --- |
 | `GET /api/mfa/modes/users/{userId}`, `GET /api/mfa/modes/organizations/{organizationId}` | `mfa:read` | The mode, for example `{ "mode": "Off" }`. |
 | `PUT /api/mfa/modes/users/{userId}`, `PUT /api/mfa/modes/organizations/{organizationId}` | `mfa:manage` | Sets the mode, body `{ "mode": "Required" }`. An unknown mode returns `400`. |
-| `GET /api/mfa/modes/users/{userId}/status`, `GET /api/mfa/modes/organizations/{organizationId}/status` | `mfa:read` | Whether the sign-in needs the code in every store and what requires it, the global setting and, for a Backoffice user, the Backoffice sign-in. For a user, each store is evaluated as that user's sign-in: `isRequiredByUserStore` marks the stores where the user's own store (`userStoreId`) requires the code, `isDisabledModeSkipped` the `Disabled` stores that don't let the user in without it, and `isLockoutEnabled` tells whether the account has lockout enabled. The optional `mode` query parameter evaluates that mode instead of the saved one. |
+| `GET /api/mfa/modes/users/{userId}/status`, `GET /api/mfa/modes/organizations/{organizationId}/status` | `mfa:read` | Whether the sign-in needs the code in every store and what requires it, the global setting, the user's Backoffice exemption and Identity two-factor requirement, and, for a Backoffice user, the Backoffice sign-in. For a user, each store is evaluated as that user's sign-in: `isRequiredByUserStore` marks the stores where the user's own store (`userStoreId`) requires the code, `isDisabledModeSkipped` the `Disabled` stores that don't let the user in without it, and `isLockoutEnabled` tells whether the account has lockout enabled. The optional `mode` query parameter evaluates that mode instead of the saved one. |
 
 The code is sent by the `MfaSignInEmailNotification` notification in the user's default language, or the store's default language. A sign-in to a store uses the store's template and is sent from the store's email (`AdminEmail`, then `Email`); a sign-in without a store uses the global template and the default sender. If the notification is not active, no code is sent: the sign-in reports `mfa_provider_not_available` and a warning is logged. Like any notification, the email with the code is saved to the notification journal, so access to the journal should be limited to the people who may see sign-in codes.
 

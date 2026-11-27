@@ -3,11 +3,11 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Authentification multifacteur",
-        "description": "Exige, en plus du mot de passe, un code à usage unique envoyé par e-mail pour chaque connexion au Backoffice et pour chaque autre connexion par mot de passe (boutique, applications, clients d'API) qui n'indique aucune boutique ou une boutique qui suit ce paramètre. Les utilisateurs dont le verrouillage est désactivé ne pourront pas se connecter tant que le code est exigé : activez leur verrouillage avant d'activer ce paramètre."
+        "description": "Exige un code par e-mail pour les connexions au Backoffice par mot de passe, sauf pour les comptes explicitement exemptés. S'applique aussi sans boutique et aux boutiques suivant ce paramètre. Les exigences des boutiques restent applicables malgré l'exemption Backoffice. Le verrouillage du compte doit être activé pour la connexion avec code."
       },
       "StoreMode": {
         "title": "Authentification multifacteur",
-        "description": "Indique si une connexion par mot de passe à cette boutique nécessite, en plus du mot de passe, un code à usage unique envoyé par e-mail. Use global setting : suivre le paramètre global d'authentification multifacteur. Enabled : exigé pour chaque utilisateur. Disabled : non exigé pour les clients de la boutique ; les comptes du Backoffice et les utilisateurs des autres boutiques suivent le paramètre global. Admin managed : exigé uniquement pour les utilisateurs et organisations qu'un administrateur a définis sur Required dans le Backoffice ; les clients ne peuvent pas le modifier. Customer choice : les clients l'activent ou la désactivent pour eux-mêmes, et les responsables d'organisation disposant de l'autorisation \"xapi:my_organization:mfa:manage\" pour toute l'organisation ; désactivée par défaut ; un Required défini par un administrateur ne peut pas être désactivé. La connexion au Backoffice suit uniquement le paramètre global."
+        "description": "Indique si une connexion par mot de passe à cette boutique nécessite, en plus du mot de passe, un code à usage unique envoyé par e-mail. Use global setting : suivre le paramètre global d'authentification multifacteur. Enabled : exigé pour chaque utilisateur. Disabled : non exigé pour les clients de la boutique ; les comptes du Backoffice et les utilisateurs des autres boutiques suivent le paramètre global. Admin managed : exigé uniquement pour les utilisateurs et organisations qu'un administrateur a définis sur Required dans le Backoffice ; les clients ne peuvent pas le modifier. Customer choice : les clients l'activent ou la désactivent pour eux-mêmes, et les responsables d'organisation disposant de l'autorisation \"xapi:my_organization:mfa:manage\" pour toute l'organisation ; désactivée par défaut ; un Required défini par un administrateur ne peut pas être désactivé. La connexion au Backoffice par mot de passe tient compte du paramètre global et de l'exemption du compte."
       }
     }
   },
@@ -97,12 +97,21 @@
             "AdminManaged": "Seuls les utilisateurs et organisations définis sur Required en ont besoin.",
             "CustomerChoice": "L'utilisateur ne l'a pas activée.",
             "MembersAdminManaged": "Seuls les membres définis sur Required en ont besoin.",
-            "MembersCustomerChoice": "Chaque membre décide sur la vitrine."
+            "MembersCustomerChoice": "Chaque membre décide sur la vitrine.",
+            "Backoffice": "Ce compte exige la MFA pour accéder au Backoffice.",
+            "BackofficeExempt": "Un administrateur a exempté ce compte de la MFA obligatoire du Backoffice.",
+            "Identity": "L'authentification à deux facteurs Identity exige le code."
           }
         },
         "commands": {
           "save": "Enregistrer",
           "reset": "Réinitialiser"
+        },
+        "exemption": {
+          "label": "Autoriser la connexion au Backoffice sans MFA obligatoire",
+          "description": "S'applique aux connexions au Backoffice par mot de passe. Les exigences des boutiques restent applicables. Le SSO suit la politique de son fournisseur.",
+          "pending": "Enregistrez la modification de l'exception pour voir le statut effectif.",
+          "identity": "L'authentification à deux facteurs Identity est activée pour ce compte et exige toujours un code."
         }
       }
     },

@@ -3,11 +3,11 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Autenticazione a più fattori",
-        "description": "Richiede, oltre alla password, un codice monouso inviato via e-mail per ogni accesso al Backoffice e per ogni altro accesso con password (negozio, app, client API) che non indica alcun negozio o indica un negozio che segue questa impostazione. Gli utenti con il blocco disattivato non potranno accedere finché il codice è richiesto: attiva il loro blocco prima di abilitare questa opzione."
+        "description": "Richiede un codice via e-mail per l'accesso al Backoffice con password, salvo gli account esplicitamente esentati. Si applica anche senza negozio e ai negozi che seguono questa impostazione. I requisiti dei negozi restano validi nonostante l'esenzione Backoffice. Il blocco dell'account deve essere abilitato per l'accesso con codice."
       },
       "StoreMode": {
         "title": "Autenticazione a più fattori",
-        "description": "Indica se un accesso con password a questo negozio richiede, oltre alla password, un codice monouso inviato via e-mail. Use global setting: segue l'impostazione globale dell'autenticazione a più fattori. Enabled: richiesto per ogni utente. Disabled: non richiesto per i clienti del negozio; gli account del Backoffice e gli utenti di altri negozi seguono l'impostazione globale. Admin managed: richiesto solo per gli utenti e le organizzazioni che un amministratore ha impostato su Required nel Backoffice; i clienti non possono modificarlo. Customer choice: i clienti la attivano o disattivano per sé stessi, e i responsabili dell'organizzazione con l'autorizzazione \"xapi:my_organization:mfa:manage\" per l'intera organizzazione; disattivata per impostazione predefinita; un Required impostato da un amministratore non può essere disattivato. L'accesso al Backoffice segue solo l'impostazione globale."
+        "description": "Indica se un accesso con password a questo negozio richiede, oltre alla password, un codice monouso inviato via e-mail. Use global setting: segue l'impostazione globale dell'autenticazione a più fattori. Enabled: richiesto per ogni utente. Disabled: non richiesto per i clienti del negozio; gli account del Backoffice e gli utenti di altri negozi seguono l'impostazione globale. Admin managed: richiesto solo per gli utenti e le organizzazioni che un amministratore ha impostato su Required nel Backoffice; i clienti non possono modificarlo. Customer choice: i clienti la attivano o disattivano per sé stessi, e i responsabili dell'organizzazione con l'autorizzazione \"xapi:my_organization:mfa:manage\" per l'intera organizzazione; disattivata per impostazione predefinita; un Required impostato da un amministratore non può essere disattivato. L'accesso al Backoffice con password considera l'impostazione globale e l'esenzione dell'account."
       }
     }
   },
@@ -97,12 +97,21 @@
             "AdminManaged": "Serve solo a utenti e organizzazioni impostati su Required.",
             "CustomerChoice": "L'utente non l'ha attivata.",
             "MembersAdminManaged": "Serve solo ai membri impostati su Required.",
-            "MembersCustomerChoice": "Ogni membro decide nella vetrina."
+            "MembersCustomerChoice": "Ogni membro decide nella vetrina.",
+            "Backoffice": "L'account richiede MFA per l'accesso al Backoffice.",
+            "BackofficeExempt": "Un amministratore ha esentato questo account dalla MFA obbligatoria del Backoffice.",
+            "Identity": "L'autenticazione a due fattori Identity richiede il codice."
           }
         },
         "commands": {
           "save": "Salva",
           "reset": "Ripristina"
+        },
+        "exemption": {
+          "label": "Consenti l'accesso al Backoffice senza MFA obbligatoria",
+          "description": "Si applica agli accessi al Backoffice con password. I requisiti dei negozi restano validi. SSO segue la politica del proprio provider.",
+          "pending": "Salva la modifica dell'esenzione per vedere lo stato effettivo.",
+          "identity": "L'autenticazione a due fattori Identity è attiva per questo account e richiede comunque un codice."
         }
       }
     },

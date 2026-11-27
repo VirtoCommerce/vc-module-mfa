@@ -3,11 +3,11 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Uwierzytelnianie wieloskładnikowe",
-        "description": "Wymaga, oprócz hasła, jednorazowego kodu wysyłanego e-mailem przy każdym logowaniu do Backoffice oraz przy każdym innym logowaniu hasłem (sklep, aplikacje, klienci API), które nie wskazuje sklepu albo wskazuje sklep stosujący to ustawienie. Użytkownicy z wyłączoną blokadą nie zalogują się, dopóki kod jest wymagany: przed włączeniem włącz im blokadę."
+        "description": "Wymaga kodu z e-maila przy logowaniu hasłem do Backoffice, z wyjątkiem kont z jawnym zwolnieniem. Dotyczy także logowania bez sklepu i sklepów podlegających temu ustawieniu. Wymagania sklepów obowiązują mimo wyjątku Backoffice. Blokada konta musi być włączona, aby logować się kodem."
       },
       "StoreMode": {
         "title": "Uwierzytelnianie wieloskładnikowe",
-        "description": "Czy logowanie hasłem do tego sklepu wymaga, oprócz hasła, jednorazowego kodu wysłanego e-mailem. Use global setting: zgodnie z globalnym ustawieniem uwierzytelniania wieloskładnikowego. Enabled: wymagany dla każdego użytkownika. Disabled: niewymagany dla klientów tego sklepu; konta Backoffice i użytkownicy innych sklepów stosują ustawienie globalne. Admin managed: wymagany tylko dla użytkowników i organizacji, którym administrator ustawił Required w Backoffice; klienci nie mogą tego zmienić. Customer choice: klienci sami włączają je lub wyłączają dla siebie, a opiekunowie organizacji z uprawnieniem \"xapi:my_organization:mfa:manage\" — dla całej organizacji; domyślnie wyłączone; Required ustawionego przez administratora nie można wyłączyć. Logowanie do Backoffice podlega tylko ustawieniu globalnemu."
+        "description": "Czy logowanie hasłem do tego sklepu wymaga, oprócz hasła, jednorazowego kodu wysłanego e-mailem. Use global setting: zgodnie z globalnym ustawieniem uwierzytelniania wieloskładnikowego. Enabled: wymagany dla każdego użytkownika. Disabled: niewymagany dla klientów tego sklepu; konta Backoffice i użytkownicy innych sklepów stosują ustawienie globalne. Admin managed: wymagany tylko dla użytkowników i organizacji, którym administrator ustawił Required w Backoffice; klienci nie mogą tego zmienić. Customer choice: klienci sami włączają je lub wyłączają dla siebie, a opiekunowie organizacji z uprawnieniem \"xapi:my_organization:mfa:manage\" — dla całej organizacji; domyślnie wyłączone; Required ustawionego przez administratora nie można wyłączyć. Logowanie hasłem do Backoffice uwzględnia ustawienie globalne i wyjątek konta."
       }
     }
   },
@@ -97,12 +97,21 @@
             "AdminManaged": "Wymagane tylko od użytkowników i organizacji z trybem Required.",
             "CustomerChoice": "Użytkownik go nie włączył.",
             "MembersAdminManaged": "Wymagane tylko od członków z trybem Required.",
-            "MembersCustomerChoice": "Każdy członek decyduje sam w witrynie sklepu."
+            "MembersCustomerChoice": "Każdy członek decyduje sam w witrynie sklepu.",
+            "Backoffice": "Konto wymaga MFA do uzyskania dostępu do Backoffice.",
+            "BackofficeExempt": "Administrator zwolnił to konto z obowiązkowego MFA w Backoffice.",
+            "Identity": "Uwierzytelnianie dwuskładnikowe Identity wymaga kodu."
           }
         },
         "commands": {
           "save": "Zapisz",
           "reset": "Resetuj"
+        },
+        "exemption": {
+          "label": "Zezwalaj na logowanie do Backoffice bez obowiązkowego MFA",
+          "description": "Dotyczy logowania hasłem do Backoffice. Wymagania sklepów nadal obowiązują. SSO podlega zasadom dostawcy.",
+          "pending": "Zapisz zmianę wyjątku, aby zobaczyć obowiązujący stan.",
+          "identity": "Uwierzytelnianie dwuskładnikowe Identity jest włączone dla tego konta i nadal wymaga kodu."
         }
       }
     },

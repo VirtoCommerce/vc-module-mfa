@@ -23,9 +23,16 @@ public class MfaRequirementService(
     ISettingsManager settingsManager,
     IMfaModeService modeService,
     IMemberService memberService,
-    IAdminUIAccessPolicy adminUIAccessPolicy)
+    IAdminUIAccessPolicy adminUIAccessPolicy,
+    IMfaBackofficeExemptionService exemptionService)
     : IMfaRequirementService
 {
+    public MfaRequirementService(IStoreService storeService, ISettingsManager settingsManager, IMfaModeService modeService,
+        IMemberService memberService, IAdminUIAccessPolicy adminUIAccessPolicy)
+        : this(storeService, settingsManager, modeService, memberService, adminUIAccessPolicy, new MfaBackofficeExemptionService(settingsManager))
+    {
+    }
+
     public virtual async Task<bool> IsRequiredAsync(ApplicationUser user, string storeId)
     {
         var requirement = await GetRequirementAsync(user, storeId);
@@ -33,11 +40,12 @@ public class MfaRequirementService(
         return requirement.IsRequired;
     }
 
-    public virtual Task<bool> IsRequiredForBackofficeAsync(ApplicationUser user)
+    public virtual async Task<bool> IsRequiredForBackofficeAsync(ApplicationUser user)
     {
         ArgumentNullException.ThrowIfNull(user);
 
-        return settingsManager.GetValueAsync<bool>(MfaModuleSettings.MfaEnabled);
+        return await settingsManager.GetValueAsync<bool>(MfaModuleSettings.MfaEnabled) &&
+            !await exemptionService.IsExemptAsync(user.Id);
     }
 
     public virtual async Task<MfaRequirement> GetRequirementAsync(ApplicationUser user, string storeId)
@@ -64,6 +72,12 @@ public class MfaRequirementService(
 
                 return userStoreRequirement;
             }
+        }
+
+        // A token can access the Backoffice regardless of the store named in its password request.
+        if (!requirement.IsRequired && await IsBackofficeAccountAsync(user) && await IsRequiredForBackofficeAsync(user))
+        {
+            return MfaRequirement.Create(true, Sources.Backoffice);
         }
 
         return requirement;
@@ -147,6 +161,14 @@ public class MfaRequirementService(
         else
         {
             requirement = await GetRequirementAsync(storeMode, [], userMode: null);
+        }
+
+        // An exemption removes the Backoffice fallback, never a real store's global requirement.
+        if (requirement.IsRequired && requirement.Source == Sources.Global &&
+            (isDisabledModeSkipped || string.IsNullOrEmpty(storeId) || await storeService.GetNoCloneAsync(storeId) == null) &&
+            await IsBackofficeAccountAsync(user) && await exemptionService.IsExemptAsync(user.Id))
+        {
+            requirement = MfaRequirement.Create(false, Sources.None);
         }
 
         requirement.IsDisabledModeSkipped = isDisabledModeSkipped;

@@ -81,6 +81,8 @@ public static class ModuleConstants
 
         public const string Global = "Global";
 
+        public const string Backoffice = "Backoffice";
+
         public const string Store = "Store";
 
         public const string Organization = "Organization";
@@ -119,6 +121,15 @@ public static class ModuleConstants
                 IsHidden = true,
             };
 
+            public static readonly SettingDescriptor BackofficeExempt = new()
+            {
+                Name = "MultiFactorAuthentication.BackofficeExempt",
+                GroupName = "Platform|Security",
+                ValueType = SettingValueType.Boolean,
+                DefaultValue = false,
+                IsHidden = true,
+            };
+
             public static readonly SettingDescriptor OrganizationMode = new()
             {
                 Name = "MultiFactorAuthentication.OrganizationMode",
@@ -145,6 +156,7 @@ public static class ModuleConstants
                 yield return General.MfaEnabled;
                 yield return General.StoreMode;
                 yield return General.UserMode;
+                yield return General.BackofficeExempt;
                 yield return General.OrganizationMode;
             }
         }
