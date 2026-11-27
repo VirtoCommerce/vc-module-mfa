@@ -20,6 +20,8 @@ export interface MfaStoreStatus {
 export interface MfaStatus {
   isGloballyEnabled?: boolean;
   isRequiredForBackoffice?: boolean | null;
+  isBackofficeExempt?: boolean | null;
+  isRequiredByIdentity?: boolean | null;
   userStoreId?: string | null;
   isLockoutEnabled?: boolean | null;
   stores?: MfaStoreStatus[];
@@ -53,6 +55,15 @@ export const setMode = async (subjectType: MfaSubjectType, id: string, mode: Mfa
   const result = await request<{ mode?: MfaMode }>("PUT", modeUrl(subjectType, id), { mode });
   modeVersion.value += 1;
   return result.mode ?? mode;
+};
+
+export const getBackofficeExemption = async (id: string) =>
+  (await request<{ isExempt: boolean }>("GET", `/api/mfa/users/${encodeURIComponent(id)}/backoffice-exemption`)).isExempt;
+
+export const setBackofficeExemption = async (id: string, isExempt: boolean) => {
+  const result = await request<{ isExempt: boolean }>("PUT", `/api/mfa/users/${encodeURIComponent(id)}/backoffice-exemption`, { isExempt });
+  modeVersion.value += 1;
+  return result.isExempt;
 };
 
 /** The effective status per store; `mode` evaluates a mode before it is saved. */

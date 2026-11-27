@@ -7,6 +7,9 @@ angular.module('virtoCommerce.mfa')
             var statusRequest = 0;
 
             // mfa:read opens the blade to view the mode, changing it needs mfa:manage
+            blade.isOrganization = isOrganization;
+            blade.backofficeExempt = false;
+            blade.originalBackofficeExempt = false;
             blade.canManage = authService.checkPermission(managePermission);
 
             blade.title = isOrganization ? 'mfa.blades.mode.organization-title' : 'mfa.blades.mode.user-title';
@@ -19,20 +22,32 @@ angular.module('virtoCommerce.mfa')
                 blade.originalMode = mode;
                 blade.mode = mode;
                 blade.isLoading = false;
+                refreshStatus();
+                if (blade.onChanged) {
+                    blade.onChanged(mode);
+                }
             }
 
             blade.refresh = function () {
                 blade.isLoading = true;
                 var getMode = isOrganization ? mfaApi.getOrganizationMode : mfaApi.getUserMode;
                 getMode({ id: blade.subjectId }, function (result) {
-                    setMode(result.mode);
-                });
+                    if (isOrganization) {
+                        setMode(result.mode);
+                    } else {
+                        mfaApi.getBackofficeExemption({ id: blade.subjectId }, function (exemption) {
+                            blade.backofficeExempt = blade.originalBackofficeExempt = exemption.isExempt;
+                            setMode(result.mode);
+                        }, function () { blade.isLoading = false; });
+                    }
+                }, function () { blade.isLoading = false; });
             };
 
             // The status follows the selected mode, so the administrator sees the effect before saving
             function refreshStatus() {
                 statusRequest += 1;
                 var request = statusRequest;
+                blade.status = null;
                 var getStatus = isOrganization ? mfaApi.getOrganizationStatus : mfaApi.getUserStatus;
                 getStatus({ id: blade.subjectId, mode: blade.mode }, function (result) {
                     if (request === statusRequest) {
@@ -42,8 +57,22 @@ angular.module('virtoCommerce.mfa')
             }
 
             function isDirty() {
-                return blade.mode !== blade.originalMode;
+                return blade.mode !== blade.originalMode || $scope.isExemptionDirty();
             }
+
+            $scope.isExemptionDirty = function () {
+                return !isOrganization && blade.backofficeExempt !== blade.originalBackofficeExempt;
+            };
+
+            $scope.getBackofficeReasonKey = function () {
+                var reason = blade.status.isRequiredForBackoffice ? 'Global' : 'GlobalOff';
+                if (blade.status.isRequiredByIdentity) {
+                    reason = 'Identity';
+                } else if (blade.status.isBackofficeExempt) {
+                    reason = 'BackofficeExempt';
+                }
+                return 'mfa.blades.mode.status.reasons.' + reason;
+            };
 
             $scope.isDirty = isDirty;
 
@@ -78,7 +107,10 @@ angular.module('virtoCommerce.mfa')
 
             function getNotRequiredReason(store) {
                 if (store.storeMode === 'Disabled') {
-                    return store.isDisabledModeSkipped ? 'GlobalOff' : 'Disabled';
+                    if (store.isDisabledModeSkipped) {
+                        return blade.status.isBackofficeExempt && blade.status.isGloballyEnabled ? 'BackofficeExempt' : 'GlobalOff';
+                    }
+                    return 'Disabled';
                 }
 
                 if (isChosenStoreMode(store.storeMode)) {
@@ -116,17 +148,30 @@ angular.module('virtoCommerce.mfa')
                     icon: 'fas fa-save',
                     executeMethod: function () {
                         blade.isLoading = true;
-                        var setModeApi = isOrganization ? mfaApi.setOrganizationMode : mfaApi.setUserMode;
-                        setModeApi({ id: blade.subjectId }, { mode: blade.mode }, function (result) {
-                            setMode(result.mode);
-                            if (blade.onChanged) {
-                                blade.onChanged(result.mode);
+                        statusRequest += 1;
+                        blade.status = null;
+                        function saveExemption() {
+                            if ($scope.isExemptionDirty()) {
+                                mfaApi.setBackofficeExemption({ id: blade.subjectId }, { isExempt: blade.backofficeExempt }, function (exemption) {
+                                    blade.originalBackofficeExempt = blade.backofficeExempt = exemption.isExempt;
+                                    blade.refresh();
+                                }, function () { blade.isLoading = false; });
+                            } else {
+                                blade.refresh();
                             }
-                        }, function () {
-                            blade.isLoading = false;
-                        });
+                        }
+
+                        if (blade.mode !== blade.originalMode) {
+                            var setModeApi = isOrganization ? mfaApi.setOrganizationMode : mfaApi.setUserMode;
+                            setModeApi({ id: blade.subjectId }, { mode: blade.mode }, function (result) {
+                                blade.originalMode = blade.mode = result.mode;
+                                saveExemption();
+                            }, function () { blade.isLoading = false; });
+                        } else {
+                            saveExemption();
+                        }
                     },
-                    canExecuteMethod: isDirty,
+                    canExecuteMethod: function () { return !blade.isLoading && isDirty(); },
                     permission: managePermission
                 },
                 {
@@ -134,8 +179,9 @@ angular.module('virtoCommerce.mfa')
                     icon: 'fa fa-undo',
                     executeMethod: function () {
                         blade.mode = blade.originalMode;
+                        blade.backofficeExempt = blade.originalBackofficeExempt;
                     },
-                    canExecuteMethod: isDirty,
+                    canExecuteMethod: function () { return !blade.isLoading && isDirty(); },
                     permission: managePermission
                 }
             ];

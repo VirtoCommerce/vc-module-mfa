@@ -80,6 +80,24 @@ public class MfaStatusServiceTests : MfaTestsBase
     }
 
     [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, true)]
+    public async Task GetUserStatusAsync_Should_ShowAnExemptionWithoutSuppressingIdentityMfa(bool identityEnabled, bool expectedRequired)
+    {
+        IsGloballyEnabled = true;
+        BackofficeUser.TwoFactorEnabled = identityEnabled;
+        await ModeService.SetBackofficeExemptionAsync(BackofficeUserId, true);
+
+        var status = await _statusService.GetUserStatusAsync(BackofficeUserId);
+
+        Assert.True(status.IsBackofficeExempt);
+        Assert.Equal(identityEnabled, status.IsRequiredByIdentity);
+        Assert.Equal(expectedRequired, status.IsRequiredForBackoffice);
+        Assert.True(Assert.Single(status.Stores, x => x.StoreId == MfaEnabledStoreId).IsRequired);
+        Assert.True(Assert.Single(status.Stores, x => x.StoreId == StoreId).IsRequired);
+    }
+
+    [Theory]
     [InlineData(LockoutDisabledUserId, false)]
     [InlineData(ActiveUserId, true)]
     public async Task GetUserStatusAsync_Should_ReportLockout(string userId, bool expectedLockoutEnabled)

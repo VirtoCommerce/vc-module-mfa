@@ -180,6 +180,9 @@ public abstract class MfaTestsBase
         UserManager = new Mock<UserManager<ApplicationUser>>(Mock.Of<IUserStore<ApplicationUser>>(), null, null, null, null, null, null, null, null);
 
         UserManager.SetupGet(x => x.SupportsUserLockout).Returns(true);
+        UserManager.SetupGet(x => x.SupportsUserTwoFactor).Returns(true);
+        UserManager.Setup(x => x.GetTwoFactorEnabledAsync(It.IsAny<ApplicationUser>()))
+            .ReturnsAsync((ApplicationUser user) => user.TwoFactorEnabled);
 
         UserManager
             .Setup(x => x.FindByIdAsync(It.IsAny<string>()))

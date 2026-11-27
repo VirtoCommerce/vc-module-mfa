@@ -35,9 +35,15 @@ public class MfaStatusService(
         status.UserStoreId = user.StoreId;
         status.IsLockoutEnabled = user.LockoutEnabled;
 
+        status.IsBackofficeExempt = await modeService.IsBackofficeExemptAsync(user.Id);
+        status.IsRequiredByIdentity = userManager.SupportsUserTwoFactor &&
+            await userManager.GetTwoFactorEnabledAsync(user) &&
+            (await userManager.GetValidTwoFactorProvidersAsync(user)).Count > 0;
+
         if (user.UserType != nameof(UserType.Customer))
         {
-            status.IsRequiredForBackoffice = await requirementService.IsRequiredForBackofficeAsync(user);
+            status.IsRequiredForBackoffice = status.IsRequiredByIdentity == true ||
+                await requirementService.IsRequiredForBackofficeAsync(user);
         }
 
         return status;

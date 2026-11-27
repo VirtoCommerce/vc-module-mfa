@@ -190,6 +190,63 @@ public class MfaRequirementServiceTests : MfaTestsBase
     }
 
     [Theory]
+    [InlineData(false, false, false)]
+    [InlineData(false, true, false)]
+    [InlineData(true, false, true)]
+    [InlineData(true, true, false)]
+    public async Task IsRequiredForBackofficeAsync_Should_ApplyOnlyAnExplicitExemption(bool globallyEnabled, bool isExempt, bool expected)
+    {
+        IsGloballyEnabled = globallyEnabled;
+        await ModeService.SetBackofficeExemptionAsync(BackofficeUserId, isExempt);
+
+        Assert.Equal(expected, await RequirementService.IsRequiredForBackofficeAsync(BackofficeUser));
+    }
+
+    [Theory]
+    [InlineData(null, false, true)]
+    [InlineData(null, true, false)]
+    [InlineData(UnknownStoreId, true, false)]
+    [InlineData(StoreId, true, true)]
+    [InlineData(MfaDisabledStoreId, true, false)]
+    [InlineData(AdminManagedStoreId, false, true)]
+    [InlineData(AdminManagedStoreId, true, false)]
+    [InlineData(CustomerChoiceStoreId, false, true)]
+    [InlineData(CustomerChoiceStoreId, true, false)]
+    [InlineData(MfaEnabledStoreId, true, true)]
+    public async Task IsRequiredAsync_Should_ProtectBackofficeTokensAndPreserveStoreRequirements(string storeId, bool isExempt, bool expected)
+    {
+        IsGloballyEnabled = true;
+        BackofficeUser.StoreId = null;
+        await ModeService.SetBackofficeExemptionAsync(BackofficeUserId, isExempt);
+
+        Assert.Equal(expected, await RequirementService.IsRequiredAsync(BackofficeUser, storeId));
+    }
+
+    [Theory]
+    [InlineData(StoreId, true)]
+    [InlineData(MfaEnabledStoreId, true)]
+    [InlineData(AdminManagedStoreId, true)]
+    [InlineData(CustomerChoiceStoreId, true)]
+    public async Task IsRequiredAsync_Should_NotExemptTheRequirementOfTheUsersOwnStore(string ownStoreId, bool expected)
+    {
+        IsGloballyEnabled = true;
+        BackofficeUser.StoreId = ownStoreId;
+        await ModeService.SetUserModeAsync(BackofficeUserId, ModuleConstants.Modes.Required);
+        await ModeService.SetBackofficeExemptionAsync(BackofficeUserId, true);
+
+        Assert.Equal(expected, await RequirementService.IsRequiredAsync(BackofficeUser, MfaDisabledStoreId));
+    }
+
+    [Fact]
+    public async Task IsRequiredAsync_Should_NotApplyAnExemptionToACustomer()
+    {
+        IsGloballyEnabled = true;
+        await ModeService.SetBackofficeExemptionAsync(ActiveUserId, true);
+
+        Assert.True(await RequirementService.IsRequiredAsync(ActiveUser, StoreId));
+    }
+
+    [Theory]
     [InlineData(AdminManagedStoreId, null, null, false, ModuleConstants.RequirementSources.None)]
     [InlineData(AdminManagedStoreId, ModuleConstants.Modes.Enabled, ModuleConstants.Modes.Enabled, false, ModuleConstants.RequirementSources.None)]
     [InlineData(AdminManagedStoreId, ModuleConstants.Modes.Required, null, true, ModuleConstants.RequirementSources.User)]

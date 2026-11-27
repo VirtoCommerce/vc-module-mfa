@@ -37,7 +37,13 @@ public class MfaRequirementService(
     {
         ArgumentNullException.ThrowIfNull(user);
 
-        return settingsManager.GetValueAsync<bool>(MfaModuleSettings.MfaEnabled);
+        return IsRequiredForBackofficeCoreAsync(user);
+    }
+
+    protected virtual async Task<bool> IsRequiredForBackofficeCoreAsync(ApplicationUser user)
+    {
+        return await settingsManager.GetValueAsync<bool>(MfaModuleSettings.MfaEnabled) &&
+            !await modeService.IsBackofficeExemptAsync(user.Id);
     }
 
     public virtual async Task<MfaRequirement> GetRequirementAsync(ApplicationUser user, string storeId)
@@ -64,6 +70,12 @@ public class MfaRequirementService(
 
                 return userStoreRequirement;
             }
+        }
+
+        // A token can access the Backoffice regardless of the store named in its password request.
+        if (!requirement.IsRequired && await IsBackofficeAccountAsync(user) && await IsRequiredForBackofficeAsync(user))
+        {
+            return MfaRequirement.Create(true, Sources.Backoffice);
         }
 
         return requirement;
@@ -149,9 +161,26 @@ public class MfaRequirementService(
             requirement = await GetRequirementAsync(storeMode, [], userMode: null);
         }
 
+        // An exemption removes the Backoffice fallback, never a real store's global requirement.
+        if (requirement.IsRequired && requirement.Source == Sources.Global &&
+            await CanApplyBackofficeExemptionAsync(user, storeId, isDisabledModeSkipped))
+        {
+            requirement = MfaRequirement.Create(false, Sources.None);
+        }
+
         requirement.IsDisabledModeSkipped = isDisabledModeSkipped;
 
         return requirement;
+    }
+
+    protected virtual async Task<bool> CanApplyBackofficeExemptionAsync(ApplicationUser user, string storeId, bool isDisabledModeSkipped)
+    {
+        if (!isDisabledModeSkipped && !string.IsNullOrEmpty(storeId) && await storeService.GetNoCloneAsync(storeId) != null)
+        {
+            return false;
+        }
+
+        return await IsBackofficeAccountAsync(user) && await modeService.IsBackofficeExemptAsync(user.Id);
     }
 
     protected virtual async Task<bool> CanSkipCodeInDisabledStoreAsync(ApplicationUser user, string storeId)
