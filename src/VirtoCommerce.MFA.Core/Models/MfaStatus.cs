@@ -17,5 +17,19 @@ public class MfaStatus
     /// </summary>
     public bool? IsRequiredForBackoffice { get; set; }
 
+    public bool? IsBackofficeExempt { get; set; }
+
+    public bool? IsRequiredByIdentity { get; set; }
+
+    /// <summary>
+    /// The user's own store: it applies to the sign-ins to other stores too. Null for an organization.
+    /// </summary>
+    public string UserStoreId { get; set; }
+
+    /// <summary>
+    /// Whether the user's account has lockout enabled: without it the user can't pass the second factor. Null for an organization.
+    /// </summary>
+    public bool? IsLockoutEnabled { get; set; }
+
     public IList<MfaStoreStatus> Stores { get; set; } = [];
 }

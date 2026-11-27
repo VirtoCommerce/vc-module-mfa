@@ -10,6 +10,7 @@ namespace VirtoCommerce.MFA.Tests;
 public class InMemoryMfaModeService : IMfaModeService
 {
     private readonly ConcurrentDictionary<string, string> _userModes = new();
+    private readonly ConcurrentDictionary<string, bool> _backofficeExemptions = new();
     private readonly ConcurrentDictionary<string, string> _organizationModes = new();
 
     public Task<string> GetUserModeAsync(string userId)
@@ -20,6 +21,17 @@ public class InMemoryMfaModeService : IMfaModeService
     public Task SetUserModeAsync(string userId, string mode)
     {
         _userModes[userId] = mode;
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> IsBackofficeExemptAsync(string userId)
+    {
+        return Task.FromResult(_backofficeExemptions.GetValueOrDefault(userId));
+    }
+
+    public Task SetBackofficeExemptionAsync(string userId, bool isExempt)
+    {
+        _backofficeExemptions[userId] = isExempt;
         return Task.CompletedTask;
     }
 

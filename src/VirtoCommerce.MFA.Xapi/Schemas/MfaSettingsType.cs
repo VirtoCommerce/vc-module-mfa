@@ -12,7 +12,7 @@ public class MfaSettingsType : ExtendableGraphType<MfaSettings>
         Field(x => x.StoreId);
         Field(x => x.StoreMode).Description("\"Use global setting\", Enabled, Disabled, AdminManaged or CustomerChoice: the values of the store setting MultiFactorAuthentication.StoreMode.");
         Field(x => x.IsRequired).Description("Whether the password sign-in to the store requires the code.");
-        Field(x => x.RequiredBy).Description("None, Global, Store, Organization or User.");
+        Field(x => x.RequiredBy).Description("None, Global, Backoffice, Store, Organization or User.");
         Field(x => x.UserMode).Description("Off, Enabled (by the user) or Required (by the administrator).");
         Field(x => x.CanChangeUserMode);
         Field(x => x.OrganizationId, nullable: true);

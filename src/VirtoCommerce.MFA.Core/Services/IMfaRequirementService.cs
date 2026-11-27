@@ -17,6 +17,16 @@ public interface IMfaRequirementService
     Task<MfaRequirement> GetRequirementAsync(ApplicationUser user, string storeId);
 
     /// <summary>
+    /// The same as <see cref="GetRequirementAsync(ApplicationUser, string)"/>, with the given user mode instead of the saved one.
+    /// </summary>
+    /// <param name="userMode">One of <see cref="ModuleConstants.Modes"/>.</param>
+    /// <remarks>The default implementation uses the saved requirement when a legacy service does not support previews.</remarks>
+    Task<MfaRequirement> GetRequirementAsync(ApplicationUser user, string storeId, string userMode)
+    {
+        return GetRequirementAsync(user, storeId);
+    }
+
+    /// <summary>
     /// Applies the same rules to the given modes instead of reading them.
     /// </summary>
     /// <param name="storeMode">One of <see cref="ModuleConstants.StoreModes"/>.</param>

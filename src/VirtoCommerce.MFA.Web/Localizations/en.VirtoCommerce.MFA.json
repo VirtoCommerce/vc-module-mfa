@@ -3,11 +3,11 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Multi-factor authentication",
-        "description": "Require a one-time code sent by email, in addition to the password, for every Backoffice sign-in, and for every other password sign-in (storefront, apps, API clients) that names no store or a store that follows this setting. Users without a confirmed email or with lockout disabled can't sign in while the code is required: confirm their email and enable their lockout before turning this on."
+        "description": "Require a one-time code sent by email, in addition to the password, for Backoffice password sign-ins unless the account has an explicit Backoffice exemption. Also applies to password sign-ins without a store or to stores following this setting. Store requirements apply even to exempt accounts. Users with lockout disabled can't sign in while the code is required."
       },
       "StoreMode": {
         "title": "Multi-factor authentication",
-        "description": "Whether a password sign-in to this store needs a one-time code sent by email in addition to the password. Use global setting: follow the global multi-factor authentication setting. Enabled: required for every user. Disabled: not required. Admin managed: required only for the users and organizations an administrator set to Required in the Backoffice; customers can't change it. Customer choice: customers turn it on or off for themselves, and organization maintainers with the \"xapi:my_organization:mfa:manage\" permission for the whole organization; off by default; a Required set by an administrator can't be turned off. The Backoffice sign-in follows only the global setting."
+        "description": "Whether a password sign-in to this store needs a one-time code sent by email in addition to the password. Use global setting: follow the global multi-factor authentication setting. Enabled: required for every user. Disabled: not required for the store's own customers; Backoffice accounts and the users of other stores follow the global setting. Admin managed: required only for the users and organizations an administrator set to Required in the Backoffice; customers can't change it. Customer choice: customers turn it on or off for themselves, and organization maintainers with the \"xapi:my_organization:mfa:manage\" permission for the whole organization; off by default; a Required set by an administrator can't be turned off. Backoffice password sign-ins follow the global setting and the account’s Backoffice exemption."
       }
     }
   },
@@ -66,7 +66,7 @@
         "status": {
           "title": "Effective status",
           "preview": "Preview of the selected mode. Save to apply it.",
-          "global": "Global setting: {{value}}. It decides for the Backoffice sign-in and for stores set to Use global setting.",
+          "global": "Global setting: {{value}}. Backoffice exemptions apply to Backoffice password sign-ins; stores continue to follow the global setting.",
           "global-on": "On",
           "global-off": "Off",
           "backoffice": "Backoffice",
@@ -86,7 +86,7 @@
             "Store": "The store requires it from everyone.",
             "Global": "The global setting is on.",
             "GlobalOff": "The global setting is off.",
-            "Disabled": "The store turned it off for everyone.",
+            "Disabled": "The store turned it off for its own customers.",
             "Organization": "The user's organization requires it.",
             "OrganizationSelf": "This organization requires it from all its members.",
             "UserRequired": "Required by the administrator.",
@@ -94,13 +94,25 @@
             "AdminManaged": "Only users and organizations set to Required need it.",
             "CustomerChoice": "The user hasn't turned it on.",
             "MembersAdminManaged": "Only members set to Required need it.",
-            "MembersCustomerChoice": "Each member decides in the storefront."
+            "MembersCustomerChoice": "Each member decides in the storefront.",
+            "Backoffice": "The account requires MFA for Backoffice access.",
+            "BackofficeExempt": "An administrator exempted this account from mandatory Backoffice MFA.",
+            "Identity": "Identity two-factor authentication requires the code.",
+            "UserStore": "The user's own store ({{store}}) requires it.",
+            "DisabledSkipped": "The store turns it off only for its own customers, so the global setting applies."
           }
         },
         "commands": {
           "save": "Save",
           "reset": "Reset"
-        }
+        },
+        "exemption": {
+          "label": "Allow Backoffice sign-in without mandatory MFA",
+          "description": "Applies to password sign-ins to the Backoffice. Store requirements still apply. SSO follows its provider's policy.",
+          "pending": "Save the exemption change to see the effective status.",
+          "identity": "Identity two-factor authentication is enabled for this account and still requires a code."
+        },
+        "lockout-disabled": "Lockout is disabled for this account, so the user can't sign in where the code is required. Lockout can't be enabled in the Backoffice: see the documentation of the multi-factor authentication module."
       }
     },
     "store-modes": {

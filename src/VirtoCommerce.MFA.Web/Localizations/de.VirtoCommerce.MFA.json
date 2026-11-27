@@ -3,11 +3,11 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Multi-Faktor-Authentifizierung",
-        "description": "Verlangt zusätzlich zum Passwort einen per E-Mail gesendeten Einmalcode bei jeder Anmeldung im Backoffice sowie bei jeder anderen Anmeldung mit Passwort (Shop, Apps, API-Clients), die keinen Shop oder einen Shop angibt, der dieser Einstellung folgt. Benutzer ohne bestätigte E-Mail-Adresse oder mit deaktivierter Sperre können sich nicht anmelden, solange der Code erforderlich ist: Bestätigen Sie vor dem Aktivieren deren E-Mail-Adresse und aktivieren Sie die Sperre."
+        "description": "Fordert bei Backoffice-Anmeldungen mit Passwort einen E-Mail-Code an, außer für ausdrücklich ausgenommene Konten. Gilt auch ohne Store und für Stores, die dieser Einstellung folgen. Store-Anforderungen bleiben trotz Backoffice-Ausnahme bestehen. Für die Anmeldung mit Code muss die Kontosperrung aktiviert sein."
       },
       "StoreMode": {
         "title": "Multi-Faktor-Authentifizierung",
-        "description": "Ob bei der Anmeldung mit Passwort in diesem Shop zusätzlich ein per E-Mail gesendeter Einmalcode erforderlich ist. Use global setting: der globalen Einstellung für die Multi-Faktor-Authentifizierung folgen. Enabled: für jeden Benutzer erforderlich. Disabled: nicht erforderlich. Admin managed: nur für Benutzer und Organisationen erforderlich, die ein Administrator im Backoffice auf Required gesetzt hat; Kunden können dies nicht ändern. Customer choice: Kunden aktivieren oder deaktivieren sie für sich selbst, Organisationsverwalter mit der Berechtigung \"xapi:my_organization:mfa:manage\" für die gesamte Organisation; standardmäßig deaktiviert; ein vom Administrator gesetztes Required kann nicht deaktiviert werden. Die Anmeldung im Backoffice folgt nur der globalen Einstellung."
+        "description": "Ob bei der Anmeldung mit Passwort in diesem Shop zusätzlich ein per E-Mail gesendeter Einmalcode erforderlich ist. Use global setting: der globalen Einstellung für die Multi-Faktor-Authentifizierung folgen. Enabled: für jeden Benutzer erforderlich. Disabled: für die eigenen Kunden des Shops nicht erforderlich; Backoffice-Konten und Benutzer anderer Shops folgen der globalen Einstellung. Admin managed: nur für Benutzer und Organisationen erforderlich, die ein Administrator im Backoffice auf Required gesetzt hat; Kunden können dies nicht ändern. Customer choice: Kunden aktivieren oder deaktivieren sie für sich selbst, Organisationsverwalter mit der Berechtigung \"xapi:my_organization:mfa:manage\" für die gesamte Organisation; standardmäßig deaktiviert; ein vom Administrator gesetztes Required kann nicht deaktiviert werden. Backoffice-Anmeldungen mit Passwort berücksichtigen die globale Einstellung und die Ausnahme des Kontos."
       }
     }
   },
@@ -86,7 +86,7 @@
             "Store": "Der Shop verlangt sie von allen.",
             "Global": "Die globale Einstellung ist aktiviert.",
             "GlobalOff": "Die globale Einstellung ist deaktiviert.",
-            "Disabled": "Der Shop hat sie für alle deaktiviert.",
+            "Disabled": "Der Shop hat sie für seine eigenen Kunden deaktiviert.",
             "Organization": "Die Organisation des Benutzers verlangt sie.",
             "OrganizationSelf": "Diese Organisation verlangt sie von allen Mitgliedern.",
             "UserRequired": "Vom Administrator verlangt.",
@@ -94,13 +94,25 @@
             "AdminManaged": "Nur Benutzer und Organisationen mit Required benötigen sie.",
             "CustomerChoice": "Der Benutzer hat sie nicht aktiviert.",
             "MembersAdminManaged": "Nur Mitglieder mit Required benötigen sie.",
-            "MembersCustomerChoice": "Jedes Mitglied entscheidet selbst im Storefront."
+            "MembersCustomerChoice": "Jedes Mitglied entscheidet selbst im Storefront.",
+            "Backoffice": "Das Konto benötigt MFA für den Backoffice-Zugriff.",
+            "BackofficeExempt": "Ein Administrator hat dieses Konto von der verpflichtenden Backoffice-MFA ausgenommen.",
+            "Identity": "Die Identity-Zwei-Faktor-Authentifizierung erfordert den Code.",
+            "UserStore": "Der eigene Shop des Benutzers ({{store}}) verlangt sie.",
+            "DisabledSkipped": "Der Shop deaktiviert sie nur für seine eigenen Kunden, daher gilt die globale Einstellung."
           }
         },
         "commands": {
           "save": "Speichern",
           "reset": "Zurücksetzen"
-        }
+        },
+        "exemption": {
+          "label": "Backoffice-Anmeldung ohne verpflichtende MFA erlauben",
+          "description": "Gilt für Backoffice-Anmeldungen mit Passwort. Store-Anforderungen gelten weiterhin. Für SSO gilt die Richtlinie des Anbieters.",
+          "pending": "Speichern Sie die Ausnahme, um den wirksamen Status zu sehen.",
+          "identity": "Für dieses Konto ist die Identity-Zwei-Faktor-Authentifizierung aktiviert. Der Code bleibt erforderlich."
+        },
+        "lockout-disabled": "Für dieses Konto ist die Sperre deaktiviert, daher kann sich der Benutzer nicht anmelden, wo der Code erforderlich ist. Die Sperre lässt sich im Backoffice nicht aktivieren: siehe die Dokumentation des Moduls für die Multi-Faktor-Authentifizierung."
       }
     },
     "store-modes": {

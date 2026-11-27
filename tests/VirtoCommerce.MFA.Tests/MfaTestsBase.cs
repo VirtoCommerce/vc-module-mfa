@@ -25,9 +25,11 @@ using VirtoCommerce.MFA.Data.Providers;
 using VirtoCommerce.MFA.Data.Services;
 using VirtoCommerce.NotificationsModule.Core.Model;
 using VirtoCommerce.NotificationsModule.Core.Services;
+using VirtoCommerce.Platform.Core;
 using VirtoCommerce.Platform.Core.Common;
 using VirtoCommerce.Platform.Core.Security;
 using VirtoCommerce.Platform.Core.Settings;
+using VirtoCommerce.Platform.Security.Services;
 using VirtoCommerce.StoreModule.Core.Model;
 using VirtoCommerce.StoreModule.Core.Services;
 using MfaModuleSettings = VirtoCommerce.MFA.Core.ModuleConstants.Settings.General;
@@ -97,6 +99,8 @@ public abstract class MfaTestsBase
 
     public Mock<IStoreService> StoreService { get; }
 
+    public PlatformUIOptions PlatformUIOptions { get; } = new();
+
     public Store[] Stores { get; }
 
     public Mock<ISettingsManager> SettingsManager { get; }
@@ -122,6 +126,7 @@ public abstract class MfaTestsBase
     public IdentityResult CodeStampUpdateResult { get; set; } = IdentityResult.Success;
 
     private readonly ConcurrentDictionary<string, string> _codeStamps = new();
+    private readonly ConcurrentDictionary<string, bool> _savedEmailConfirmations = new();
 
     protected MfaTestsBase()
     {
@@ -175,6 +180,9 @@ public abstract class MfaTestsBase
         UserManager = new Mock<UserManager<ApplicationUser>>(Mock.Of<IUserStore<ApplicationUser>>(), null, null, null, null, null, null, null, null);
 
         UserManager.SetupGet(x => x.SupportsUserLockout).Returns(true);
+        UserManager.SetupGet(x => x.SupportsUserTwoFactor).Returns(true);
+        UserManager.Setup(x => x.GetTwoFactorEnabledAsync(It.IsAny<ApplicationUser>()))
+            .ReturnsAsync((ApplicationUser user) => user.TwoFactorEnabled);
 
         UserManager
             .Setup(x => x.FindByIdAsync(It.IsAny<string>()))
@@ -192,10 +200,19 @@ public abstract class MfaTestsBase
             .Setup(x => x.IsLockedOutAsync(It.IsAny<ApplicationUser>()))
             .ReturnsAsync((ApplicationUser user) => user.LockoutEnd > TimeProvider.GetUtcNow());
 
-        // Like the Identity "Email" token provider: only a confirmed email can receive a code
+        UserManager
+            .Setup(x => x.GetEmailAsync(It.IsAny<ApplicationUser>()))
+            .ReturnsAsync((ApplicationUser user) => user.Email);
+
+        var emailTokenProvider = new MfaEmailTokenProvider();
+
         UserManager
             .Setup(x => x.GetValidTwoFactorProvidersAsync(It.IsAny<ApplicationUser>()))
-            .ReturnsAsync((ApplicationUser user) => !string.IsNullOrEmpty(user.Email) && user.EmailConfirmed ? [EmailProvider] : []);
+            .Returns(async (ApplicationUser user) => await emailTokenProvider.CanGenerateTwoFactorTokenAsync(UserManager.Object, user) ? [EmailProvider] : new List<string>());
+
+        UserManager
+            .Setup(x => x.IsEmailConfirmedAsync(It.IsAny<ApplicationUser>()))
+            .ReturnsAsync((ApplicationUser user) => user.EmailConfirmed);
 
         UserManager
             .Setup(x => x.GenerateTwoFactorTokenAsync(It.IsAny<ApplicationUser>(), EmailProvider))
@@ -273,7 +290,10 @@ public abstract class MfaTestsBase
         TicketStore = new TwoFactorTicketStore(memoryCache, Options.Create(MfaOptions));
         CodeAttemptLimiter = new MfaCodeAttemptLimiter(memoryCache, Options.Create(MfaOptions), TimeProvider);
         ErrorDescriber = new MfaErrorDescriber(TimeProvider);
-        RequirementService = new MfaRequirementService(StoreService.Object, SettingsManager.Object, ModeService, memberService.Object);
+        var platformUIOptions = new Mock<IOptionsMonitor<PlatformUIOptions>>();
+        platformUIOptions.Setup(x => x.CurrentValue).Returns(() => PlatformUIOptions);
+        var adminUIAccessPolicy = new ConfigurationAdminUIAccessPolicy(platformUIOptions.Object);
+        RequirementService = new MfaRequirementService(StoreService.Object, SettingsManager.Object, ModeService, memberService.Object, adminUIAccessPolicy);
 
         MfaService = new MfaService(UserManager.Object, StoreService.Object, TwoFactorTokenService, TicketStore, [emailProvider],
             CodeAttemptLimiter, CodeDeliveryLimiter, Options.Create(MfaOptions), TimeProvider);
@@ -357,9 +377,15 @@ public abstract class MfaTestsBase
         if (CodeStampUpdateResult.Succeeded)
         {
             _codeStamps[user.Id] = codeStamp;
+            _savedEmailConfirmations[user.Id] = user.EmailConfirmed;
         }
 
         return CodeStampUpdateResult;
+    }
+
+    protected bool IsEmailConfirmationSaved(ApplicationUser user)
+    {
+        return _savedEmailConfirmations.TryGetValue(user.Id, out var emailConfirmed) && emailConfirmed;
     }
 
     // Like Identity: a wrong code counts toward the lockout, which starts at MaxFailedAccessAttempts

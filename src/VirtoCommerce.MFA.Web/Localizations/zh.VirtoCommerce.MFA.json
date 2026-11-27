@@ -3,11 +3,11 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "多重身份验证",
-        "description": "在每次登录 Backoffice 时，以及在其他未指定店铺或所指定店铺遵循此设置的密码登录（店铺、应用、API 客户端）时，除密码外还要求输入通过电子邮件发送的一次性验证码。需要验证码期间，未确认电子邮件或已禁用锁定的用户将无法登录：启用此设置前，请先确认其电子邮件并启用锁定。"
+        "description": "使用密码登录 Backoffice 时要求输入邮件验证码，但明确获得例外的账户除外。未指定商店以及遵循此设置的商店也适用。Backoffice 例外不会取消商店要求。使用验证码登录的账户必须启用锁定功能。"
       },
       "StoreMode": {
         "title": "多重身份验证",
-        "description": "使用密码登录此店铺时，是否在密码之外还要求输入通过电子邮件发送的一次性验证码。Use global setting：遵循全局多重身份验证设置。Enabled：所有用户都需要。Disabled：不需要。Admin managed：仅管理员在 Backoffice 中设为 Required 的用户和组织需要；客户无法更改。Customer choice：客户自行开启或关闭，拥有 \"xapi:my_organization:mfa:manage\" 权限的组织维护者可为整个组织开启或关闭；默认关闭；管理员设置的 Required 无法关闭。Backoffice 登录仅遵循全局设置。"
+        "description": "使用密码登录此店铺时，是否在密码之外还要求输入通过电子邮件发送的一次性验证码。Use global setting：遵循全局多重身份验证设置。Enabled：所有用户都需要。Disabled：店铺自己的客户不需要；Backoffice 账户和其他店铺的用户遵循全局设置。Admin managed：仅管理员在 Backoffice 中设为 Required 的用户和组织需要；客户无法更改。Customer choice：客户自行开启或关闭，拥有 \"xapi:my_organization:mfa:manage\" 权限的组织维护者可为整个组织开启或关闭；默认关闭；管理员设置的 Required 无法关闭。使用密码登录 Backoffice 时会同时考虑全局设置和账户例外。"
       }
     }
   },
@@ -86,7 +86,7 @@
             "Store": "店铺要求所有人使用。",
             "Global": "全局设置已开启。",
             "GlobalOff": "全局设置已关闭。",
-            "Disabled": "店铺已为所有人关闭。",
+            "Disabled": "店铺已为自己的客户关闭。",
             "Organization": "用户所在组织要求使用。",
             "OrganizationSelf": "此组织要求其所有成员使用。",
             "UserRequired": "管理员要求使用。",
@@ -94,13 +94,25 @@
             "AdminManaged": "仅设为 Required 的用户和组织需要。",
             "CustomerChoice": "用户未开启。",
             "MembersAdminManaged": "仅设为 Required 的成员需要。",
-            "MembersCustomerChoice": "每位成员在店面自行决定。"
+            "MembersCustomerChoice": "每位成员在店面自行决定。",
+            "Backoffice": "此账户访问 Backoffice 需要 MFA。",
+            "BackofficeExempt": "管理员已将此账户排除在 Backoffice 强制 MFA 之外。",
+            "Identity": "Identity 双因素身份验证要求输入验证码。",
+            "UserStore": "用户自己的店铺（{{store}}）要求使用。",
+            "DisabledSkipped": "店铺仅为自己的客户关闭，因此适用全局设置。"
           }
         },
         "commands": {
           "save": "保存",
           "reset": "重置"
-        }
+        },
+        "exemption": {
+          "label": "允许无需强制 MFA 登录 Backoffice",
+          "description": "适用于使用密码登录 Backoffice。商店要求仍然适用。SSO 遵循其提供商的策略。",
+          "pending": "保存例外更改以查看实际状态。",
+          "identity": "此账户已启用 Identity 双因素身份验证，仍然需要验证码。"
+        },
+        "lockout-disabled": "此账户已禁用锁定，因此在需要验证码的地方无法登录。无法在 Backoffice 中启用锁定：请参阅多因素身份验证模块的文档。"
       }
     },
     "store-modes": {

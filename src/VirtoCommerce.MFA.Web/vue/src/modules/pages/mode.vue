@@ -16,14 +16,35 @@
           :options="modeOptions"
           option-value="value"
           option-label="label"
-          :disabled="!canManage"
+          :disabled="!canManage || loading"
           :clearable="false"
         />
         <VcHint v-if="mode">{{ $t(`mfa.blades.mode.description.${mode}`) }}</VcHint>
+        <template v-if="!isOrganization">
+          <VcSwitch
+            v-model="backofficeExempt"
+            :label="$t('mfa.blades.mode.exemption.label')"
+            :disabled="!canManage || loading"
+          />
+          <VcHint>{{ $t("mfa.blades.mode.exemption.description") }}</VcHint>
+          <VcBanner v-if="status?.isRequiredByIdentity" variant="warning">
+            {{ $t("mfa.blades.mode.exemption.identity") }}
+          </VcBanner>
+        </template>
       </VcForm>
+      <VcHint v-if="isExemptionDirty" class="tw-mt-4">{{ $t("mfa.blades.mode.exemption.pending") }}</VcHint>
+
+      <VcBanner
+        v-if="status?.isLockoutEnabled === false"
+        class="tw-mt-4"
+        variant="warning"
+        icon="lucide-triangle-alert"
+      >
+        {{ $t("mfa.blades.mode.lockout-disabled") }}
+      </VcBanner>
 
       <section
-        v-if="status"
+        v-if="status && !isExemptionDirty"
         class="tw-mt-6 tw-space-y-3"
       >
         <h3 class="tw-text-base tw-font-semibold">{{ $t("mfa.blades.mode.status.title") }}</h3>
@@ -74,10 +95,10 @@
 
 <script setup lang="ts">
 import { useBlade, usePermissions, type IBladeToolbar } from "@vc-shell/framework";
-import { VcBlade, VcColumn, VcContainer, VcDataTable, VcForm, VcHint, VcSelect, VcStatus } from "@vc-shell/framework/ui";
+import { VcBanner, VcBlade, VcColumn, VcContainer, VcDataTable, VcForm, VcHint, VcSelect, VcStatus, VcSwitch } from "@vc-shell/framework/ui";
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { getMode, getStatus, MFA_MODES, setMode, type MfaMode, type MfaStatus, type MfaStoreStatus, type MfaSubjectType } from "../api";
+import { getBackofficeExemption, getMode, getStatus, MFA_MODES, setBackofficeExemption, setMode, type MfaMode, type MfaStatus, type MfaStoreStatus, type MfaSubjectType } from "../api";
 
 // not routable: opened from the MFA widget of a user or an organization, which passes the subject in options
 defineBlade({ url: "/mfa-mode", name: "MfaMode", permissions: ["mfa:read"], routable: false });
@@ -98,7 +119,10 @@ const loading = ref(false);
 const savedMode = ref<MfaMode>();
 const mode = ref<MfaMode>();
 const status = ref<MfaStatus>();
-const isDirty = computed(() => !!mode.value && mode.value !== savedMode.value);
+const savedBackofficeExempt = ref(false);
+const backofficeExempt = ref(false);
+const isExemptionDirty = computed(() => !isOrganization.value && backofficeExempt.value !== savedBackofficeExempt.value);
+const isDirty = computed(() => (!!mode.value && mode.value !== savedMode.value) || isExemptionDirty.value);
 
 const modeOptions = computed(() => MFA_MODES.map((value) => ({ value, label: t(`mfa.modes.${value}`) })));
 
@@ -106,7 +130,12 @@ async function load() {
   if (!subjectId.value) return;
   loading.value = true;
   try {
-    savedMode.value = await getMode(subjectType.value, subjectId.value);
+    const [loadedMode, exemption] = await Promise.all([
+      getMode(subjectType.value, subjectId.value),
+      isOrganization.value ? Promise.resolve(false) : getBackofficeExemption(subjectId.value),
+    ]);
+    savedMode.value = loadedMode;
+    savedBackofficeExempt.value = backofficeExempt.value = exemption;
     mode.value = savedMode.value;
   } finally {
     loading.value = false;
@@ -115,19 +144,30 @@ async function load() {
 
 // The status follows the selected mode, so the administrator sees the effect before saving
 let statusRequest = 0;
-watch(mode, async (value) => {
+async function refreshStatus() {
+  const value = mode.value;
   if (!value || !subjectId.value) return;
   statusRequest += 1;
   const request = statusRequest;
+  status.value = undefined;
   const result = await getStatus(subjectType.value, subjectId.value, value).catch(() => undefined);
   if (request === statusRequest) {
     status.value = result;
   }
-});
+}
+watch(mode, refreshStatus);
 
 const isChosenStoreMode = (storeMode?: string) => storeMode === "AdminManaged" || storeMode === "CustomerChoice";
 
 function getRequiredReason(store: MfaStoreStatus) {
+  if (store.isRequiredByUserStore) {
+    return "UserStore";
+  }
+
+  if (store.isDisabledModeSkipped) {
+    return "DisabledSkipped";
+  }
+
   if (store.requiredBy === "Organization") {
     return isOrganization.value ? "OrganizationSelf" : "Organization";
   }
@@ -141,6 +181,9 @@ function getRequiredReason(store: MfaStoreStatus) {
 
 function getNotRequiredReason(store: MfaStoreStatus) {
   if (store.storeMode === "Disabled") {
+    if (store.isDisabledModeSkipped) {
+      return status.value?.isBackofficeExempt && status.value?.isGloballyEnabled ? "BackofficeExempt" : "GlobalOff";
+    }
     return "Disabled";
   }
 
@@ -150,6 +193,13 @@ function getNotRequiredReason(store: MfaStoreStatus) {
 
   return "GlobalOff";
 }
+
+// Names the user's own store in the reason of the stores it requires the code for
+const userStoreName = computed(() => {
+  const userStoreId = status.value?.userStoreId;
+  const userStore = status.value?.stores?.find((x) => x.storeId === userStoreId);
+  return userStore?.storeName || userStore?.storeId || userStoreId || "";
+});
 
 const storeModeLabel = (storeMode?: string) =>
   t(`mfa.store-modes.${storeMode === "Use global setting" ? "UseGlobalSetting" : storeMode}`);
@@ -169,7 +219,9 @@ function toRow(store: MfaStoreStatus) {
     store: store.storeName || store.storeId,
     storeSetting: storeModeLabel(store.storeMode),
     result: t(`mfa.blades.mode.status.results.${result}`),
-    reason: t(`mfa.blades.mode.status.reasons.${store.isRequired ? getRequiredReason(store) : getNotRequiredReason(store)}`),
+    reason: t(`mfa.blades.mode.status.reasons.${store.isRequired ? getRequiredReason(store) : getNotRequiredReason(store)}`, {
+      store: userStoreName.value,
+    }),
     variant: perMember ? "warning" : store.isRequired ? "success" : "info",
   };
 }
@@ -183,7 +235,12 @@ const rows = computed(() => {
     return stores;
   }
 
-  // the Backoffice sign-in follows only the global setting
+  let backofficeReason = value.isRequiredForBackoffice ? "Global" : "GlobalOff";
+  if (value.isRequiredByIdentity) {
+    backofficeReason = "Identity";
+  } else if (value.isBackofficeExempt) {
+    backofficeReason = "BackofficeExempt";
+  }
   const required = value.isRequiredForBackoffice;
   return [
     {
@@ -191,7 +248,7 @@ const rows = computed(() => {
       store: t("mfa.blades.mode.status.backoffice"),
       storeSetting: t("mfa.blades.mode.status.global-setting"),
       result: t(`mfa.blades.mode.status.results.${required ? "required" : "not-required"}`),
-      reason: t(`mfa.blades.mode.status.reasons.${required ? "Global" : "GlobalOff"}`),
+      reason: t(`mfa.blades.mode.status.reasons.${backofficeReason}`),
       variant: required ? "success" : "info",
     },
     ...stores,
@@ -204,12 +261,22 @@ const bladeToolbar = ref<IBladeToolbar[]>([
     title: computed(() => t("mfa.blades.mode.commands.save")),
     icon: "lucide-save",
     isVisible: canManage,
-    disabled: computed(() => !isDirty.value),
+    disabled: computed(() => loading.value || !isDirty.value),
     async clickHandler() {
       loading.value = true;
       try {
-        savedMode.value = await setMode(subjectType.value, subjectId.value, mode.value!);
-        mode.value = savedMode.value;
+        statusRequest += 1;
+        status.value = undefined;
+        if (mode.value !== savedMode.value) {
+          savedMode.value = await setMode(subjectType.value, subjectId.value, mode.value!);
+          mode.value = savedMode.value;
+        }
+        if (isExemptionDirty.value) {
+          savedBackofficeExempt.value = await setBackofficeExemption(subjectId.value, backofficeExempt.value);
+          backofficeExempt.value = savedBackofficeExempt.value;
+        }
+        await load();
+        await refreshStatus();
       } finally {
         loading.value = false;
       }
@@ -220,9 +287,10 @@ const bladeToolbar = ref<IBladeToolbar[]>([
     title: computed(() => t("mfa.blades.mode.commands.reset")),
     icon: "lucide-undo-2",
     isVisible: canManage,
-    disabled: computed(() => !isDirty.value),
+    disabled: computed(() => loading.value || !isDirty.value),
     clickHandler() {
       mode.value = savedMode.value;
+      backofficeExempt.value = savedBackofficeExempt.value;
     },
   },
 ]);

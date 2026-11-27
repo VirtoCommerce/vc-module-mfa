@@ -5,7 +5,8 @@
   "scripts": {
     "serve": "cross-env APP_ENV=development vite --force",
     "build": "cross-env APP_ENV=production vite build",
-    "type-check": "vue-tsc --noEmit"
+    "type-check": "vue-tsc --noEmit",
+    "test": "node --test ../../../tests/admin/mfa-mode.test.cjs"
   },
   "devDependencies": {
     "@types/node": "^20.10.5",

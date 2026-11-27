@@ -1,7 +1,8 @@
+using System.Collections.Generic;
 using System.Linq;
+using VirtoCommerce.MFA.Core.Models;
 using System.Threading.Tasks;
 using Moq;
-using VirtoCommerce.MFA.Core;
 using VirtoCommerce.MFA.Data.Services;
 using VirtoCommerce.StoreModule.Core.Model.Search;
 using VirtoCommerce.StoreModule.Core.Services;
@@ -15,12 +16,11 @@ namespace VirtoCommerce.MFA.Tests.Services;
 public class MfaStatusServiceTests : MfaTestsBase
 {
     private readonly MfaStatusService _statusService;
+    private readonly Mock<IStoreSearchService> _storeSearchService = new();
 
     public MfaStatusServiceTests()
     {
-        var storeSearchService = new Mock<IStoreSearchService>();
-
-        storeSearchService
+        _storeSearchService
             .Setup(x => x.SearchAsync(It.IsAny<StoreSearchCriteria>(), It.IsAny<bool>()))
             .ReturnsAsync((StoreSearchCriteria criteria, bool _) => new StoreSearchResult
             {
@@ -28,14 +28,15 @@ public class MfaStatusServiceTests : MfaTestsBase
                 Results = Stores.Skip(criteria.Skip).Take(criteria.Take).ToList(),
             });
 
-        _statusService = new MfaStatusService(UserManager.Object, storeSearchService.Object, SettingsManager.Object, RequirementService, ModeService);
+        _statusService = new MfaStatusService(UserManager.Object, _storeSearchService.Object, SettingsManager.Object, RequirementService, ModeService);
     }
 
     [Theory]
     [InlineData(StoreId, false, null, null, null, false, Sources.None)]
     [InlineData(StoreId, true, null, null, null, true, Sources.Global)]
     [InlineData(MfaEnabledStoreId, false, null, null, null, true, Sources.Store)]
-    [InlineData(MfaDisabledStoreId, true, Modes.Required, Modes.Required, null, false, Sources.None)]
+    [InlineData(MfaDisabledStoreId, true, Modes.Required, Modes.Required, null, true, Sources.Global)]
+    [InlineData(MfaDisabledStoreId, false, Modes.Required, Modes.Required, null, false, Sources.None)]
     [InlineData(AdminManagedStoreId, false, Modes.Enabled, null, null, false, Sources.None)]
     [InlineData(AdminManagedStoreId, false, Modes.Required, null, null, true, Sources.User)]
     [InlineData(AdminManagedStoreId, false, null, null, Modes.Required, true, Sources.User)]
@@ -79,6 +80,90 @@ public class MfaStatusServiceTests : MfaTestsBase
         Assert.Null(customerStatus.IsRequiredForBackoffice);
     }
 
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, true)]
+    public async Task GetUserStatusAsync_Should_ShowAnExemptionWithoutSuppressingIdentityMfa(bool identityEnabled, bool expectedRequired)
+    {
+        IsGloballyEnabled = true;
+        BackofficeUser.TwoFactorEnabled = identityEnabled;
+        await ModeService.SetBackofficeExemptionAsync(BackofficeUserId, true);
+
+        var status = await _statusService.GetUserStatusAsync(BackofficeUserId);
+
+        Assert.True(status.IsBackofficeExempt);
+        Assert.Equal(identityEnabled, status.IsRequiredByIdentity);
+        Assert.Equal(expectedRequired, status.IsRequiredForBackoffice);
+        Assert.True(Assert.Single(status.Stores, x => x.StoreId == MfaEnabledStoreId).IsRequired);
+        Assert.True(Assert.Single(status.Stores, x => x.StoreId == StoreId).IsRequired);
+    }
+
+    [Theory]
+    [InlineData(LockoutDisabledUserId, false)]
+    [InlineData(ActiveUserId, true)]
+    public async Task GetUserStatusAsync_Should_ReportLockout(string userId, bool expectedLockoutEnabled)
+    {
+        // Act
+        var status = await _statusService.GetUserStatusAsync(userId);
+
+        // Assert
+        Assert.Equal(expectedLockoutEnabled, status.IsLockoutEnabled);
+    }
+
+    [Fact]
+    public async Task GetOrganizationStatusAsync_Should_NotReportLockout()
+    {
+        // Act
+        var status = await _statusService.GetOrganizationStatusAsync(OrganizationId);
+
+        // Assert
+        Assert.Null(status.IsLockoutEnabled);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task GetUserStatusAsync_Should_ShowWhereTheUserStoreRequiresTheCode(bool isGloballyEnabled)
+    {
+        // Arrange
+        IsGloballyEnabled = isGloballyEnabled;
+
+        // Act
+        var status = await _statusService.GetUserStatusAsync(EnabledStoreCustomerId);
+
+        // Assert
+        Assert.Equal(MfaEnabledStoreId, status.UserStoreId);
+        Assert.All(status.Stores, x => Assert.True(x.IsRequired));
+
+        var userStore = Assert.Single(status.Stores, x => x.StoreId == MfaEnabledStoreId);
+        Assert.False(userStore.IsRequiredByUserStore);
+
+        var otherStore = Assert.Single(status.Stores, x => x.StoreId == StoreId);
+        Assert.Equal(!isGloballyEnabled, otherStore.IsRequiredByUserStore);
+        Assert.Equal(isGloballyEnabled ? Sources.Global : Sources.Store, otherStore.RequiredBy);
+    }
+
+    [Theory]
+    [InlineData(DisabledStoreManagerId, false, false, true)]
+    [InlineData(DisabledStoreManagerId, true, true, true)]
+    [InlineData(DisabledStoreCustomerId, true, false, false)]
+    [InlineData(ActiveUserId, true, true, true)]
+    public async Task GetUserStatusAsync_Should_ShowWhetherTheDisabledStoreLetsTheUserIn(
+        string userId, bool isGloballyEnabled, bool expectedRequired, bool expectedDisabledModeSkipped)
+    {
+        // Arrange
+        IsGloballyEnabled = isGloballyEnabled;
+
+        // Act
+        var status = await _statusService.GetUserStatusAsync(userId);
+
+        // Assert
+        var store = Assert.Single(status.Stores, x => x.StoreId == MfaDisabledStoreId);
+        Assert.Equal(expectedRequired, store.IsRequired);
+        Assert.Equal(expectedDisabledModeSkipped, store.IsDisabledModeSkipped);
+        Assert.False(store.IsRequiredByUserStore);
+    }
+
     [Fact]
     public async Task GetUserStatusAsync_Should_ReturnNull_When_TheUserDoesNotExist()
     {
@@ -87,6 +172,31 @@ public class MfaStatusServiceTests : MfaTestsBase
 
         // Assert
         Assert.Null(status);
+    }
+
+    [Fact]
+    public async Task GetUserStatusAsync_Should_PreserveCustomResultsFromTheExistingStatusExtensionPoint()
+    {
+        IsGloballyEnabled = true;
+        var service = new CustomStatusService(this);
+
+        var status = await service.GetUserStatusAsync(BackofficeUserId);
+
+        Assert.False(Assert.Single(status.Stores, x => x.StoreId == StoreId).IsRequired);
+        Assert.Equal(Sources.None, Assert.Single(status.Stores, x => x.StoreId == StoreId).RequiredBy);
+    }
+
+    private sealed class CustomStatusService(MfaStatusServiceTests owner)
+        : MfaStatusService(owner.UserManager.Object, owner._storeSearchService.Object, owner.SettingsManager.Object, owner.RequirementService, owner.ModeService)
+    {
+        protected override async Task<MfaStatus> CreateStatusAsync(IList<string> organizationModes, string userMode)
+        {
+            var status = await base.CreateStatusAsync(organizationModes, userMode);
+            var store = status.Stores.Single(x => x.StoreId == StoreId);
+            store.IsRequired = false;
+            store.RequiredBy = Sources.None;
+            return status;
+        }
     }
 
     [Theory]

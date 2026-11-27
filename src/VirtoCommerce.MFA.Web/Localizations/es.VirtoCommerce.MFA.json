@@ -3,11 +3,11 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Autenticación multifactor",
-        "description": "Exige, además de la contraseña, un código de un solo uso enviado por correo electrónico en cada inicio de sesión en el Backoffice y en cada otro inicio de sesión con contraseña (tienda, aplicaciones, clientes de API) que no indica ninguna tienda o indica una tienda que sigue esta configuración. Los usuarios sin correo confirmado o con el bloqueo desactivado no podrán iniciar sesión mientras se exija el código: confirme su correo y active su bloqueo antes de activar esta opción."
+        "description": "Exige un código por correo al acceder al Backoffice con contraseña, salvo las cuentas con una excepción explícita. También se aplica sin tienda y en tiendas que siguen esta configuración. Los requisitos de las tiendas se mantienen pese a la excepción del Backoffice. La cuenta debe tener habilitado el bloqueo para acceder con código."
       },
       "StoreMode": {
         "title": "Autenticación multifactor",
-        "description": "Indica si un inicio de sesión con contraseña en esta tienda necesita, además de la contraseña, un código de un solo uso enviado por correo. Use global setting: seguir la configuración global de autenticación multifactor. Enabled: obligatorio para todos los usuarios. Disabled: no obligatorio. Admin managed: obligatorio solo para los usuarios y organizaciones que un administrador configuró como Required en el Backoffice; los clientes no pueden cambiarlo. Customer choice: los clientes la activan o desactivan para sí mismos, y los responsables de organización con el permiso \"xapi:my_organization:mfa:manage\" para toda la organización; desactivada de forma predeterminada; un Required configurado por un administrador no se puede desactivar. El inicio de sesión en el Backoffice sigue solo la configuración global."
+        "description": "Indica si un inicio de sesión con contraseña en esta tienda necesita, además de la contraseña, un código de un solo uso enviado por correo. Use global setting: seguir la configuración global de autenticación multifactor. Enabled: obligatorio para todos los usuarios. Disabled: no obligatorio para los clientes de la propia tienda; las cuentas del Backoffice y los usuarios de otras tiendas siguen la configuración global. Admin managed: obligatorio solo para los usuarios y organizaciones que un administrador configuró como Required en el Backoffice; los clientes no pueden cambiarlo. Customer choice: los clientes la activan o desactivan para sí mismos, y los responsables de organización con el permiso \"xapi:my_organization:mfa:manage\" para toda la organización; desactivada de forma predeterminada; un Required configurado por un administrador no se puede desactivar. El acceso al Backoffice con contraseña considera la configuración global y la excepción de la cuenta."
       }
     }
   },
@@ -86,7 +86,7 @@
             "Store": "La tienda lo exige a todos.",
             "Global": "La configuración global está activada.",
             "GlobalOff": "La configuración global está desactivada.",
-            "Disabled": "La tienda la desactivó para todos.",
+            "Disabled": "La tienda la desactivó para sus propios clientes.",
             "Organization": "La organización del usuario lo exige.",
             "OrganizationSelf": "Esta organización lo exige a todos sus miembros.",
             "UserRequired": "Exigido por el administrador.",
@@ -94,13 +94,25 @@
             "AdminManaged": "Solo lo necesitan los usuarios y organizaciones configurados como Required.",
             "CustomerChoice": "El usuario no la ha activado.",
             "MembersAdminManaged": "Solo lo necesitan los miembros configurados como Required.",
-            "MembersCustomerChoice": "Cada miembro decide en la tienda en línea."
+            "MembersCustomerChoice": "Cada miembro decide en la tienda en línea.",
+            "Backoffice": "La cuenta requiere MFA para acceder al Backoffice.",
+            "BackofficeExempt": "Un administrador ha eximido a esta cuenta de la MFA obligatoria del Backoffice.",
+            "Identity": "La autenticación de dos factores de Identity requiere el código.",
+            "UserStore": "La tienda propia del usuario ({{store}}) la exige.",
+            "DisabledSkipped": "La tienda solo la desactiva para sus propios clientes, por lo que se aplica la configuración global."
           }
         },
         "commands": {
           "save": "Guardar",
           "reset": "Restablecer"
-        }
+        },
+        "exemption": {
+          "label": "Permitir el acceso al Backoffice sin MFA obligatoria",
+          "description": "Se aplica al acceso al Backoffice con contraseña. Los requisitos de las tiendas se mantienen. SSO sigue la política de su proveedor.",
+          "pending": "Guarde el cambio de excepción para ver el estado efectivo.",
+          "identity": "La autenticación de dos factores de Identity está activada para esta cuenta y sigue requiriendo un código."
+        },
+        "lockout-disabled": "El bloqueo está desactivado en esta cuenta, por lo que el usuario no puede iniciar sesión donde se exige el código. El bloqueo no se puede activar en el Backoffice: consulte la documentación del módulo de autenticación multifactor."
       }
     },
     "store-modes": {

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using VirtoCommerce.MFA.Core.Models;
@@ -33,10 +32,18 @@ public class MfaStatusService(
         var organizationModes = await modeService.GetOrganizationModesAsync(await requirementService.GetOrganizationIdsAsync(user));
         var userMode = mode ?? await modeService.GetUserModeAsync(user.Id);
 
-        var status = await CreateStatusAsync(organizationModes.Values.ToList(), userMode);
+        var status = await CreateStatusAsync(new UserOrganizationModes(user, organizationModes.Values), userMode);
+        status.UserStoreId = user.StoreId;
+        status.IsLockoutEnabled = user.LockoutEnabled;
+        status.IsBackofficeExempt = await modeService.IsBackofficeExemptAsync(user.Id);
+        status.IsRequiredByIdentity = userManager.SupportsUserTwoFactor &&
+            await userManager.GetTwoFactorEnabledAsync(user) &&
+            (await userManager.GetValidTwoFactorProvidersAsync(user)).Count > 0;
+
         if (user.UserType != nameof(UserType.Customer))
         {
-            status.IsRequiredForBackoffice = await requirementService.IsRequiredForBackofficeAsync(user);
+            status.IsRequiredForBackoffice = status.IsRequiredByIdentity == true ||
+                await requirementService.IsRequiredForBackofficeAsync(user);
         }
 
         return status;
@@ -60,7 +67,9 @@ public class MfaStatusService(
         foreach (var store in stores)
         {
             var storeMode = await requirementService.GetStoreModeAsync(store.Id);
-            var requirement = await requirementService.GetRequirementAsync(storeMode, organizationModes, userMode);
+            var requirement = organizationModes is UserOrganizationModes userModes
+                ? await requirementService.GetRequirementAsync(userModes.User, store.Id, userMode)
+                : await requirementService.GetRequirementAsync(storeMode, organizationModes, userMode);
 
             var storeStatus = AbstractTypeFactory<MfaStoreStatus>.TryCreateInstance();
             storeStatus.StoreId = store.Id;
@@ -68,9 +77,17 @@ public class MfaStatusService(
             storeStatus.StoreMode = storeMode;
             storeStatus.IsRequired = requirement.IsRequired;
             storeStatus.RequiredBy = requirement.Source;
+            storeStatus.IsRequiredByUserStore = requirement.IsRequiredByUserStore;
+            storeStatus.IsDisabledModeSkipped = requirement.IsDisabledModeSkipped;
             status.Stores.Add(storeStatus);
         }
 
         return status;
+    }
+
+    // Keep the existing virtual signature while carrying the user needed for store-specific evaluation.
+    private sealed class UserOrganizationModes(ApplicationUser user, IEnumerable<string> modes) : List<string>(modes)
+    {
+        public ApplicationUser User { get; } = user;
     }
 }

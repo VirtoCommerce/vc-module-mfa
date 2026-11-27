@@ -3,11 +3,11 @@
     "MultiFactorAuthentication": {
       "Enabled": {
         "title": "Monivaiheinen tunnistautuminen",
-        "description": "Vaatii salasanan lisäksi sähköpostitse lähetetyn kertakoodin jokaisessa Backoffice-kirjautumisessa sekä jokaisessa muussa salasanakirjautumisessa (kauppa, sovellukset, API-asiakkaat), jossa ei ole kauppaa tai jonka kauppa noudattaa tätä asetusta. Käyttäjät, joiden sähköpostia ei ole vahvistettu tai joiden lukitus on poistettu käytöstä, eivät voi kirjautua, kun koodi vaaditaan: vahvista heidän sähköpostinsa ja ota lukitus käyttöön ennen tämän asetuksen käyttöönottoa."
+        "description": "Vaatii sähköpostikoodin salasanalla Backofficeen kirjautuvilta, paitsi erikseen vapautetuilta tileiltä. Koskee myös kirjautumista ilman kauppaa ja tätä asetusta noudattaviin kauppoihin. Kauppojen vaatimukset säilyvät Backoffice-poikkeuksesta huolimatta. Tilin lukituksen on oltava käytössä koodilla kirjautumista varten."
       },
       "StoreMode": {
         "title": "Monivaiheinen tunnistautuminen",
-        "description": "Tarvitaanko salasanan lisäksi sähköpostitse lähetetty kertakoodi, kun tähän kauppaan kirjaudutaan salasanalla. Use global setting: noudata monivaiheisen tunnistautumisen yleistä asetusta. Enabled: pakollinen kaikille käyttäjille. Disabled: ei pakollinen. Admin managed: pakollinen vain käyttäjille ja organisaatioille, joille järjestelmänvalvoja on asettanut Backofficessa tilan Required; asiakkaat eivät voi muuttaa sitä. Customer choice: asiakkaat ottavat sen käyttöön tai poistavat sen käytöstä itseltään, ja organisaation ylläpitäjät, joilla on oikeus \"xapi:my_organization:mfa:manage\", koko organisaatiolta; oletuksena pois käytöstä; järjestelmänvalvojan asettamaa Required-tilaa ei voi poistaa käytöstä. Backoffice-kirjautuminen noudattaa vain yleistä asetusta."
+        "description": "Tarvitaanko salasanan lisäksi sähköpostitse lähetetty kertakoodi, kun tähän kauppaan kirjaudutaan salasanalla. Use global setting: noudata monivaiheisen tunnistautumisen yleistä asetusta. Enabled: pakollinen kaikille käyttäjille. Disabled: ei pakollinen kaupan omille asiakkaille; Backoffice-tilit ja muiden kauppojen käyttäjät noudattavat yleistä asetusta. Admin managed: pakollinen vain käyttäjille ja organisaatioille, joille järjestelmänvalvoja on asettanut Backofficessa tilan Required; asiakkaat eivät voi muuttaa sitä. Customer choice: asiakkaat ottavat sen käyttöön tai poistavat sen käytöstä itseltään, ja organisaation ylläpitäjät, joilla on oikeus \"xapi:my_organization:mfa:manage\", koko organisaatiolta; oletuksena pois käytöstä; järjestelmänvalvojan asettamaa Required-tilaa ei voi poistaa käytöstä. Backofficeen salasanalla kirjautuminen huomioi yleisen asetuksen ja tilin poikkeuksen."
       }
     }
   },
@@ -86,7 +86,7 @@
             "Store": "Kauppa vaatii sitä kaikilta.",
             "Global": "Yleinen asetus on käytössä.",
             "GlobalOff": "Yleinen asetus on pois käytöstä.",
-            "Disabled": "Kauppa on poistanut sen käytöstä kaikilta.",
+            "Disabled": "Kauppa on poistanut sen käytöstä omilta asiakkailtaan.",
             "Organization": "Käyttäjän organisaatio vaatii sitä.",
             "OrganizationSelf": "Tämä organisaatio vaatii sitä kaikilta jäseniltään.",
             "UserRequired": "Järjestelmänvalvojan vaatima.",
@@ -94,13 +94,25 @@
             "AdminManaged": "Vain käyttäjät ja organisaatiot, joilla on tila Required, tarvitsevat sitä.",
             "CustomerChoice": "Käyttäjä ei ole ottanut sitä käyttöön.",
             "MembersAdminManaged": "Vain jäsenet, joilla on tila Required, tarvitsevat sitä.",
-            "MembersCustomerChoice": "Jokainen jäsen päättää itse verkkokaupassa."
+            "MembersCustomerChoice": "Jokainen jäsen päättää itse verkkokaupassa.",
+            "Backoffice": "Tili vaatii MFA:n Backoffice-käyttöön.",
+            "BackofficeExempt": "Ylläpitäjä on vapauttanut tilin pakollisesta Backoffice-MFA:sta.",
+            "Identity": "Identityn kaksivaiheinen tunnistautuminen vaatii koodin.",
+            "UserStore": "Käyttäjän oma kauppa ({{store}}) vaatii sen.",
+            "DisabledSkipped": "Kauppa poistaa sen käytöstä vain omilta asiakkailtaan, joten yleinen asetus on voimassa."
           }
         },
         "commands": {
           "save": "Tallenna",
           "reset": "Palauta"
-        }
+        },
+        "exemption": {
+          "label": "Salli Backoffice-kirjautuminen ilman pakollista MFA:ta",
+          "description": "Koskee salasanalla kirjautumista Backofficeen. Kauppojen vaatimukset ovat edelleen voimassa. SSO noudattaa palveluntarjoajan käytäntöä.",
+          "pending": "Tallenna poikkeuksen muutos nähdäksesi voimassa olevan tilan.",
+          "identity": "Tilillä on käytössä Identityn kaksivaiheinen tunnistautuminen, joka vaatii edelleen koodin."
+        },
+        "lockout-disabled": "Tämän tilin lukitus on poistettu käytöstä, joten käyttäjä ei voi kirjautua, kun koodi vaaditaan. Lukitusta ei voi ottaa käyttöön Backofficessa: katso monivaiheisen tunnistautumisen moduulin dokumentaatio."
       }
     },
     "store-modes": {
