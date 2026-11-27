@@ -40,10 +40,15 @@ public class MfaRequirementService(
         return requirement.IsRequired;
     }
 
-    public virtual async Task<bool> IsRequiredForBackofficeAsync(ApplicationUser user)
+    public virtual Task<bool> IsRequiredForBackofficeAsync(ApplicationUser user)
     {
         ArgumentNullException.ThrowIfNull(user);
 
+        return IsRequiredForBackofficeCoreAsync(user);
+    }
+
+    protected virtual async Task<bool> IsRequiredForBackofficeCoreAsync(ApplicationUser user)
+    {
         return await settingsManager.GetValueAsync<bool>(MfaModuleSettings.MfaEnabled) &&
             !await exemptionService.IsExemptAsync(user.Id);
     }
@@ -165,8 +170,7 @@ public class MfaRequirementService(
 
         // An exemption removes the Backoffice fallback, never a real store's global requirement.
         if (requirement.IsRequired && requirement.Source == Sources.Global &&
-            (isDisabledModeSkipped || string.IsNullOrEmpty(storeId) || await storeService.GetNoCloneAsync(storeId) == null) &&
-            await IsBackofficeAccountAsync(user) && await exemptionService.IsExemptAsync(user.Id))
+            await CanApplyBackofficeExemptionAsync(user, storeId, isDisabledModeSkipped))
         {
             requirement = MfaRequirement.Create(false, Sources.None);
         }
@@ -174,6 +178,16 @@ public class MfaRequirementService(
         requirement.IsDisabledModeSkipped = isDisabledModeSkipped;
 
         return requirement;
+    }
+
+    protected virtual async Task<bool> CanApplyBackofficeExemptionAsync(ApplicationUser user, string storeId, bool isDisabledModeSkipped)
+    {
+        if (!isDisabledModeSkipped && !string.IsNullOrEmpty(storeId) && await storeService.GetNoCloneAsync(storeId) != null)
+        {
+            return false;
+        }
+
+        return await IsBackofficeAccountAsync(user) && await exemptionService.IsExemptAsync(user.Id);
     }
 
     protected virtual async Task<bool> CanSkipCodeInDisabledStoreAsync(ApplicationUser user, string storeId)

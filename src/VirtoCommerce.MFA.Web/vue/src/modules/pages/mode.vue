@@ -235,8 +235,12 @@ const rows = computed(() => {
     return stores;
   }
 
-  const backofficeReason = value.isRequiredByIdentity ? "Identity" :
-    value.isBackofficeExempt ? "BackofficeExempt" : value.isRequiredForBackoffice ? "Global" : "GlobalOff";
+  let backofficeReason = value.isRequiredForBackoffice ? "Global" : "GlobalOff";
+  if (value.isRequiredByIdentity) {
+    backofficeReason = "Identity";
+  } else if (value.isBackofficeExempt) {
+    backofficeReason = "BackofficeExempt";
+  }
   const required = value.isRequiredForBackoffice;
   return [
     {

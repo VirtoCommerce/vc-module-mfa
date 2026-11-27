@@ -65,9 +65,12 @@ angular.module('virtoCommerce.mfa')
             };
 
             $scope.getBackofficeReasonKey = function () {
-                var reason = blade.status.isRequiredByIdentity ? 'Identity' :
-                    (blade.status.isBackofficeExempt ? 'BackofficeExempt' :
-                        (blade.status.isRequiredForBackoffice ? 'Global' : 'GlobalOff'));
+                var reason = blade.status.isRequiredForBackoffice ? 'Global' : 'GlobalOff';
+                if (blade.status.isRequiredByIdentity) {
+                    reason = 'Identity';
+                } else if (blade.status.isBackofficeExempt) {
+                    reason = 'BackofficeExempt';
+                }
                 return 'mfa.blades.mode.status.reasons.' + reason;
             };
 
