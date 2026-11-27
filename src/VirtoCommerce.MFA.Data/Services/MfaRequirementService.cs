@@ -23,16 +23,9 @@ public class MfaRequirementService(
     ISettingsManager settingsManager,
     IMfaModeService modeService,
     IMemberService memberService,
-    IAdminUIAccessPolicy adminUIAccessPolicy,
-    IMfaBackofficeExemptionService exemptionService)
+    IAdminUIAccessPolicy adminUIAccessPolicy)
     : IMfaRequirementService
 {
-    public MfaRequirementService(IStoreService storeService, ISettingsManager settingsManager, IMfaModeService modeService,
-        IMemberService memberService, IAdminUIAccessPolicy adminUIAccessPolicy)
-        : this(storeService, settingsManager, modeService, memberService, adminUIAccessPolicy, new MfaBackofficeExemptionService(settingsManager))
-    {
-    }
-
     public virtual async Task<bool> IsRequiredAsync(ApplicationUser user, string storeId)
     {
         var requirement = await GetRequirementAsync(user, storeId);
@@ -50,7 +43,7 @@ public class MfaRequirementService(
     protected virtual async Task<bool> IsRequiredForBackofficeCoreAsync(ApplicationUser user)
     {
         return await settingsManager.GetValueAsync<bool>(MfaModuleSettings.MfaEnabled) &&
-            !await exemptionService.IsExemptAsync(user.Id);
+            !await modeService.IsBackofficeExemptAsync(user.Id);
     }
 
     public virtual async Task<MfaRequirement> GetRequirementAsync(ApplicationUser user, string storeId)
@@ -187,7 +180,7 @@ public class MfaRequirementService(
             return false;
         }
 
-        return await IsBackofficeAccountAsync(user) && await exemptionService.IsExemptAsync(user.Id);
+        return await IsBackofficeAccountAsync(user) && await modeService.IsBackofficeExemptAsync(user.Id);
     }
 
     protected virtual async Task<bool> CanSkipCodeInDisabledStoreAsync(ApplicationUser user, string storeId)

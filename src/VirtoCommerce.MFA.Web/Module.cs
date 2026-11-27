@@ -70,7 +70,6 @@ public class Module : IModule, IHasConfiguration, IHasModuleService
         serviceCollection.AddTransient<ITwoFactorTokenService, TwoFactorTokenService>();
         serviceCollection.AddTransient<IMfaRequirementService, MfaRequirementService>();
         serviceCollection.AddTransient<IMfaModeService, MfaModeService>();
-        serviceCollection.AddTransient<IMfaBackofficeExemptionService, MfaBackofficeExemptionService>();
         serviceCollection.AddTransient<IMfaSelfService, MfaSelfService>();
         serviceCollection.AddTransient<IMfaStatusService, MfaStatusService>();
         serviceCollection.AddTransient<IMfaService, MfaService>();

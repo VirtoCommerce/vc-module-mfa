@@ -13,7 +13,7 @@ namespace VirtoCommerce.MFA.Web.Controllers.Api;
 [ApiController]
 [Route("api/mfa/users/{userId}/backoffice-exemption")]
 public class MfaBackofficeExemptionsController(
-    IMfaBackofficeExemptionService exemptionService,
+    IMfaModeService modeService,
     UserManager<ApplicationUser> userManager) : Controller
 {
     [HttpGet]
@@ -26,7 +26,7 @@ public class MfaBackofficeExemptionsController(
         }
 
         var exemption = AbstractTypeFactory<MfaBackofficeExemption>.TryCreateInstance();
-        exemption.IsExempt = await exemptionService.IsExemptAsync(userId);
+        exemption.IsExempt = await modeService.IsBackofficeExemptAsync(userId);
 
         return Ok(exemption);
     }
@@ -46,10 +46,10 @@ public class MfaBackofficeExemptionsController(
             return NotFound();
         }
 
-        await exemptionService.SetExemptionAsync(userId, request.IsExempt);
+        await modeService.SetBackofficeExemptionAsync(userId, request.IsExempt);
 
         var exemption = AbstractTypeFactory<MfaBackofficeExemption>.TryCreateInstance();
-        exemption.IsExempt = await exemptionService.IsExemptAsync(userId);
+        exemption.IsExempt = await modeService.IsBackofficeExemptAsync(userId);
 
         return Ok(exemption);
     }

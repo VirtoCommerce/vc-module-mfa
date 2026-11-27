@@ -26,6 +26,36 @@ public class MfaModeService(ISettingsManager settingsManager) : IMfaModeService
         return SetModeAsync(MfaModuleSettings.UserMode, nameof(ApplicationUser), userId, mode);
     }
 
+    public virtual Task<bool> IsBackofficeExemptAsync(string userId)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(userId);
+
+        return GetBackofficeExemptionAsync(userId);
+    }
+
+    protected virtual async Task<bool> GetBackofficeExemptionAsync(string userId)
+    {
+        var settings = await settingsManager.GetObjectSettingsAsync(
+            [MfaModuleSettings.BackofficeExempt.Name], nameof(ApplicationUser), userId);
+
+        return settings.FirstOrDefault()?.Value is true;
+    }
+
+    public virtual Task SetBackofficeExemptionAsync(string userId, bool isExempt)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(userId);
+
+        return settingsManager.SaveObjectSettingsAsync(
+        [
+            new ObjectSettingEntry(MfaModuleSettings.BackofficeExempt)
+            {
+                ObjectType = nameof(ApplicationUser),
+                ObjectId = userId,
+                Value = isExempt,
+            },
+        ]);
+    }
+
     public virtual Task<string> GetOrganizationModeAsync(string organizationId)
     {
         return GetModeAsync(MfaModuleSettings.OrganizationMode, nameof(Organization), organizationId);

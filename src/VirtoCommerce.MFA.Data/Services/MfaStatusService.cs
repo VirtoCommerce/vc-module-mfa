@@ -17,16 +17,9 @@ public class MfaStatusService(
     IStoreSearchService storeSearchService,
     ISettingsManager settingsManager,
     IMfaRequirementService requirementService,
-    IMfaModeService modeService,
-    IMfaBackofficeExemptionService exemptionService)
+    IMfaModeService modeService)
     : IMfaStatusService
 {
-    public MfaStatusService(UserManager<ApplicationUser> userManager, IStoreSearchService storeSearchService,
-        ISettingsManager settingsManager, IMfaRequirementService requirementService, IMfaModeService modeService)
-        : this(userManager, storeSearchService, settingsManager, requirementService, modeService, new MfaBackofficeExemptionService(settingsManager))
-    {
-    }
-
     public virtual async Task<MfaStatus> GetUserStatusAsync(string userId, string mode = null)
     {
         var user = await userManager.FindByIdAsync(userId);
@@ -42,7 +35,7 @@ public class MfaStatusService(
         status.UserStoreId = user.StoreId;
         status.IsLockoutEnabled = user.LockoutEnabled;
 
-        status.IsBackofficeExempt = await exemptionService.IsExemptAsync(user.Id);
+        status.IsBackofficeExempt = await modeService.IsBackofficeExemptAsync(user.Id);
         status.IsRequiredByIdentity = userManager.SupportsUserTwoFactor &&
             await userManager.GetTwoFactorEnabledAsync(user) &&
             (await userManager.GetValidTwoFactorProvidersAsync(user)).Count > 0;

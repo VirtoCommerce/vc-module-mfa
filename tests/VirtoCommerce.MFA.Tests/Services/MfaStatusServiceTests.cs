@@ -27,7 +27,7 @@ public class MfaStatusServiceTests : MfaTestsBase
                 Results = Stores.Skip(criteria.Skip).Take(criteria.Take).ToList(),
             });
 
-        _statusService = new MfaStatusService(UserManager.Object, storeSearchService.Object, SettingsManager.Object, RequirementService, ModeService, BackofficeExemptionService.Object);
+        _statusService = new MfaStatusService(UserManager.Object, storeSearchService.Object, SettingsManager.Object, RequirementService, ModeService);
     }
 
     [Theory]
@@ -86,7 +86,7 @@ public class MfaStatusServiceTests : MfaTestsBase
     {
         IsGloballyEnabled = true;
         BackofficeUser.TwoFactorEnabled = identityEnabled;
-        BackofficeExemptionService.Setup(x => x.IsExemptAsync(BackofficeUserId)).ReturnsAsync(true);
+        await ModeService.SetBackofficeExemptionAsync(BackofficeUserId, true);
 
         var status = await _statusService.GetUserStatusAsync(BackofficeUserId);
 

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using VirtoCommerce.MFA.Core;
 using VirtoCommerce.MFA.Core.Models;
+using VirtoCommerce.MFA.Core.Services;
 using VirtoCommerce.MFA.Web.Controllers.Api;
 using Xunit;
 
@@ -13,6 +14,7 @@ namespace VirtoCommerce.MFA.Tests.Controllers;
 [Trait("Category", "Unit")]
 public class MfaBackofficeExemptionsControllerTests : MfaTestsBase
 {
+    private readonly Mock<IMfaModeService> _modeService = new();
     [Theory]
     [InlineData(nameof(MfaBackofficeExemptionsController.GetExemption), ModuleConstants.Security.Permissions.Read)]
     [InlineData(nameof(MfaBackofficeExemptionsController.SetExemption), ModuleConstants.Security.Permissions.Manage)]
@@ -27,20 +29,20 @@ public class MfaBackofficeExemptionsControllerTests : MfaTestsBase
     [Fact]
     public async Task ExemptionEndpoints_Should_RejectAnUnknownUserWithoutWritingSettings()
     {
-        var controller = new MfaBackofficeExemptionsController(BackofficeExemptionService.Object, UserManager.Object);
+        var controller = new MfaBackofficeExemptionsController(_modeService.Object, UserManager.Object);
 
         Assert.IsType<NotFoundResult>((await controller.GetExemption(UnknownUserId)).Result);
         Assert.IsType<NotFoundResult>((await controller.SetExemption(UnknownUserId, new MfaBackofficeExemption { IsExempt = true })).Result);
-        BackofficeExemptionService.VerifyNoOtherCalls();
+        _modeService.VerifyNoOtherCalls();
     }
 
     [Fact]
     public async Task SetExemption_Should_RejectANullBody()
     {
-        var controller = new MfaBackofficeExemptionsController(BackofficeExemptionService.Object, UserManager.Object);
+        var controller = new MfaBackofficeExemptionsController(_modeService.Object, UserManager.Object);
 
         Assert.IsType<BadRequestResult>((await controller.SetExemption(BackofficeUserId, null)).Result);
-        BackofficeExemptionService.VerifyNoOtherCalls();
+        _modeService.VerifyNoOtherCalls();
     }
 
     [Theory]
@@ -48,12 +50,12 @@ public class MfaBackofficeExemptionsControllerTests : MfaTestsBase
     [InlineData(true)]
     public async Task SetExemption_Should_ReturnTheSavedSetting(bool isExempt)
     {
-        BackofficeExemptionService.Setup(x => x.IsExemptAsync(BackofficeUserId)).ReturnsAsync(isExempt);
-        var controller = new MfaBackofficeExemptionsController(BackofficeExemptionService.Object, UserManager.Object);
+        _modeService.Setup(x => x.IsBackofficeExemptAsync(BackofficeUserId)).ReturnsAsync(isExempt);
+        var controller = new MfaBackofficeExemptionsController(_modeService.Object, UserManager.Object);
 
         var response = await controller.SetExemption(BackofficeUserId, new MfaBackofficeExemption { IsExempt = isExempt });
 
         Assert.Equal(isExempt, Assert.IsType<MfaBackofficeExemption>(Assert.IsType<OkObjectResult>(response.Result).Value).IsExempt);
-        BackofficeExemptionService.Verify(x => x.SetExemptionAsync(BackofficeUserId, isExempt), Times.Once);
+        _modeService.Verify(x => x.SetBackofficeExemptionAsync(BackofficeUserId, isExempt), Times.Once);
     }
 }

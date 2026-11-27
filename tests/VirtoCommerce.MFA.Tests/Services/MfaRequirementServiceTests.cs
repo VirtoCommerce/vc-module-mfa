@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using Moq;
 using VirtoCommerce.MFA.Core;
 using VirtoCommerce.Platform.Core.Security;
 using Xunit;
@@ -198,7 +197,7 @@ public class MfaRequirementServiceTests : MfaTestsBase
     public async Task IsRequiredForBackofficeAsync_Should_ApplyOnlyAnExplicitExemption(bool globallyEnabled, bool isExempt, bool expected)
     {
         IsGloballyEnabled = globallyEnabled;
-        BackofficeExemptionService.Setup(x => x.IsExemptAsync(BackofficeUserId)).ReturnsAsync(isExempt);
+        await ModeService.SetBackofficeExemptionAsync(BackofficeUserId, isExempt);
 
         Assert.Equal(expected, await RequirementService.IsRequiredForBackofficeAsync(BackofficeUser));
     }
@@ -218,7 +217,7 @@ public class MfaRequirementServiceTests : MfaTestsBase
     {
         IsGloballyEnabled = true;
         BackofficeUser.StoreId = null;
-        BackofficeExemptionService.Setup(x => x.IsExemptAsync(BackofficeUserId)).ReturnsAsync(isExempt);
+        await ModeService.SetBackofficeExemptionAsync(BackofficeUserId, isExempt);
 
         Assert.Equal(expected, await RequirementService.IsRequiredAsync(BackofficeUser, storeId));
     }
@@ -233,7 +232,7 @@ public class MfaRequirementServiceTests : MfaTestsBase
         IsGloballyEnabled = true;
         BackofficeUser.StoreId = ownStoreId;
         await ModeService.SetUserModeAsync(BackofficeUserId, ModuleConstants.Modes.Required);
-        BackofficeExemptionService.Setup(x => x.IsExemptAsync(BackofficeUserId)).ReturnsAsync(true);
+        await ModeService.SetBackofficeExemptionAsync(BackofficeUserId, true);
 
         Assert.Equal(expected, await RequirementService.IsRequiredAsync(BackofficeUser, MfaDisabledStoreId));
     }
@@ -242,7 +241,7 @@ public class MfaRequirementServiceTests : MfaTestsBase
     public async Task IsRequiredAsync_Should_NotApplyAnExemptionToACustomer()
     {
         IsGloballyEnabled = true;
-        BackofficeExemptionService.Setup(x => x.IsExemptAsync(ActiveUserId)).ReturnsAsync(true);
+        await ModeService.SetBackofficeExemptionAsync(ActiveUserId, true);
 
         Assert.True(await RequirementService.IsRequiredAsync(ActiveUser, StoreId));
     }

@@ -1,7 +1,6 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
-using Moq;
 using VirtoCommerce.MFA.Data.Services;
 using VirtoCommerce.Platform.Security;
 using Xunit;
@@ -18,7 +17,7 @@ public class BackofficeExemptionIdentityTests : MfaTestsBase
     {
         IsGloballyEnabled = true;
         BackofficeUser.TwoFactorEnabled = identityEnabled;
-        BackofficeExemptionService.Setup(x => x.IsExemptAsync(BackofficeUserId)).ReturnsAsync(true);
+        await ModeService.SetBackofficeExemptionAsync(BackofficeUserId, true);
         var policy = new MfaTwoFactorPolicy(RequirementService, Options.Create(MfaOptions), new HttpContextAccessor());
         var service = new TwoFactorSignInService(UserManager.Object, [policy], []);
 
