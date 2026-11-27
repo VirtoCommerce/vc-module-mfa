@@ -54,17 +54,27 @@ public class MfaRequirementService(
             !await modeService.IsBackofficeExemptAsync(user.Id);
     }
 
-    public virtual async Task<MfaRequirement> GetRequirementAsync(ApplicationUser user, string storeId)
+    public virtual Task<MfaRequirement> GetRequirementAsync(ApplicationUser user, string storeId)
     {
         ArgumentNullException.ThrowIfNull(user);
 
+        return GetUserRequirementAsync(user, storeId);
+    }
+
+    private async Task<MfaRequirement> GetUserRequirementAsync(ApplicationUser user, string storeId)
+    {
         return await GetRequirementAsync(user, storeId, await modeService.GetUserModeAsync(user.Id));
     }
 
-    public virtual async Task<MfaRequirement> GetRequirementAsync(ApplicationUser user, string storeId, string userMode)
+    public virtual Task<MfaRequirement> GetRequirementAsync(ApplicationUser user, string storeId, string userMode)
     {
         ArgumentNullException.ThrowIfNull(user);
 
+        return GetUserRequirementAsync(user, storeId, userMode);
+    }
+
+    private async Task<MfaRequirement> GetUserRequirementAsync(ApplicationUser user, string storeId, string userMode)
+    {
         var requirement = await GetStoreRequirementAsync(user, storeId, userMode);
 
         // Tokens are not bound to the store they were issued for, so the user's own store applies too:
