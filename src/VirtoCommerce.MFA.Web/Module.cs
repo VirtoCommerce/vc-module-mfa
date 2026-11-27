@@ -14,6 +14,7 @@ using VirtoCommerce.MFA.Core;
 using VirtoCommerce.MFA.Core.Models;
 using VirtoCommerce.MFA.Core.Notifications;
 using VirtoCommerce.MFA.Core.Services;
+using VirtoCommerce.MFA.Data.Extensions;
 using VirtoCommerce.MFA.Data.OpenIddict;
 using VirtoCommerce.MFA.Data.Providers;
 using VirtoCommerce.MFA.Data.Services;
@@ -61,9 +62,7 @@ public class Module : IModule, IHasConfiguration, IHasModuleService
             options.Tokens.ProviderMap[TokenOptions.DefaultEmailProvider] = new TokenProviderDescriptor(typeof(MfaEmailTokenProvider)));
 
         serviceCollection.TryAddSingleton(TimeProvider.System);
-        serviceCollection.AddSingleton<IMfaCodeAttemptLimiter, MfaCodeAttemptLimiter>();
-        serviceCollection.AddSingleton<IMfaCodeDeliveryLimiter, MfaCodeDeliveryLimiter>();
-        serviceCollection.AddSingleton<ITwoFactorTicketStore, TwoFactorTicketStore>();
+        serviceCollection.AddMfaSignInLimits();
         serviceCollection.AddSingleton<MfaErrorDescriber>();
 
         serviceCollection.AddTransient<IMfaProvider, EmailMfaProvider>();
